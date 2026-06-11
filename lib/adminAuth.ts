@@ -16,7 +16,7 @@ export function clearAdminPassword(): void {
 }
 
 export async function verifyAdminPassword(password: string): Promise<boolean> {
-  const res = await fetch('/api/admin/stats', {
+  const res = await fetch('/api/admin/verify', {
     headers: { 'x-admin-password': password },
   });
   return res.ok;

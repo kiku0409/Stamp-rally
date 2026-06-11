@@ -24,26 +24,33 @@ export default function AdminDashboard() {
     const pw = getAdminPassword();
     const headers = { 'x-admin-password': pw };
 
-    const [eventsRes, statsRes] = await Promise.all([
-      fetch('/api/events'),
-      fetch('/api/admin/stats', { headers }),
-    ]);
+    try {
+      const [eventsRes, statsRes] = await Promise.all([
+        fetch('/api/events'),
+        fetch('/api/admin/stats', { headers }),
+      ]);
 
-    const eventsData: Event[] = await eventsRes.json();
-    const statsData = await statsRes.json();
+      const eventsData = await eventsRes.json();
+      const statsData = await statsRes.json();
 
-    // Load per-event stamp counts
-    const withStats = await Promise.all(
-      eventsData.map(async (ev) => {
-        const r = await fetch(`/api/admin/stats?event_id=${ev.id}`, { headers });
-        const s = await r.json();
-        return { ...ev, stampCount: s.stampCount || 0 };
-      })
-    );
+      const eventsArray: Event[] = Array.isArray(eventsData) ? eventsData : [];
 
-    setEvents(withStats);
-    setTotalStats(statsData);
-    setLoading(false);
+      // Load per-event stamp counts
+      const withStats = await Promise.all(
+        eventsArray.map(async (ev) => {
+          const r = await fetch(`/api/admin/stats?event_id=${ev.id}`, { headers });
+          const s = await r.json();
+          return { ...ev, stampCount: s.stampCount || 0 };
+        })
+      );
+
+      setEvents(withStats);
+      if (!statsData.error) setTotalStats(statsData);
+    } catch {
+      // silently handle connection errors
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (loading) {
