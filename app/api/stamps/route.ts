@@ -35,13 +35,13 @@ export async function POST(request: Request) {
   // Check for duplicate
   const { data: existing } = await supabase
     .from('event_stamps')
-    .select('id')
+    .select('*')
     .eq('participant_id', participant_id)
     .eq('event_id', event_id)
     .maybeSingle();
 
   if (existing) {
-    return NextResponse.json({ alreadyStamped: true }, { status: 200 });
+    return NextResponse.json({ alreadyStamped: true, stamp: existing }, { status: 200 });
   }
 
   const { data, error } = await supabase

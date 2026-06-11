@@ -84,6 +84,7 @@ export default function StampPage({ params }: StampPageProps) {
       const data = await res.json();
 
       if (data.alreadyStamped) {
+        if (data.stamp?.stamped_at) setStampedAt(data.stamp.stamped_at);
         setStep('already');
       } else {
         setStampedAt(data.stamp.stamped_at);
@@ -116,8 +117,16 @@ export default function StampPage({ params }: StampPageProps) {
             <p className="text-gray-600 text-sm mb-4">
               このライブのスタンプは取得済みです
             </p>
-            <div className="bg-purple-50 rounded-xl p-3">
+            <div className="bg-purple-50 rounded-xl p-3 space-y-1">
               <p className="font-bold text-gray-800">{event.title}</p>
+              {stampedAt && (
+                <p className="text-xs text-purple-500 font-medium">
+                  取得日時: {new Date(stampedAt).toLocaleString('ja-JP', {
+                    year: 'numeric', month: 'numeric', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}
+                </p>
+              )}
             </div>
           </div>
           <button
