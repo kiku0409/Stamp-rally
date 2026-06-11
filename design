@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>来場スタンプアプリ — 緑ベース・ミニマル案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #17835D;
+    --green-deep: #0E5C41;
+    --green-soft: #E9F5EF;
+    --green-border: #C5E4D5;
+    --ink: #20241F;
+    --muted: #6E756E;
+    --faint: #A2A8A1;
+    --line: #E4E8E3;
+    --bg: #F5F7F5;
+    --card: #FFFFFF;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 40px 20px 64px;
+  }
+  .intro { max-width: 1120px; margin: 0 auto 8px; }
+  .intro h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.02em; }
+  .intro p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .tokens {
+    max-width: 1120px; margin: 16px auto 36px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .swatch {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 99px; padding: 6px 14px 6px 6px; font-size: 12px; color: var(--muted);
+  }
+  .swatch i { display: block; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.06); }
+  .screens {
+    max-width: 1120px; margin: 0 auto;
+    display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start;
+  }
+  .col { width: 340px; }
+  .col > h2 { font-size: 13px; font-weight: 500; color: var(--muted); margin: 0 0 10px 6px; letter-spacing: 0.04em; }
+  .phone {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 24px 20px 20px;
+    min-height: 600px;
+  }
+
+  /* 共通パーツ */
+  .row { display: flex; align-items: center; }
+  .between { justify-content: space-between; }
+  .h-label { font-size: 14px; font-weight: 700; }
+  .sub { font-size: 12px; color: var(--muted); }
+  .tiny { font-size: 11px; color: var(--faint); }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--green-soft); color: var(--green-deep);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat {
+    background: var(--bg); border-radius: 12px; padding: 14px 16px;
+  }
+  .stat .label { font-size: 12px; color: var(--muted); }
+  .stat .num { font-size: 26px; font-weight: 700; margin-top: 2px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 13px; border: none; border-radius: 12px;
+    background: var(--green); color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn.ghost {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--line); font-weight: 500;
+  }
+  .btn.small { width: auto; padding: 7px 14px; font-size: 12px; border-radius: 9px; }
+  .progress { height: 6px; border-radius: 3px; background: #fff; overflow: hidden; }
+  .progress > i { display: block; height: 100%; background: var(--green); border-radius: 3px; }
+
+  /* スタンプ */
+  .stamp {
+    border-radius: 50%; background: var(--green-soft); color: var(--green-deep);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transform: rotate(-6deg); flex-shrink: 0;
+    border: 1.5px solid var(--green-border);
+  }
+  .stamp.empty {
+    background: transparent; border: 1.5px dashed var(--line);
+    color: var(--faint); transform: none;
+  }
+  .stamp svg { display: block; }
+  .stamp .d { font-size: 10px; font-weight: 700; margin-top: 1px; }
+
+  /* タイトルカード(称号) */
+  .title-card {
+    background: var(--green-soft); border: 1px solid var(--green-border);
+    border-radius: var(--radius); padding: 16px; margin: 16px 0;
+  }
+  .title-card .name { font-size: 14px; font-weight: 700; color: var(--green-deep); }
+  .title-card .meta { font-size: 12px; color: var(--green); }
+
+  /* ライブカード */
+  .live-card {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .live-card.got { border-color: var(--green-border); }
+  .live-card .t { font-size: 14px; font-weight: 700; }
+  .live-card .got-mark { font-size: 11px; color: var(--green); font-weight: 700; margin-top: 2px; }
+  .live-card.pending .t { color: var(--muted); font-weight: 500; }
+
+  /* 獲得画面 */
+  .center { text-align: center; }
+  .get-title { font-size: 22px; font-weight: 700; margin-top: 20px; }
+
+  /* 管理画面 */
+  .admin-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+  }
+  .admin-head .logo { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .event-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+  .count { font-size: 12px; color: var(--green); font-weight: 700; margin-top: 6px; }
+
+  footer { max-width: 1120px; margin: 48px auto 0; font-size: 12px; color: var(--faint); text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>来場スタンプアプリ — 緑ベース・ミニマル案</h1>
+  <p>アクセントは緑1色のみ。グラデーション・絵文字・装飾シャドウを廃止し、スタンプだけが色を持つ設計。</p>
+</div>
+
+<div class="tokens">
+  <span class="swatch"><i style="background:#17835D"></i>Green #17835D</span>
+  <span class="swatch"><i style="background:#0E5C41"></i>Green deep #0E5C41</span>
+  <span class="swatch"><i style="background:#E9F5EF"></i>Green soft #E9F5EF</span>
+  <span class="swatch"><i style="background:#20241F"></i>Ink #20241F</span>
+  <span class="swatch"><i style="background:#6E756E"></i>Muted #6E756E</span>
+  <span class="swatch"><i style="background:#F5F7F5"></i>BG #F5F7F5</span>
+</div>
+
+<div class="screens">
+
+  <!-- 画面1: スタンプ帳 -->
+  <div class="col">
+    <h2>① スタンプ帳(ホーム)</h2>
+    <div class="phone">
+      <div class="row between" style="margin-bottom:18px">
+        <div class="row" style="gap:10px">
+          <div class="avatar">き</div>
+          <div>
+            <div class="h-label">スタンプ帳</div>
+            <div class="sub">きく さん</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="tiny">獲得スタンプ</div>
+          <div style="font-size:22px;font-weight:700;color:var(--green)">1</div>
+        </div>
+      </div>
+
+      <div class="title-card">
+        <div class="row between" style="margin-bottom:8px">
+          <div class="row" style="gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0E5C41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/></svg>
+            <span class="name">ライブデビュー</span>
+          </div>
+          <span class="meta">1 / 5</span>
+        </div>
+        <div class="progress"><i style="width:20%"></i></div>
+        <div class="meta" style="margin-top:7px">次の称号「ライブ常連」まで あと4回</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><div class="label">総参加回数</div><div class="num">1</div></div>
+        <div class="stat"><div class="label">獲得スタンプ</div><div class="num">1</div></div>
+      </div>
+
+      <div class="h-label" style="margin:20px 0 12px">ライブ一覧</div>
+
+      <div class="live-card got">
+        <div class="stamp" style="width:50px;height:50px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span class="d">6.11</span>
+        </div>
+        <div style="min-width:0">
+          <div class="t">マツザキ・スクエア</div>
+          <div class="sub">渋谷AXSA</div>
+          <div class="got-mark">✓ 2026/06/11 取得</div>
+        </div>
+      </div>
+
+      <div class="live-card pending">
+        <div class="stamp empty" style="width:50px;height:50px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div style="min-width:0">
+          <div class="t">Shibuya Street Live × TIMM</div>
+          <div class="sub">渋谷フクラス PRONT前 ・ 未取得</div>
+        </div>
+      </div>
+
+      <button class="btn" style="margin-top:14px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M21 21v.01M17.5 17.5v.01"/></svg>
+        QRを読み取ってスタンプ獲得
+      </button>
+      <button class="btn ghost" style="margin-top:10px;font-size:12px;padding:9px">端末の参加者情報をリセット</button>
+    </div>
+  </div>
+
+  <!-- 画面2: 獲得直後 -->
+  <div class="col">
+    <h2>② スタンプ獲得の瞬間</h2>
+    <div class="phone center" style="padding-top:64px">
+      <div class="stamp" style="width:120px;height:120px;margin:0 auto">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <span class="d" style="font-size:13px;margin-top:3px">6.11</span>
+      </div>
+      <div class="get-title">スタンプ獲得</div>
+      <div class="sub" style="margin-top:4px">マツザキ・スクエア</div>
+      <div class="tiny" style="margin-top:2px">渋谷AXSA ・ 2026/6/11 17:46</div>
+
+      <div class="title-card" style="text-align:left;margin-top:28px">
+        <div class="row between" style="margin-bottom:8px">
+          <span class="meta">称号「ライブ常連」まで</span>
+          <span class="name" style="font-size:12px">あと4</span>
+        </div>
+        <div class="progress"><i style="width:20%"></i></div>
+      </div>
+
+      <button class="btn">スタンプ帳を見る</button>
+      <div class="tiny" style="margin-top:14px">同じライブのスタンプは1回のみ獲得できます</div>
+    </div>
+  </div>
+
+  <!-- 画面3: 管理画面 -->
+  <div class="col">
+    <h2>③ 管理画面ダッシュボード</h2>
+    <div class="phone">
+      <div class="admin-head">
+        <div class="logo"><span class="dot"></span>管理画面</div>
+        <span class="sub" style="cursor:pointer">ログアウト</span>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><div class="label">総スタンプ数</div><div class="num" style="color:var(--green)">1</div></div>
+        <div class="stat"><div class="label">総参加者数</div><div class="num" style="color:var(--green)">1</div></div>
+      </div>
+
+      <div class="row between" style="margin:22px 0 12px">
+        <div class="h-label">イベント一覧</div>
+        <button class="btn small">＋ 新規作成</button>
+      </div>
+
+      <div class="event-card">
+        <div class="row between">
+          <div class="t" style="font-size:14px;font-weight:700">マツザキ・スクエア</div>
+          <div class="row" style="gap:6px">
+            <button class="btn ghost small">QR</button>
+            <button class="btn ghost small">編集</button>
+          </div>
+        </div>
+        <div class="sub" style="margin-top:4px">2026/06/11 ・ 渋谷AXSA</div>
+        <div class="count">スタンプ取得数 1</div>
+      </div>
+
+      <div class="event-card">
+        <div class="row between">
+          <div class="t" style="font-size:14px;font-weight:700">Shibuya Street Live × TIMM</div>
+          <div class="row" style="gap:6px">
+            <button class="btn ghost small">QR</button>
+            <button class="btn ghost small">編集</button>
+          </div>
+        </div>
+        <div class="sub" style="margin-top:4px">2026/06/11 ・ 渋谷フクラス PRONT前</div>
+        <div class="count" style="color:var(--faint)">スタンプ取得数 0</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>アクセント1色(緑) ・ フラット ・ 角丸16px統一 ・ アイコンは線画SVGで統一 ・ Zen Kaku Gothic New</footer>
+
+</body>
+</html>
