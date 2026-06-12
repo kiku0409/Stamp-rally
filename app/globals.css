@@ -1,24 +1,75 @@
 @import "tailwindcss";
 
-@keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 2s ease-in-out infinite;
+@theme {
+  --color-brand: #9C2A38;
+  --color-brand-deep: #681622;
+  --color-brand-soft: #F6E7EA;
+  --color-brand-border: #E6C5CB;
+  --color-ink: #15161A;
+  --color-subtle: #6C6A6E;
+  --color-faint: #A8A5A8;
+  --color-rule: #E3E0DB;
+  --color-page: #ECE9E4;
 }
 
 @keyframes stamp-pop {
-  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
-  70% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+  70%  { transform: scale(1.08) rotate(-8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes fade-up {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .animate-stamp-pop {
-  animation: stamp-pop 0.5s ease-out forwards;
+  animation: stamp-pop 0.45s ease-out forwards;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.35s ease-out forwards;
+}
+
+/* グラデーションボタン */
+.btn-brand {
+  background: linear-gradient(180deg, #A63340 0%, #7A1E2B 100%);
+  box-shadow: 0 2px 6px rgba(90,16,26,.34), 0 7px 18px rgba(90,16,26,.22), inset 0 1px 0 rgba(255,255,255,.26);
+  transition: transform 0.1s ease;
+}
+.btn-brand:active {
+  transform: scale(0.98);
+}
+
+/* 取得済みスタンプ円 */
+.stamp-acquired {
+  background: radial-gradient(circle at 36% 26%, #FFFFFF 0%, #F6E8EB 46%, #E8C8CE 100%);
+  box-shadow: 0 5px 12px rgba(110,24,34,.22), inset 0 2px 4px rgba(255,255,255,.8), inset 0 -4px 7px rgba(110,26,36,.14);
+}
+
+/* 称号カード背景グラデ */
+.bg-grad-soft {
+  background: linear-gradient(165deg, #F8EBED 0%, #F1DBDF 100%);
+}
+
+/* 進捗バー塗り */
+.progress-grad {
+  background: linear-gradient(180deg, #A63340, #741C28);
+}
+
+/* カード影 */
+.card-shadow {
+  box-shadow: 0 1px 2px rgba(20,16,16,.06), 0 6px 18px rgba(20,16,16,.08);
+}
+
+/* 管理画面斜めストライプ背景 */
+.admin-bg {
+  background-color: #ECE9E4;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    rgba(0,0,0,.025) 8px,
+    rgba(0,0,0,.025) 9px
+  );
 }

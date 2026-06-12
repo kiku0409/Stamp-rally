@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { Music } from 'lucide-react';
 import { Event } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import NicknameForm from '@/components/NicknameForm';
@@ -54,7 +55,6 @@ export default function StampPage({ params }: StampPageProps) {
   async function handleNicknameSubmit(nick: string) {
     setStep('stamping');
     try {
-      // Create participant
       const res = await fetch('/api/participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -97,11 +97,11 @@ export default function StampPage({ params }: StampPageProps) {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-pink-50 via-white to-purple-50">
+    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-page">
       {step === 'loading' || step === 'stamping' ? (
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-4 border-pink-400 border-t-transparent animate-spin" />
-          <p className="text-gray-500">{step === 'loading' ? '読み込み中...' : 'スタンプ取得中...'}</p>
+          <div className="w-[54px] h-[54px] mx-auto mb-4 rounded-full border-[3px] border-rule border-t-brand animate-spin" />
+          <p className="text-subtle text-sm">{step === 'loading' ? '読み込み中...' : 'スタンプ取得中...'}</p>
         </div>
       ) : step === 'register' ? (
         <NicknameForm onSubmit={handleNicknameSubmit} />
@@ -109,40 +109,42 @@ export default function StampPage({ params }: StampPageProps) {
         <StampAcquired event={event} stampedAt={stampedAt} nickname={nickname} />
       ) : step === 'already' && event ? (
         <div className="w-full max-w-sm mx-auto text-center">
-          <div className="text-5xl mb-4">✅</div>
-          <div className="bg-white rounded-3xl p-6 border-2 border-purple-200 shadow-lg mb-6">
-            <h2 className="text-xl font-bold text-purple-600 mb-2">
-              取得済みです
-            </h2>
-            <p className="text-gray-600 text-sm mb-4">
-              このライブのスタンプは取得済みです
-            </p>
-            <div className="bg-purple-50 rounded-xl p-3 space-y-1">
-              <p className="font-bold text-gray-800">{event.title}</p>
-              {stampedAt && (
-                <p className="text-xs text-purple-500 font-medium">
-                  取得日時: {new Date(stampedAt).toLocaleString('ja-JP', {
-                    year: 'numeric', month: 'numeric', day: 'numeric',
-                    hour: '2-digit', minute: '2-digit',
-                  })}
-                </p>
-              )}
-            </div>
+          <div
+            className="w-[120px] h-[120px] rounded-full stamp-acquired flex flex-col items-center justify-center text-brand-deep mx-auto mb-6"
+            style={{ transform: 'rotate(-6deg)' }}
+          >
+            <Music size={34} strokeWidth={2} />
+          </div>
+          <h2 className="text-[20px] font-bold text-brand-deep mb-2">取得済みです</h2>
+          <p className="text-subtle text-sm mb-5">このライブのスタンプは取得済みです</p>
+          <div className="bg-brand-soft border border-brand-border rounded-2xl p-4 mb-6 text-left space-y-1">
+            <p className="font-bold text-ink text-sm">{event.title}</p>
+            {stampedAt && (
+              <p className="text-xs text-brand font-medium">
+                {new Date(stampedAt).toLocaleString('ja-JP', {
+                  year: 'numeric', month: 'numeric', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                })}
+              </p>
+            )}
           </div>
           <button
             onClick={() => router.push('/stamp-book')}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold text-lg shadow-lg"
+            className="w-full py-3.5 rounded-xl btn-brand text-white font-bold text-base"
           >
-            スタンプ帳を見る 📖
+            スタンプ帳を見る
           </button>
         </div>
       ) : (
         <div className="text-center">
-          <div className="text-5xl mb-4">😢</div>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="w-16 h-16 rounded-full bg-rule flex items-center justify-center mx-auto mb-4 text-faint">
+            <Music size={28} strokeWidth={2} />
+          </div>
+          <p className="text-ink font-bold mb-2">イベントが見つかりません</p>
+          <p className="text-subtle text-sm mb-6">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold"
+            className="px-6 py-3 rounded-xl btn-brand text-white font-bold text-sm"
           >
             トップへ戻る
           </button>

@@ -19,10 +19,10 @@ export function formatDateTime(dateStr: string): string {
 }
 
 export function getAchievementTitle(count: number): string {
-  if (count >= 20) return '🏆 レジェンド参加者';
-  if (count >= 10) return '🥇 常連参加者';
-  if (count >= 5) return '🥈 リピーター';
-  if (count >= 1) return '🥉 ライブデビュー';
+  if (count >= 20) return 'レジェンド参加者';
+  if (count >= 10) return '常連参加者';
+  if (count >= 5) return 'リピーター';
+  if (count >= 1) return 'ライブデビュー';
   return '';
 }
 

@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist } from 'next/font/google';
+import { Zen_Kaku_Gothic_New } from 'next/font/google';
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'] });
+const zenKaku = Zen_Kaku_Gothic_New({
+  weight: ['400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: 'スタンプラリー | ライブ来場スタンプ',
@@ -23,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className={`${geist.className} bg-gray-50 min-h-screen`}>
+      <body className={`${zenKaku.className} bg-page min-h-screen text-ink`}>
         {children}
       </body>
     </html>

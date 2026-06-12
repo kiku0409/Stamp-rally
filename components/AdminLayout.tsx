@@ -32,32 +32,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-10 h-10 rounded-full border-4 border-pink-400 border-t-transparent animate-spin" />
+      <div className="min-h-screen flex items-center justify-center admin-bg">
+        <div className="w-10 h-10 rounded-full border-4 border-rule border-t-brand animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen admin-bg">
+      <header className="bg-white border-b border-rule sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/admin" className="font-bold text-gray-800">
-              🛠 管理画面
+            <Link href="/admin" className="flex items-center gap-2 font-bold text-ink">
+              <span className="w-2 h-2 rounded-full bg-brand inline-block" />
+              管理画面
             </Link>
             <nav className="hidden sm:flex items-center gap-3 text-sm">
-              <Link href="/admin" className="text-gray-600 hover:text-pink-500">
+              <Link href="/admin" className="text-subtle hover:text-brand transition-colors">
                 ダッシュボード
-              </Link>
-              <Link href="/admin/events" className="text-gray-600 hover:text-pink-500">
-                イベント管理
               </Link>
             </nav>
           </div>
           <button
             onClick={handleLogout}
-            className="text-sm text-gray-400 hover:text-red-500 transition-colors"
+            className="text-sm text-subtle hover:text-ink transition-colors"
           >
             ログアウト
           </button>

@@ -32,11 +32,11 @@ export default function QRCodeDisplay({ url, eventTitle }: QRCodeDisplayProps) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <canvas ref={canvasRef} className="rounded-xl shadow-md" />
+      <canvas ref={canvasRef} className="rounded-xl border border-rule" />
       <p className="text-xs text-gray-500 break-all text-center max-w-xs">{url}</p>
       <button
         onClick={handleDownload}
-        className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-400 to-purple-500 text-white text-sm font-medium shadow active:scale-95 transition-transform"
+        className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium active:scale-95 transition-transform"
       >
         QRコードをダウンロード
       </button>

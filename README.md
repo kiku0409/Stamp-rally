@@ -17,7 +17,7 @@
 
 ### 1. Supabaseプロジェクト作成
 
-1. [Supabase](https://supabase.com) にアクセスしてアカウント作成
+1. [Supabase](ht　tps://supabase.com) にアクセスしてアカウント作成
 2. 「New project」でプロジェクトを作成
 3. プロジェクト名・データベースパスワードを設定
 

@@ -1,60 +1,53 @@
 'use client';
 
 import Link from 'next/link';
+import { Music, MapPin } from 'lucide-react';
 import { Event } from '@/types';
-import { formatDate, formatDateTime } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
+import AchievementBadge from './AchievementBadge';
 
 interface StampAcquiredProps {
   event: Event;
   stampedAt: string;
-  nickname: string;
+  nickname?: string;
+  stampCount?: number;
 }
 
-export default function StampAcquired({ event, stampedAt, nickname }: StampAcquiredProps) {
+export default function StampAcquired({ event, stampedAt, stampCount = 1 }: StampAcquiredProps) {
+  const [, month, day] = event.event_date.split('-');
+  const mmdd = `${parseInt(month)}.${parseInt(day)}`;
+
   return (
     <div className="w-full max-w-sm mx-auto text-center">
-      <div className="mb-6 animate-bounce-slow">
-        <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-2xl">
-          <span className="text-6xl">⭐</span>
-        </div>
+      <div
+        className="w-[120px] h-[120px] rounded-full stamp-acquired flex flex-col items-center justify-center text-brand-deep mx-auto mb-6 animate-stamp-pop"
+      >
+        <Music size={34} strokeWidth={2} />
+        <span className="text-sm font-bold mt-1">{mmdd}</span>
       </div>
 
-      <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl p-6 border-2 border-pink-200 shadow-lg mb-6">
-        <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-1">
-          スタンプ獲得！
-        </h2>
-        <p className="text-gray-500 text-sm mb-4">ライブ参加ありがとうございました！</p>
+      <h2 className="text-[22px] font-bold text-ink mb-1 animate-fade-up">スタンプ獲得</h2>
+      <p className="text-subtle text-sm mb-6 animate-fade-up">{event.title}</p>
 
-        <div className="space-y-2 text-left">
-          <div className="bg-white rounded-xl p-3 border border-pink-100">
-            <p className="text-xs text-gray-400">イベント</p>
-            <p className="font-bold text-gray-800">{event.title}</p>
-          </div>
-          <div className="bg-white rounded-xl p-3 border border-pink-100">
-            <p className="text-xs text-gray-400">開催日</p>
-            <p className="font-medium text-gray-700">{formatDate(event.event_date)}</p>
-          </div>
-          <div className="bg-white rounded-xl p-3 border border-pink-100">
-            <p className="text-xs text-gray-400">会場</p>
-            <p className="font-medium text-gray-700">📍 {event.venue}</p>
-          </div>
-          <div className="bg-white rounded-xl p-3 border border-pink-100">
-            <p className="text-xs text-gray-400">取得日時</p>
-            <p className="font-medium text-gray-700">{formatDateTime(stampedAt)}</p>
-          </div>
+      <div className="bg-brand-soft border border-brand-border rounded-2xl p-4 text-left mb-5 space-y-2 animate-fade-up">
+        <div className="flex items-center gap-1.5 text-xs text-subtle">
+          <MapPin size={12} strokeWidth={2} />
+          <span>{event.venue}</span>
         </div>
+        <p className="text-xs text-subtle">{formatDateTime(stampedAt)}</p>
       </div>
 
-      <p className="text-gray-500 text-sm mb-6">
-        {nickname} さんのスタンプ帳に記録しました！
-      </p>
+      <div className="mb-6 animate-fade-up">
+        <AchievementBadge stampCount={stampCount} />
+      </div>
 
       <Link
         href="/stamp-book"
-        className="block w-full py-4 rounded-2xl bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold text-lg shadow-lg active:scale-95 transition-transform text-center"
+        className="block w-full py-3.5 rounded-xl btn-brand text-white font-bold text-base text-center animate-fade-up"
       >
-        スタンプ帳を見る 📖
+        スタンプ帳を見る
       </Link>
+      <p className="text-xs text-faint mt-4">同じライブのスタンプは1回のみ獲得できます</p>
     </div>
   );
 }
