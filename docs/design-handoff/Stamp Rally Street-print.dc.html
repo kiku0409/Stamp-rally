@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#9C2A38; --accent-deep:#681622; --accent-soft:#F6E7EA; --accent-border:#E6C5CB;
+    --ink:#15161A; --muted:#6C6A6E; --faint:#A8A5A8; --line:#E3E0DB; --bg:#ECE9E4; --card:#FFFFFF;
+    --red:#15161A; --red-border:#CCC9CB; --red-soft:#F1EFEA;
+    --grad-accent:linear-gradient(180deg,#A63340 0%,#7A1E2B 100%);
+    --grad-soft:linear-gradient(165deg,#F8EBED 0%,#F1DBDF 100%);
+    --stamp-grad:radial-gradient(circle at 36% 26%,#FFFFFF 0%,#F6E8EB 46%,#E8C8CE 100%);
+    --sh-btn:0 2px 6px rgba(90,16,26,.34),0 7px 18px rgba(90,16,26,.22),inset 0 1px 0 rgba(255,255,255,.26);
+    --sh-card:0 1px 2px rgba(20,16,16,.06),0 6px 18px rgba(20,16,16,.08);
+    --sh-stamp:0 5px 12px rgba(110,24,34,.22),inset 0 2px 4px rgba(255,255,255,.8),inset 0 -4px 7px rgba(110,26,36,.14);
+    --sh-phone:0 24px 60px rgba(20,16,16,.20),0 6px 18px rgba(20,16,16,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;background:#EBEEEB;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes stamp-pop{0%{transform:scale(0) rotate(-15deg);opacity:0;}70%{transform:scale(1.08) rotate(-9deg);opacity:1;}100%{transform:scale(1) rotate(-6deg);opacity:1;}}
+  @keyframes fade-up{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .scr::-webkit-scrollbar{width:0;height:0;}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;gap:0;background:#EBEEEB;font-family:'Zen Kaku Gothic New',sans-serif;color:var(--ink);">
+
+  <aside style="width:236px;flex-shrink:0;border-right:1px solid #DCE0DC;background:#F3F5F3;padding:24px 16px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow-y:auto;">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--ink);">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:block;"></span>
+        スタンプラリー
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">ストリート・ワインレッド×黒 / プロトタイプ</div>
+    </div>
+    <div>
+      <div style="font-size:10px;letter-spacing:0.08em;color:var(--faint);font-weight:700;margin-bottom:8px;">来場者フロー</div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <sc-for list="{{ consumerNav }}" as="item" hint-placeholder-count="5">
+          <button onClick="{{ item.go }}" style="{{ item.style }}" style-hover="background:#E6EAE6;">{{ item.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:10px;letter-spacing:0.08em;color:var(--faint);font-weight:700;margin-bottom:8px;">管理画面</div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <sc-for list="{{ adminNav }}" as="item" hint-placeholder-count="4">
+          <button onClick="{{ item.go }}" style="{{ item.style }}" style-hover="background:#E6EAE6;">{{ item.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="margin-top:auto;font-size:10px;color:var(--faint);line-height:1.6;">アクセント ワインレッド × 黒インク / 管理=グレー地 / つや・立体 / 線画SVG</div>
+  </aside>
+
+  <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding:40px 24px;background:radial-gradient(120% 70% at 50% -10%, rgba(150,42,56,.24) 0%, rgba(150,42,56,0) 55%), repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 2px, transparent 2px 10px), linear-gradient(180deg,#201C20 0%,#151217 100%);">
+    <div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin:0 0 10px 6px;letter-spacing:0.03em;">{{ screenLabel }}</div>
+      <div style="width:382px;height:760px;background:var(--card);border:1px solid #D7DBD7;border-radius:38px;padding:10px;box-shadow:var(--sh-phone);">
+        <div class="scr" style="width:100%;height:100%;border-radius:30px;overflow:hidden;overflow-y:auto;position:relative;background:radial-gradient(115% 45% at 50% 0%, rgba(150,42,56,.08) 0%, rgba(150,42,56,0) 58%), repeating-linear-gradient(135deg, rgba(21,22,26,.02) 0 1px, transparent 1px 12px), #F4F1EB;">
+<!-- ===== HOME (landing) ===== -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px;">
+  <div style="width:66px;height:66px;border-radius:50%;background:var(--stamp-grad);box-shadow:var(--sh-stamp);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+  </div>
+  <h1 style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:0.01em;">スタンプラリー</h1>
+  <p style="font-size:13px;color:var(--muted);margin-top:6px;">ライブ来場デジタルスタンプ</p>
+  <button onClick="{{ goBook }}" style="margin-top:32px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);">スタンプ帳を見る</button>
+  <p style="font-size:12px;color:var(--faint);margin-top:14px;line-height:1.6;">QRコードを読み取って<br/>スタンプを獲得しよう</p>
+  <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--line);width:100%;">
+    <button onClick="{{ goAdminLogin }}" style="background:none;border:none;font-family:inherit;font-size:12px;color:var(--faint);cursor:pointer;" style-hover="color:var(--muted);">管理者ページ</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ===== REGISTER (nickname) ===== -->
+<sc-if value="{{ isRegister }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:36px 28px;">
+  <div style="text-align:center;margin-bottom:30px;">
+    <div style="width:60px;height:60px;border-radius:50%;background:var(--stamp-grad);box-shadow:var(--sh-stamp);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <h2 style="font-size:20px;font-weight:700;color:var(--ink);">ニックネームを登録</h2>
+    <p style="font-size:12px;color:var(--muted);margin-top:6px;">スタンプ帳に表示される名前を入力してください</p>
+  </div>
+  <input value="{{ nickInput }}" onChange="{{ onNick }}" maxlength="20" placeholder="例：ライブ大好き太郎" style="width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;text-align:center;font-size:16px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+  <div style="font-size:11px;color:var(--faint);text-align:right;margin-top:6px;">{{ nickLen }}/20</div>
+  <button onClick="{{ submitNick }}" disabled="{{ nickDisabled }}" style="margin-top:18px;width:100%;padding:14px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);">スタンプ帳を作成する</button>
+</div>
+</sc-if>
+
+<!-- ===== STAMPING (loading) ===== -->
+<sc-if value="{{ isStamping }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+  <div style="width:54px;height:54px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:spin 0.8s linear infinite;"></div>
+  <p style="margin-top:18px;font-size:13px;color:var(--muted);">スタンプ取得中...</p>
+</div>
+</sc-if>
+
+<!-- ===== ACQUIRED ===== -->
+<sc-if value="{{ isAcquired }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;padding:52px 28px 32px;">
+  <div style="width:120px;height:120px;border-radius:50%;background:var(--stamp-grad);border:1.5px solid var(--accent-border);color:var(--accent-deep);box-shadow:var(--sh-stamp);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-6deg);">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    <span style="font-size:13px;font-weight:700;margin-top:3px;">{{ aqMD }}</span>
+  </div>
+  <div style="font-size:22px;font-weight:700;color:var(--ink);margin-top:22px;">スタンプ獲得</div>
+  <div style="font-size:13px;color:var(--muted);margin-top:6px;">{{ aqTitle }}</div>
+  <div style="font-size:11px;color:var(--faint);margin-top:3px;">{{ aqVenue }} ・ {{ aqDateTime }}</div>
+
+  <div style="width:100%;background:var(--grad-soft);border:1px solid var(--accent-border);box-shadow:var(--sh-card);border-radius:16px;padding:16px;margin-top:28px;text-align:left;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+      <span style="font-size:12px;color:var(--accent);">{{ tierNext }}</span>
+    </div>
+    <div style="height:6px;border-radius:3px;background:#fff;overflow:hidden;"><i style="display:block;height:100%;background:linear-gradient(180deg,#A63340,#741C28);border-radius:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);width:{{ tierPct }};"></i></div>
+  </div>
+
+  <button onClick="{{ goBook }}" style="margin-top:24px;width:100%;padding:14px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);">スタンプ帳を見る</button>
+  <div style="font-size:11px;color:var(--faint);margin-top:14px;">同じライブのスタンプは1回のみ獲得できます</div>
+</div>
+</sc-if>
+
+<!-- ===== ALREADY STAMPED ===== -->
+<sc-if value="{{ isAlready }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 28px 32px;">
+  <div style="width:120px;height:120px;border-radius:50%;background:var(--stamp-grad);border:1.5px solid var(--accent-border);color:var(--accent-deep);box-shadow:var(--sh-stamp);display:flex;align-items:center;justify-content:center;transform:rotate(-6deg);">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+  </div>
+  <div style="font-size:20px;font-weight:700;color:var(--accent-deep);margin-top:24px;">取得済みです</div>
+  <p style="font-size:13px;color:var(--muted);margin-top:8px;">このライブのスタンプは取得済みです</p>
+  <div style="width:100%;background:var(--grad-soft);border:1px solid var(--accent-border);box-shadow:var(--sh-card);border-radius:12px;padding:13px;margin-top:22px;font-size:14px;font-weight:700;color:var(--accent-deep);">{{ alTitle }}</div>
+  <button onClick="{{ goBook }}" style="margin-top:24px;width:100%;padding:14px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;">スタンプ帳を見る</button>
+</div>
+</sc-if>
+
+<!-- ===== ERROR ===== -->
+<sc-if value="{{ isError }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px;">
+  <div style="width:64px;height:64px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--faint);">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+  </div>
+  <p style="font-size:14px;color:var(--muted);margin-top:18px;">イベントが見つかりません</p>
+  <button onClick="{{ goHome }}" style="margin-top:22px;padding:12px 28px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">トップへ戻る</button>
+</div>
+</sc-if>
+
+<!-- ===== STAMP BOOK ===== -->
+<sc-if value="{{ isBook }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ hasParticipant }}" hint-placeholder-val="{{ true }}">
+<div style="padding:22px 18px 28px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:38px;height:38px;border-radius:50%;background:var(--stamp-grad);box-shadow:var(--sh-stamp);color:var(--accent-deep);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">{{ avatar }}</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink);">スタンプ帳</div>
+        <div style="font-size:12px;color:var(--muted);">{{ nick }} さん</div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--faint);">獲得スタンプ</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">{{ count }}</div>
+    </div>
+  </div>
+
+  <div style="background:var(--grad-soft);border:1px solid var(--accent-border);box-shadow:var(--sh-card);border-radius:16px;padding:16px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--accent-deep);">{{ tierTitle }}</span>
+      </div>
+      <span style="font-size:12px;color:var(--accent);">{{ tierFrac }}</span>
+    </div>
+    <div style="height:6px;border-radius:3px;background:#fff;overflow:hidden;"><i style="display:block;height:100%;background:linear-gradient(180deg,#A63340,#741C28);border-radius:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);width:{{ tierPct }};"></i></div>
+    <div style="font-size:12px;color:var(--accent);margin-top:8px;">{{ tierNext }}</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="background:var(--bg);border-radius:12px;padding:14px 16px;">
+      <div style="font-size:12px;color:var(--muted);">総参加回数</div>
+      <div style="font-size:26px;font-weight:700;color:var(--ink);margin-top:2px;">{{ count }}</div>
+    </div>
+    <div style="background:var(--bg);border-radius:12px;padding:14px 16px;">
+      <div style="font-size:12px;color:var(--muted);">獲得スタンプ</div>
+      <div style="font-size:26px;font-weight:700;color:var(--ink);margin-top:2px;">{{ count }}</div>
+    </div>
+  </div>
+
+  <div style="font-size:14px;font-weight:700;color:var(--ink);margin:20px 0 12px;">ライブ一覧</div>
+
+  <sc-for list="{{ bookEvents }}" as="ev" hint-placeholder-count="2">
+    <sc-if value="{{ ev.stamped }}" hint-placeholder-val="{{ true }}">
+      <div style="border:1px solid var(--accent-border);border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh-card);">
+        <div style="width:50px;height:50px;border-radius:50%;background:var(--stamp-grad);border:1.5px solid var(--accent-border);color:var(--accent-deep);box-shadow:var(--sh-stamp);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-6deg);flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span style="font-size:10px;font-weight:700;margin-top:1px;">{{ ev.md }}</span>
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--ink);">{{ ev.title }}</div>
+          <div style="font-size:12px;color:var(--muted);">{{ ev.venue }}</div>
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-top:2px;display:flex;align-items:center;gap:4px;white-space:nowrap;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>{{ ev.gotText }}</div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ ev.pending }}" hint-placeholder-val="{{ true }}">
+      <div style="border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh-card);">
+        <div style="width:50px;height:50px;border-radius:50%;background:transparent;border:1.5px dashed var(--line);color:var(--faint);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:14px;font-weight:500;color:var(--muted);">{{ ev.title }}</div>
+          <div style="font-size:12px;color:var(--muted);">{{ ev.sub }}</div>
+        </div>
+      </div>
+    </sc-if>
+  </sc-for>
+
+  <button onClick="{{ scan }}" style="margin-top:14px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M21 21v.01M17.5 17.5v.01"/></svg>
+    QRを読み取ってスタンプ獲得
+  </button>
+  <button onClick="{{ resetParticipant }}" style="margin-top:10px;width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;">端末の参加者情報をリセット</button>
+</div>
+</sc-if>
+<sc-if value="{{ noParticipant }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px;">
+  <div style="width:64px;height:64px;border-radius:50%;background:var(--stamp-grad);box-shadow:var(--sh-stamp);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+  </div>
+  <h1 style="font-size:20px;font-weight:700;color:var(--ink);">スタンプ帳</h1>
+  <p style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7;">スタンプを取得するとここに記録されます。<br/>まずは会場のQRコードを読み取ってください。</p>
+  <button onClick="{{ scan }}" style="margin-top:24px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M21 21v.01M17.5 17.5v.01"/></svg>
+    QRを読み取る
+  </button>
+  <button onClick="{{ goHome }}" style="margin-top:10px;width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;">トップへ戻る</button>
+</div>
+</sc-if>
+</sc-if>
+
+<!-- ===== ADMIN LOGIN ===== -->
+<sc-if value="{{ isAdminLogin }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:36px 28px;background:repeating-linear-gradient(135deg, rgba(28,28,34,.022) 0 1px, transparent 1px 13px), #E7E7EA;">
+  <div style="text-align:center;margin-bottom:28px;">
+    <div style="width:58px;height:58px;border-radius:50%;background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-card);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--ink);">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h1 style="font-size:20px;font-weight:700;color:var(--ink);">管理者ログイン</h1>
+  </div>
+  <input type="password" value="{{ pwInput }}" onChange="{{ onPw }}" placeholder="パスワード" style="width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;text-align:center;font-size:16px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+  <button onClick="{{ adminLogin }}" style="margin-top:16px;width:100%;padding:14px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);">ログイン</button>
+</div>
+</sc-if>
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<sc-if value="{{ isAdminDash }}" hint-placeholder-val="{{ true }}">
+<div style="background:repeating-linear-gradient(135deg, rgba(28,28,34,.022) 0 1px, transparent 1px 13px), #E7E7EA;min-height:100%;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:var(--card);border-bottom:1px solid var(--line);">
+    <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--ink);"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:block;"></span>管理画面</div>
+    <button onClick="{{ logout }}" style="display:flex;align-items:center;gap:5px;background:none;border:none;font-family:inherit;font-size:12px;color:var(--muted);cursor:pointer;" style-hover="color:var(--ink);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>ログアウト</button>
+  </div>
+  <div style="padding:20px 18px 28px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-card);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:12px;color:var(--muted);">総スタンプ数</div>
+        <div style="font-size:32px;font-weight:700;color:var(--accent);margin-top:2px;">{{ totalStamps }}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-card);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:12px;color:var(--muted);">総参加者数</div>
+        <div style="font-size:32px;font-weight:700;color:var(--accent);margin-top:2px;">{{ totalParticipants }}</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 12px;">
+      <div style="font-size:15px;font-weight:700;color:var(--ink);">イベント一覧</div>
+      <button onClick="{{ openNew }}" style="display:flex;align-items:center;gap:5px;padding:7px 13px;border:none;border-radius:9px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>新規作成</button>
+    </div>
+
+    <sc-for list="{{ adminEvents }}" as="ev" hint-placeholder-count="2">
+      <div style="background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-card);border-radius:16px;padding:14px 16px;margin-bottom:10px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="font-size:14px;font-weight:700;color:var(--ink);min-width:0;">{{ ev.title }}</div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button onClick="{{ ev.qr }}" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;" style-hover="border-color:var(--accent-border);color:var(--accent);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M21 21v.01M17.5 17.5v.01"/></svg>QR</button>
+            <button onClick="{{ ev.edit }}" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;" style-hover="border-color:var(--accent-border);color:var(--accent);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>編集</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:5px;">{{ ev.dateFmt }} ・ {{ ev.venue }}</div>
+        <div style="font-size:12px;font-weight:700;margin-top:6px;color:{{ ev.countColor }};">スタンプ取得数 {{ ev.count }}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ===== ADMIN NEW EVENT ===== -->
+<sc-if value="{{ isAdminNew }}" hint-placeholder-val="{{ true }}">
+<div style="background:repeating-linear-gradient(135deg, rgba(28,28,34,.022) 0 1px, transparent 1px 13px), #E7E7EA;min-height:100%;padding:20px 18px 28px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+    <button onClick="{{ backDash }}" style="background:none;border:none;color:var(--muted);cursor:pointer;display:flex;padding:2px;" style-hover="color:var(--ink);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <h1 style="font-size:17px;font-weight:700;color:var(--ink);">新規イベント作成</h1>
+  </div>
+  <div style="background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-card);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;">
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">イベント名 <span style="color:var(--red);">*</span></label>
+      <input value="{{ fTitle }}" onChange="{{ onFTitle }}" placeholder="例: 東京公演 2026" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">開催日 <span style="color:var(--red);">*</span></label>
+      <input type="date" value="{{ fDate }}" onChange="{{ onFDate }}" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">会場名 <span style="color:var(--red);">*</span></label>
+      <input value="{{ fVenue }}" onChange="{{ onFVenue }}" placeholder="例: Zepp Tokyo" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">説明（任意）</label>
+      <textarea onChange="{{ onFDesc }}" value="{{ fDesc }}" rows="3" placeholder="イベントの説明" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;resize:none;"></textarea>
+    </div>
+    <button onClick="{{ createEvent }}" style="width:100%;padding:13px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);">イベントを作成</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ===== ADMIN EDIT EVENT ===== -->
+<sc-if value="{{ isAdminEdit }}" hint-placeholder-val="{{ true }}">
+<div style="background:repeating-linear-gradient(135deg, rgba(28,28,34,.022) 0 1px, transparent 1px 13px), #E7E7EA;min-height:100%;padding:20px 18px 28px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+    <button onClick="{{ backDash }}" style="background:none;border:none;color:var(--muted);cursor:pointer;display:flex;padding:2px;" style-hover="color:var(--ink);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <h1 style="font-size:17px;font-weight:700;color:var(--ink);">イベント編集</h1>
+  </div>
+
+  <div style="background:var(--grad-soft);border:1px solid var(--accent-border);box-shadow:var(--sh-card);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;color:var(--accent);">スタンプ取得数</div>
+    <div style="font-size:30px;font-weight:700;color:var(--accent-deep);margin-top:2px;">{{ editCount }}</div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-card);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;">QRコード</div>
+      <button onClick="{{ toggleQR }}" style="background:none;border:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;">{{ qrToggleText }}</button>
+    </div>
+    <sc-if value="{{ showQR }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px;">
+        <div style="padding:10px;background:#fff;border:1px solid var(--line);border-radius:12px;">{{ qrEl }}</div>
+        <div style="font-size:11px;color:var(--muted);text-align:center;word-break:break-all;max-width:240px;">{{ qrUrl }}</div>
+        <button onClick="{{ downloadQR }}" style="display:flex;align-items:center;gap:6px;padding:10px 16px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>QRコードをダウンロード</button>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-card);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;margin-bottom:14px;">
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">イベント名</label>
+      <input value="{{ fTitle }}" onChange="{{ onFTitle }}" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">開催日</label>
+      <input type="date" value="{{ fDate }}" onChange="{{ onFDate }}" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">会場名</label>
+      <input value="{{ fVenue }}" onChange="{{ onFVenue }}" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;" style-focus="border-color:var(--accent);" />
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">説明</label>
+      <textarea onChange="{{ onFDesc }}" value="{{ fDesc }}" rows="3" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);outline:none;resize:none;"></textarea>
+    </div>
+    <button onClick="{{ saveEvent }}" style="width:100%;padding:13px;border:none;border-radius:12px;background:var(--grad-accent);color:#fff;box-shadow:var(--sh-btn);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;" style-active="transform:scale(0.98);">保存する</button>
+  </div>
+
+  <button onClick="{{ deleteEvent }}" style="width:100%;padding:12px;border:1px solid var(--red-border);border-radius:12px;background:transparent;color:var(--red);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;" style-hover="background:var(--red-soft);">このイベントを削除</button>
+</div>
+</sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const ICON = {
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  award:'<circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/>',
+  qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M21 21v.01M17.5 17.5v.01"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  back:'<path d="M19 12H5M12 19l-7-7 7-7"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  trash:'<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  pencil:'<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  alert:'<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+};
+const QR_IMG = {
+  e1:'data:image/gif;base64,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',
+  e2:'data:image/gif;base64,R0lGODdh5gDmAIAAAAAAAP///ywAAAAA5gDmAAAC/4yPqcvtD6OctNqLs968+w+G4kiW5omm6sq27gvH8kzX9o3n+s73/g8MCofEovGITCqXzKbzCY1Kp9Sq9YrNtgDcrvcLDovBFnJi3C1/FWgxu/1uy+deEv0+V9fP8IoZgccVNzYYaJg2cqiISPF3IKfH+BhYGFa5eGeHeRgpyIfWCXDZB0g6uUmZiJrauPZJ6Odaije6N7tKp4mbG2t7Ctvqa2BYKzm8yyvi6LG80Fyc/OvpQPw6LS0a8tyxrdGNDYFaGc4Kbp0N8u0t+6Ee4C5+Tk4rX5/Ofi/Mje/MD51nr0G1W9eO6ePgDkPCXsb6HTw30By1cgYbLgzWkJm/Df/wNhLkFJBBxIoF33nMcJFhyZEm9aUUyS/exIcfx0E0RRKdtpgUW1o8KaGZTIFAfa7kSa+mKpc9hRad9xMT1JI2lX6EFLId0kxZXzqMumiqTphMy3K1utNstJxVUW5VJDZu16ZPLzhNKjGvwrcgZ2acqxYg2nxg1xodexjr4MQ4I9z96/coXrZLCwvWyxgU4LMTHlN94PkyZWV8FWNmGdp0UL6h/oXWZVn1Ydesb2rGKBky0cCyva7m3Th18NKN5S42jq133da2gZ2mC/x259q4EaNertI69NjYR2Nuu5fm88mzK+c2LFw8WcvIw+v2nlO5erfRncPP/P7recTg7Rb/TW9feaTV58ZmBVbXX4LZtYffgd/tQ6AlBkqIYFYKVhiZduT55hhx0t0nG4Mdzcdgf9eR6B+KGCbn4S4m9lQiR91NpyKN3EU4FIgwgjZjjAj1yGOEtEk1YYhB5sfcgEgu2Nx+yOw35JLHyVjjihoJ2eQqL5LnI31SMkmYky3isiVnv3155mc/PjlcYGVCOeGbGrIZ4JV0Oqijm3HuuRiAd8J252t8jsfeoHkGyqFYiMLZJ3WEMvronIuiaeOkkB56qYCRyhklmeZZyqmhmmIqaamdajnFiAEaOeVVO2phgqp4NsifhVmyCiugtbqKZYaKvprrp7/2ult+OQYb639t/9ZpK69mIluCrBSyOJ+0LDnhZ1+VThvfJmtSyiYM2V575KzhUgnuk+KOqW2a3NJKrpUdIrMujsCuZ6666KpZrKcujHuvfu+eu06V8Aas66m44juwvgWnS+8OgmaYrYjKRkwxuxeeMHG/DX8o8MbdEpkxsfep0DHDFZdrKsvH/gNzsxw7qrLGLIt8MJdZxtzqzHqWfKOxNAv88s5G95zszx6v7KvMI4flss1IezlrktRC3XTWHlvNMM8+MysvwVvfTLa8ciaaHdqkFj21tFyHfPTXVYN5NVxlj621uxaDrKvao+b8LM5u09113EmDva3CxTn9N86CSy33rnV/LDTfov8qbvCwgQsbNcjWXlwo0IZ9azcKn3sO+tyNVuttWlhHrnm+rFu+euWv21k67J2vmvq7oYouGoS3R9u7fLarvunuo+/bLvE6O5vpwsIj/3SmXheu5PLQt7y96Yt3z7j0ftdM++RnA1nd6aEv3Xvf35tfJPrbqm+94XBnH/z1f0tPuu/20y+5k00vf/+DnPtmxzsEUq9xKYgX+1BnL4MZj18CBN74UrQ5Cw7NgeRbH/bm977Dae+BCQzaAvU3uPSF0HkZJKHsTOg/4D1Oggj7FP9utcEagq9tM+IgC0fYwReKqXxB5B7eQEjEH5ZqgpQ7YdrkV8T+2QBgJqMV/i64Q6r/BXAFVISh/vqHRfg9jIJcZBfTxKiVJIbCb2Ec4xKXJcQYarGNVmTeFM1owDqGSY7ucWLeyghBSqFwhV2M4yCftwU4bjF2b1RgI591xurxEZAlJCMjvxi/DeXRhyhTJBjzeD5NVpGTDfQk8yJ5v8kx8ZAtZMEqTwnKTEJykzp03QJRKTZ3ia9120uhLSeJS4chEXGSZOIuMzcvYu5PkWxzITB5qcr22VCaWSxmLa3pyBO1koGfdCQr/TXMW0ITm8dbJAbFOUph6pKQ4wQcGen4wQo60ysAvGHt0GNK7yltnWoMXzv3NstAWnKAjsMhDbN5zWWKspLmlCLjTvU2zEEM/4bBRObb6JnQeq4wlAxNmRIL2sseFi+jeEynRWEp0EcOVIVJJGVIq1ivgHrxl8fcJkTtF1N8whSlynRpNHf6r+0MUZDKeyYii4jKnAYvqTxFp00NOlMaaHOoKw2nUZ/60qjO4JX3VKlXfWjMkipTqR4tKzP/WcCU+tSV+UxeNd1JwLeG9agx4Kpb0UhOIOoRr3CF5wDNus+95jWufJ0rVhOZ0t8VVp1EoyXJtsrOxw72kkXlKFWvWlU3alStke1pWyV50z8esJxTJSxoKyvLy/pShJhtHlg7a8i0btOvmMxqHGvq1NjKNWC0xSlUbwvb1gK2o8FN2G+b2NC7rm2kC/8FbmBx99XPJjN6sbQtcitKVIDmTp7xVKhWkXpWk2b3boP1qHaNeFoNcla8mU3ccc1LXu9elpGGne9DzxndxBJOvl6lb3i/y007+na3EXQRatlKV+jWdrEFBmcUEXtYNy44vZGaFGURHGEtTliw/LXwgSmpVwUPmMEUZeyGr7hRgo6YwstF1IVBbNo0kra4K+ZwN2e83vFKuKirtXGN18hc4p50x+ot54btaVX/AlV3RX5ndfl6Yyc3d5LGbfIWmfrWKF9ZqFTmnJXPC0AUIzTH7RUxgS1F3eemFlQ1wC6aFcvdDqNZxzK2r3WPNVwpl9jFbXbsnOEc4Bb/uc/sZXP/V2e450DdsdAePrQ/G0wnaKWSVBdF69QA3VsZ5Dm5gtYrRgOb6brm8KCJzi2n+QvSImy60pKd9HTRG+gkrHq/zYwzpqHYg1mHzdIP+iN8tZzLabaUmiRO81j/uih9zpbYLEb1j5HNZ9bydsuFtuyp+2hoJU4bzKMG8Gj/FLltx9eunb42fhutbRr7WrpY/iX+vtnlS8vWjz/NsN7cPe9495qZJ35viiMq4DPT29b5/rSB341vgeub4Ao3uIPrbO51k/nUDr+uSDGWcIjDu+JAXjJ4E4zf0Cq3r0ODt5KHp1SRU9rfalb4ybcrakjfutVhfrSiCV1qWBcSuS+OM7o1/y1WY6tWuibnMa8xPHRQB53nH/Z5snGedA/Gmtukbq+4Zejlegs94hW++ERN3XONHxfQrD62vLNs84G717pkp/W/9/1g0T677DqVOt0XPvUa1xzhbL+c2/t5diinHe/37ntX221mraMK7cqO+tYRr+I7txPJe1S5nD0eecXj+e2VH/ua+01kzU+e82I3fNcx71DJ05z0iZ/s5+euYZYPj/Klr33c1w53uHY85ynP+O0Ln/u1clj4rc/875+t/+twHX95uw367teN6Cgnw7svH3z/+xfg7383t/+gXf+/3f23VbJWWe/jXbJuFgPwnaRVogReIgRmogRvIgR3ogR8IgiEogiNIgiVogieIgimogivIgi3ogi8IgzEogzNIgzVYAAA7',
+};
+
+class Component extends DCLogic {
+  state = {
+    screen: 'home',
+    participant: { nickname: 'きく' },
+    nickInput: '',
+    pwInput: '',
+    scanId: null,
+    acquiredId: 'e1',
+    stamps: [{ eventId: 'e1', at: '2026-06-11T17:46:00' }],
+    editId: 'e1',
+    showQR: false,
+    form: { title: '', event_date: '', venue: '', description: '' },
+  };
+
+  EVENTS = [
+    { id:'e1', title:'マツザキ・スクエア', venue:'渋谷AXSA', date:'2026-06-11', token:'mtzk-sq-2026', description:'渋谷AXSAでのスペシャルライブ。' },
+    { id:'e2', title:'Shibuya Street Live × TIMM', venue:'渋谷フクラス PRONT前', date:'2026-06-11', token:'shibuya-timm', description:'屋外ストリートライブ。' },
+  ];
+
+  ev(id){ return this.EVENTS.find(e => e.id === id); }
+  isStamped(id){ return this.state.stamps.some(s => s.eventId === id); }
+  fmtDate(d){ const x=new Date(d); return x.getFullYear()+'/'+String(x.getMonth()+1).padStart(2,'0')+'/'+String(x.getDate()).padStart(2,'0'); }
+  fmtMD(d){ const x=new Date(d); return (x.getMonth()+1)+'.'+x.getDate(); }
+  fmtDateTime(d){ const x=new Date(d); return this.fmtDate(d)+' '+String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0'); }
+
+  go(screen){ this.setState({ screen }); this.resetScroll(); }
+  resetScroll(){ requestAnimationFrame(()=>{ const el=document.querySelector('.scr'); if(el) el.scrollTop=0; }); }
+
+  scan(){
+    const pending = this.EVENTS.find(e => !this.isStamped(e.id)) || this.EVENTS[0];
+    this.setState({ scanId: pending.id, screen: 'stamping' });
+    setTimeout(() => {
+      if (!this.state.participant) { this.go('register'); return; }
+      this.acquire(pending.id);
+    }, 1300);
+  }
+  acquire(id){
+    this.resetScroll();
+    if (this.isStamped(id)) { this.setState({ acquiredId:id, screen:'already' }); return; }
+    const at = new Date().toISOString();
+    this.setState(s => ({ stamps:[...s.stamps,{eventId:id,at}], acquiredId:id, screen:'acquired' }));
+  }
+  submitNick(){
+    const n = this.state.nickInput.trim(); if(!n) return;
+    this.setState({ participant:{nickname:n} });
+    setTimeout(()=>this.acquire(this.state.scanId),50);
+  }
+  resetParticipant(){ this.setState({ participant:null, stamps:[], screen:'home' }); }
+
+  adminLogin(){ if(!this.state.pwInput.trim()) return; this.go('adminDash'); }
+  openNew(){ this.setState({ form:{title:'',event_date:'',venue:'',description:''}, screen:'adminNew' }); }
+  openEdit(id, qr){ const e=this.ev(id); const c=document.getElementById('qrCanvas'); if(c) delete c.dataset.done; this.setState({ editId:id, showQR:!!qr, form:{title:e.title,event_date:e.date,venue:e.venue,description:e.description||''}, screen:'adminEdit' }); }
+  setField(k,v){ this.setState(s=>({ form:{...s.form,[k]:v} })); }
+
+  downloadQR(){
+    const a=document.createElement('a'); a.href=QR_IMG[this.state.editId]||''; a.download='qr-'+this.state.editId+'.gif'; a.click();
+  }
+
+  navStyle(active){
+    return 'text-align:left;border:none;cursor:pointer;font-family:inherit;font-size:13px;border-radius:9px;padding:8px 10px;transition:background .12s;'
+      + (active ? 'background:var(--accent-soft);color:var(--accent-deep);font-weight:700;' : 'background:transparent;color:var(--muted);font-weight:500;');
+  }
+
+  achTitle(c){ if(c>=20)return'レジェンド参加者'; if(c>=10)return'常連参加者'; if(c>=5)return'リピーター'; if(c>=1)return'ライブデビュー'; return '—'; }
+  achNext(c){ if(c<5)return{target:5,label:'5回参加'}; if(c<10)return{target:10,label:'10回参加'}; if(c<20)return{target:20,label:'20回参加'}; return null; }
+
+  renderVals(){
+    const s = this.state;
+    const labels = {
+      home:'① ホーム', register:'② ニックネーム登録', stamping:'③ スタンプ取得中',
+      acquired:'④ スタンプ獲得', already:'④b 取得済み', error:'④c エラー', book:'⑤ スタンプ帳',
+      adminLogin:'⑥ 管理ログイン', adminDash:'⑦ ダッシュボード', adminNew:'⑧ 新規作成', adminEdit:'⑨ イベント編集',
+    };
+    const cnav = [
+      ['home','ホーム'],['register','ニックネーム登録'],['acquired','スタンプ獲得'],['already','取得済み'],['book','スタンプ帳'],
+    ].map(([k,l]) => ({ label:l, go:()=>this.go(k), style:this.navStyle(s.screen===k) }));
+    const anav = [
+      ['adminLogin','ログイン'],['adminDash','ダッシュボード'],['adminNew','新規作成'],['adminEdit','イベント編集'],
+    ].map(([k,l]) => ({ label:l, go:()=> k==='adminEdit'?this.openEdit('e1'):(k==='adminNew'?this.openNew():this.go(k)), style:this.navStyle(s.screen===k) }));
+
+    const count = s.stamps.length;
+    const nick = s.participant ? s.participant.nickname : '';
+    const next = this.achNext(count);
+    const tierTitle = this.achTitle(count);
+    const tierFrac = next ? (count + ' / ' + next.target) : 'コンプリート';
+    const tierPct = next ? Math.min(count/next.target*100,100) + '%' : '100%';
+    const tierNext = next ? ('次の目標「' + next.label + '」まで あと' + (next.target - count) + '回') : '全称号コンプリート';
+
+    const bookEvents = this.EVENTS.map(e => {
+      const st = s.stamps.find(x => x.eventId === e.id);
+      return { title:e.title, venue:e.venue, stamped:!!st, pending:!st, md:this.fmtMD(e.date),
+        gotText: st ? (this.fmtDate(st.at) + ' 取得') : '', sub: st ? e.venue : (e.venue + ' ・ 未取得') };
+    });
+
+    const aq = this.ev(s.acquiredId) || this.EVENTS[0];
+    const aqStamp = s.stamps.find(x => x.eventId === s.acquiredId);
+
+    const adminEvents = this.EVENTS.map(e => {
+      const c = s.stamps.filter(x => x.eventId === e.id).length;
+      return { title:e.title, dateFmt:this.fmtDate(e.date), venue:e.venue, count:c, countColor:c===0?'var(--faint)':'var(--accent)',
+        edit:()=>this.openEdit(e.id), qr:()=>this.openEdit(e.id, true) };
+    });
+    const totalStamps = s.stamps.length;
+
+    const editEv = this.ev(s.editId) || this.EVENTS[0];
+    const editCount = s.stamps.filter(x => x.eventId === editEv.id).length;
+    const qrUrl = 'https://stamp-rally.app/event/' + editEv.token + '/stamp';
+
+    return {
+      screenLabel: labels[s.screen] || '',
+      consumerNav: cnav, adminNav: anav,
+      isHome:s.screen==='home', isRegister:s.screen==='register', isStamping:s.screen==='stamping',
+      isAcquired:s.screen==='acquired', isAlready:s.screen==='already', isError:s.screen==='error',
+      isBook:s.screen==='book', isAdminLogin:s.screen==='adminLogin', isAdminDash:s.screen==='adminDash',
+      isAdminNew:s.screen==='adminNew', isAdminEdit:s.screen==='adminEdit',
+
+      nick, avatar: nick ? nick.charAt(0) : '?', count, hasParticipant: !!s.participant, noParticipant: !s.participant,
+      tierTitle, tierFrac, tierPct, tierNext,
+      bookEvents,
+
+      scan:()=>this.scan(), goHome:()=>this.go('home'), goBook:()=>this.go('book'),
+      goAdminLogin:()=>this.go('adminLogin'), goRegister:()=>this.go('register'),
+      resetParticipant:()=>this.resetParticipant(),
+
+      nickInput:s.nickInput, onNick:e=>this.setState({nickInput:e.target.value}),
+      nickLen:s.nickInput.length, nickDisabled:s.nickInput.trim().length===0,
+      submitNick:()=>this.submitNick(),
+
+      aqTitle:aq.title, aqVenue:aq.venue, aqDateFmt:this.fmtDate(aq.date), aqMD:this.fmtMD(aq.date),
+      aqDateTime: aqStamp ? this.fmtDateTime(aqStamp.at) : this.fmtDateTime(new Date().toISOString()),
+      alTitle:aq.title,
+
+      pwInput:s.pwInput, onPw:e=>this.setState({pwInput:e.target.value}), canLogin:s.pwInput.trim().length>0,
+      adminLogin:()=>this.adminLogin(), logout:()=>this.go('adminLogin'),
+      totalStamps, totalParticipants:1, adminEvents,
+      openNew:()=>this.openNew(), createEvent:()=>this.go('adminDash'),
+
+      fTitle:s.form.title, fDate:s.form.event_date, fVenue:s.form.venue, fDesc:s.form.description,
+      onFTitle:e=>this.setField('title',e.target.value), onFDate:e=>this.setField('event_date',e.target.value),
+      onFVenue:e=>this.setField('venue',e.target.value), onFDesc:e=>this.setField('description',e.target.value),
+      editTitle:editEv.title, editCount, qrUrl, showQR:s.showQR,
+      qrEl: React.createElement('img',{src:QR_IMG[editEv.id]||'',alt:'QR',width:200,height:200,style:{display:'block',imageRendering:'pixelated',borderRadius:'4px'}}),
+      toggleQR:()=>this.setState(st=>({showQR:!st.showQR})), qrToggleText:s.showQR?'閉じる':'表示する',
+      downloadQR:()=>this.downloadQR(), saveEvent:()=>this.go('adminDash'),
+      deleteEvent:()=>{ if(confirm('「'+editEv.title+'」を削除しますか？')) this.go('adminDash'); },
+      backDash:()=>this.go('adminDash'),
+    };
+  }
+}
+</script>
+<script>
+(async () => {
+  // Prepend so page-supplied @page / break rules (deck-stage's margin:0,
+  // author CSS) keep source-order precedence over the baseline.
+  const baseCss = document.createElement('style');
+  baseCss.textContent = "@media print {\n  @page { margin: 0.5cm; }\n  html, body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }\n  section, article, figure, table { break-inside: avoid; }\n  *, *::before, *::after {\n    animation-delay: -99s !important; animation-duration: .001s !important;\n    animation-iteration-count: 1 !important; animation-fill-mode: both !important;\n    animation-play-state: running !important; transition-duration: 0s !important;\n  }\n}";
+  document.head.prepend(baseCss);
+  if (document.readyState === 'loading') {
+    await new Promise((r) => document.addEventListener('DOMContentLoaded', r, { once: true }));
+  }
+  let ds = document.querySelector('deck-stage');
+  // whenDefined never resolves when nothing registers the element, so only
+  // await it when a <deck-stage> tag exists (and race a timeout regardless).
+  if (ds && !customElements.get('deck-stage')) {
+    try {
+      await Promise.race([
+        customElements.whenDefined('deck-stage'),
+        new Promise((r) => setTimeout(r, 3000)),
+      ]);
+    } catch (e) {}
+    ds = document.querySelector('deck-stage');
+  }
+  // dc-runtime assigns window.DCLogic at init and mounts into #dc-root on
+  // DOMContentLoaded; settle on that subtree so React has rendered before
+  // print(). Non-DC pages fall through to weighing body.
+  const isDc = !ds && 'DCLogic' in window;
+  const settleRoot = ds || (isDc ? document.getElementById('dc-root') : null) || document.body;
+  if (settleRoot) {
+    // Weigh only content children — skip script/style/template so inline
+    // Babel/CSS doesn't register as stable "content" before the framework
+    // has mounted anything.
+    const MEDIA = 'img,svg,canvas,video,picture,iframe,embed,object';
+    const weigh = () => {
+      let text = 0, media = 0;
+      for (const c of settleRoot.children) {
+        const t = c.tagName;
+        if (t === 'SCRIPT' || t === 'STYLE' || t === 'TEMPLATE') continue;
+        text += (c.textContent || '').trim().length;
+        media += c.querySelectorAll(MEDIA).length + (c.matches(MEDIA) ? 1 : 0);
+      }
+      return text + media * 100;
+    };
+    // "Non-zero and stable" alone is not sufficient to mean rendered: generic
+    // body can carry a static shell while async main content is pending, and
+    // #dc-root can carry the root DC's static text while child refs are still
+    // .sc-placeholder boxes. Gate generic on readyState 'complete', and never
+    // accept stability while a dc-runtime placeholder is present.
+    const isGeneric = settleRoot === document.body;
+    const deadline = Date.now() + 15000;
+    let last = -1, stable = 0;
+    while (Date.now() < deadline) {
+      const n = weigh();
+      const ready =
+        (!isGeneric || document.readyState === 'complete') &&
+        !settleRoot.querySelector('.sc-placeholder');
+      if (n > 0 && n === last && ready) { if (++stable >= 2) break; } else { stable = 0; }
+      last = n;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+  try { await document.fonts.ready; } catch (e) {}
+  // Jump every animation to its end state so print() never captures a slide
+  // mid-entrance. Ordering matters: the 0s-transition style must be live
+  // BEFORE data-deck-active is set so attribute-keyed transitions don't
+  // start a (now-0s) run from the pre-active base.
+  const st = document.createElement('style');
+  st.textContent = '*,*::before,*::after{animation-delay:-99s !important;animation-duration:.001s !important;animation-iteration-count:1 !important;animation-fill-mode:both !important;animation-play-state:running !important;transition-duration:0s !important}';
+  document.head.appendChild(st);
+  for (const d of document.querySelectorAll('deck-stage')) {
+    for (const c of d.children) {
+      const t = c.tagName;
+      if (t === 'SCRIPT' || t === 'STYLE' || t === 'TEMPLATE') continue;
+      c.setAttribute('data-deck-active', '');
+    }
+  }
+  try {
+    const sweep = () => {
+      for (const a of document.getAnimations()) {
+        try { a.finish(); } catch (e) {
+          try { a.currentTime = (a.effect && a.effect.getComputedTiming().duration) || 0; a.pause(); } catch (e2) {}
+        }
+      }
+    };
+    sweep();
+    await new Promise((r) => requestAnimationFrame(r));
+    sweep();
+    await new Promise((r) => requestAnimationFrame(r));
+  } catch (e) {}
+  setTimeout(() => { try { window.print(); } catch (e) {} }, 200);
+})();
+</script>
+</body>
+</html>
