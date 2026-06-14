@@ -1,24 +1,69 @@
 @import "tailwindcss";
 
-@keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 2s ease-in-out infinite;
+@theme {
+  --color-brand: #17835D;
+  --color-brand-deep: #0E5C41;
+  --color-brand-soft: #E9F5EF;
+  --color-brand-border: #C5E4D5;
+  --color-ink: #20241F;
+  --color-subtle: #6E756E;
+  --color-faint: #A2A8A1;
+  --color-rule: #E4E8E3;
+  --color-page: #F5F7F5;
 }
 
 @keyframes stamp-pop {
-  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
-  70% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+  70%  { transform: scale(1.08) rotate(-8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes fade-up {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .animate-stamp-pop {
-  animation: stamp-pop 0.5s ease-out forwards;
+  animation: stamp-pop 0.45s ease-out forwards;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.35s ease-out forwards;
+}
+
+.btn-brand {
+  background: linear-gradient(180deg, #1F9D70 0%, #16805B 100%);
+  box-shadow: 0 2px 6px rgba(14,92,65,.30), 0 7px 18px rgba(14,92,65,.18), inset 0 1px 0 rgba(255,255,255,.26);
+  transition: transform 0.1s ease;
+}
+.btn-brand:active {
+  transform: scale(0.98);
+}
+
+.stamp-acquired {
+  background: radial-gradient(circle at 36% 26%, #FFFFFF 0%, #E8F5EF 46%, #C8E8D8 100%);
+  box-shadow: 0 5px 12px rgba(14,92,65,.20), inset 0 2px 4px rgba(255,255,255,.8), inset 0 -4px 7px rgba(14,92,65,.12);
+}
+
+.bg-grad-soft {
+  background: linear-gradient(165deg, #EBF7F2 0%, #D6EFE6 100%);
+}
+
+.progress-grad {
+  background: linear-gradient(180deg, #1F9D70, #16805B);
+}
+
+.card-shadow {
+  box-shadow: 0 1px 2px rgba(20,36,20,.06), 0 6px 18px rgba(20,36,20,.07);
+}
+
+.admin-bg {
+  background-color: #F5F7F5;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    rgba(0,0,0,.02) 8px,
+    rgba(0,0,0,.02) 9px
+  );
 }

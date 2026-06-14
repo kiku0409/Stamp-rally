@@ -1,5 +1,6 @@
 'use client';
 
+import { Music, Plus } from 'lucide-react';
 import { Event, EventStamp } from '@/types';
 import { formatDate } from '@/lib/utils';
 
@@ -10,49 +11,42 @@ interface StampCardProps {
 
 export default function StampCard({ event, stamp }: StampCardProps) {
   const isStamped = !!stamp;
+  const [, month, day] = event.event_date.split('-');
+  const mmdd = `${parseInt(month)}.${parseInt(day)}`;
 
   return (
     <div
-      className={`relative rounded-2xl p-4 border-2 transition-all duration-300 ${
-        isStamped
-          ? 'border-pink-400 bg-gradient-to-br from-pink-50 to-purple-50 shadow-md'
-          : 'border-gray-200 bg-gray-50 opacity-70'
+      className={`rounded-2xl p-4 border flex items-center gap-4 card-shadow ${
+        isStamped ? 'border-brand-border bg-white' : 'border-rule bg-white opacity-60'
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-xs font-medium text-gray-500 mb-1">
-            {formatDate(event.event_date)}
-          </p>
-          <h3
-            className={`font-bold text-base mb-1 ${
-              isStamped ? 'text-gray-800' : 'text-gray-400'
-            }`}
-          >
-            {event.title}
-          </h3>
-          <p
-            className={`text-xs ${isStamped ? 'text-gray-600' : 'text-gray-400'}`}
-          >
-            📍 {event.venue}
-          </p>
-          {isStamped && stamp && (
-            <p className="text-xs text-pink-500 mt-1 font-medium">
-              ✓ {formatDate(stamp.stamped_at)} 取得
-            </p>
-          )}
+      {isStamped ? (
+        <div
+          className="w-[52px] h-[52px] rounded-full stamp-acquired flex flex-col items-center justify-center shrink-0 text-brand-deep"
+          style={{ transform: 'rotate(-6deg)' }}
+        >
+          <Music size={16} strokeWidth={2} />
+          <span className="text-[10px] font-bold mt-0.5">{mmdd}</span>
         </div>
-        <div className="ml-4 flex-shrink-0">
-          {isStamped ? (
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-lg">
-              <span className="text-2xl">⭐</span>
-            </div>
-          ) : (
-            <div className="w-16 h-16 rounded-full border-4 border-dashed border-gray-300 flex items-center justify-center">
-              <span className="text-2xl opacity-30">⭐</span>
-            </div>
-          )}
+      ) : (
+        <div className="w-[52px] h-[52px] rounded-full border-[1.5px] border-dashed border-rule flex items-center justify-center shrink-0 text-faint">
+          <Plus size={14} strokeWidth={2} />
         </div>
+      )}
+
+      <div className="min-w-0">
+        <p className="text-xs text-subtle mb-0.5">{formatDate(event.event_date)}</p>
+        <h3 className={`font-bold text-sm leading-snug ${isStamped ? 'text-ink' : 'text-subtle'}`}>
+          {event.title}
+        </h3>
+        <p className={`text-xs mt-0.5 ${isStamped ? 'text-subtle' : 'text-faint'}`}>
+          {event.venue}
+        </p>
+        {isStamped && stamp && (
+          <p className="text-xs text-brand font-bold mt-1">
+            ✓ {formatDate(stamp.stamped_at)} 取得
+          </p>
+        )}
       </div>
     </div>
   );
