@@ -11,6 +11,7 @@ export interface Event {
 export interface Participant {
   id: string;
   nickname: string;
+  birth_decade: string | null;
   created_at: string;
 }
 

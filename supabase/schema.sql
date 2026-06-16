@@ -15,9 +15,10 @@ CREATE TABLE IF NOT EXISTS events (
 
 -- Participants table (no auth required)
 CREATE TABLE IF NOT EXISTS participants (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nickname   TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nickname     TEXT NOT NULL,
+  birth_decade TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Event stamps table

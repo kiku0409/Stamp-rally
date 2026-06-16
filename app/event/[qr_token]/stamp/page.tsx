@@ -52,13 +52,13 @@ export default function StampPage({ params }: StampPageProps) {
     }
   }
 
-  async function handleNicknameSubmit(nick: string) {
+  async function handleNicknameSubmit(nick: string, birthDecade: string) {
     setStep('stamping');
     try {
       const res = await fetch('/api/participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nick }),
+        body: JSON.stringify({ nickname: nick, birth_decade: birthDecade }),
       });
       if (!res.ok) throw new Error('参加者登録に失敗しました');
       const participant = await res.json();

@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { nickname } = body;
+  const { nickname, birth_decade } = body;
 
   if (!nickname?.trim()) {
     return NextResponse.json({ error: 'Nickname is required' }, { status: 400 });
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('participants')
-    .insert({ nickname: nickname.trim() })
+    .insert({ nickname: nickname.trim(), birth_decade: birth_decade ?? null })
     .select()
     .single();
 
