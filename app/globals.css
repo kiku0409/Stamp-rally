@@ -1,15 +1,28 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #17835D;
-  --color-brand-deep: #0E5C41;
-  --color-brand-soft: #E9F5EF;
-  --color-brand-border: #C5E4D5;
-  --color-ink: #20241F;
-  --color-subtle: #6E756E;
-  --color-faint: #A2A8A1;
-  --color-rule: #E4E8E3;
-  --color-page: #F5F7F5;
+  --color-accent: #0A938C;
+  --color-accent-deep: #07615C;
+  --color-accent-text: #0A7A74;
+  --color-soft: #EAF6F5;
+  --color-teal-border: #ACDAD8;
+  --color-screen-bg: #F1F8F7;
+  --color-track: #D8EEED;
+  --color-ink: #17302E;
+  --color-muted: #5A7B74;
+  --color-faint: #8DA8A5;
+  --color-line: #DCE8E6;
+  --color-danger: #C2463B;
+  --color-danger-border: #E7C3BE;
+  --color-danger-soft: #FBF1F0;
+  /* legacy compat */
+  --color-brand: #0A938C;
+  --color-brand-deep: #07615C;
+  --color-brand-soft: #EAF6F5;
+  --color-brand-border: #ACDAD8;
+  --color-subtle: #5A7B74;
+  --color-page: #F1F8F7;
+  --color-rule: #DCE8E6;
 }
 
 @keyframes stamp-pop {
@@ -32,38 +45,41 @@
 }
 
 .btn-brand {
-  background: linear-gradient(180deg, #1F9D70 0%, #16805B 100%);
-  box-shadow: 0 2px 6px rgba(14,92,65,.30), 0 7px 18px rgba(14,92,65,.18), inset 0 1px 0 rgba(255,255,255,.26);
+  background: linear-gradient(180deg, #1E9C95 0%, #087A74 100%);
+  box-shadow: 0 2px 6px rgba(7,97,92,.30), 0 7px 18px rgba(7,97,92,.20), inset 0 1px 0 rgba(255,255,255,.28);
   transition: transform 0.1s ease;
 }
 .btn-brand:active {
   transform: scale(0.98);
 }
 
+.stamp-face {
+  background: radial-gradient(circle at 36% 26%, #FFFFFF 0%, #E2F2F1 46%, #98D2CF 100%);
+  box-shadow: 0 5px 12px rgba(7,97,92,.22), inset 0 2px 4px rgba(255,255,255,.78), inset 0 -4px 7px rgba(7,80,74,.13);
+}
+
+/* keep old name as alias */
 .stamp-acquired {
-  background: radial-gradient(circle at 36% 26%, #FFFFFF 0%, #E8F5EF 46%, #C8E8D8 100%);
-  box-shadow: 0 5px 12px rgba(14,92,65,.20), inset 0 2px 4px rgba(255,255,255,.8), inset 0 -4px 7px rgba(14,92,65,.12);
+  background: radial-gradient(circle at 36% 26%, #FFFFFF 0%, #E2F2F1 46%, #98D2CF 100%);
+  box-shadow: 0 5px 12px rgba(7,97,92,.22), inset 0 2px 4px rgba(255,255,255,.78), inset 0 -4px 7px rgba(7,80,74,.13);
 }
 
 .bg-grad-soft {
-  background: linear-gradient(165deg, #EBF7F2 0%, #D6EFE6 100%);
+  background: linear-gradient(165deg, #EDFAF8 0%, #DBF1EE 100%);
+}
+
+.header-grad {
+  background: linear-gradient(160deg, #17A399 0%, #076B63 100%);
 }
 
 .progress-grad {
-  background: linear-gradient(180deg, #1F9D70, #16805B);
+  background: linear-gradient(180deg, #19A99F, #0A7E77);
 }
 
 .card-shadow {
-  box-shadow: 0 1px 2px rgba(20,36,20,.06), 0 6px 18px rgba(20,36,20,.07);
+  box-shadow: 0 1px 2px rgba(7,60,56,.05), 0 6px 18px rgba(7,60,56,.07);
 }
 
 .admin-bg {
-  background-color: #F5F7F5;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 8px,
-    rgba(0,0,0,.02) 8px,
-    rgba(0,0,0,.02) 9px
-  );
+  background-color: #F1F8F7;
 }

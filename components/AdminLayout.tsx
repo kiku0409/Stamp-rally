@@ -34,22 +34,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center admin-bg">
-        <div className="w-10 h-10 rounded-full border-[3px] border-rule border-t-brand animate-spin" />
+        <div className="w-10 h-10 rounded-full border-[3px] border-line border-t-accent animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen admin-bg">
-      <header className="bg-white border-b border-rule sticky top-0 z-10">
+      <header className="header-grad sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-brand inline-block" />
-            <Link href="/admin" className="font-bold text-ink text-sm">管理画面</Link>
+            <span className="w-2 h-2 rounded-full bg-white inline-block" />
+            <Link href="/admin" className="font-bold text-white text-[14px]">管理画面</Link>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1 text-xs text-subtle hover:text-ink transition-colors"
+            className="flex items-center gap-1.5 text-[12px] text-white/70 hover:text-white transition-colors"
           >
             <LogOut size={13} strokeWidth={2} />
             ログアウト

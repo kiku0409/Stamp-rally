@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Music } from 'lucide-react';
+import { Music, Check, AlertCircle } from 'lucide-react';
 import { Event } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import NicknameForm from '@/components/NicknameForm';
@@ -12,6 +12,39 @@ type Step = 'loading' | 'register' | 'stamping' | 'done' | 'already' | 'error';
 
 interface StampPageProps {
   params: Promise<{ qr_token: string }>;
+}
+
+function Barcode() {
+  return (
+    <div
+      className="h-[28px] w-full rounded opacity-70 mt-1"
+      style={{
+        background:
+          'repeating-linear-gradient(90deg,#17302E 0,#17302E 2px,transparent 2px,transparent 4px,#17302E 4px,#17302E 5px,transparent 5px,transparent 8px)',
+      }}
+    />
+  );
+}
+
+function Perforation({ bgColor = '#F1F8F7' }: { bgColor?: string }) {
+  return (
+    <div className="relative my-4">
+      <div className="border-t-2 border-dashed border-teal-border" />
+      <div className="absolute -left-5 -top-[11px] w-[22px] h-[22px] rounded-full" style={{ backgroundColor: bgColor }} />
+      <div className="absolute -right-5 -top-[11px] w-[22px] h-[22px] rounded-full" style={{ backgroundColor: bgColor }} />
+    </div>
+  );
+}
+
+function formatStampDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export default function StampPage({ params }: StampPageProps) {
@@ -94,50 +127,93 @@ export default function StampPage({ params }: StampPageProps) {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-page">
-      {step === 'loading' || step === 'stamping' ? (
+    <main className="min-h-screen flex flex-col items-center justify-center p-5 bg-screen-bg">
+      {/* Loading / Stamping */}
+      {(step === 'loading' || step === 'stamping') && (
         <div className="text-center">
-          <div className="w-[54px] h-[54px] mx-auto mb-4 rounded-full border-[3px] border-rule border-t-brand animate-spin" />
-          <p className="text-subtle text-sm">{step === 'loading' ? '読み込み中...' : 'スタンプ取得中...'}</p>
+          <div className="w-[54px] h-[54px] mx-auto mb-4 rounded-full border-[3px] border-line border-t-accent animate-spin" />
+          <p className="text-muted text-[14px]">
+            {step === 'loading' ? '読み込み中...' : 'スタンプ取得中...'}
+          </p>
         </div>
-      ) : step === 'register' ? (
+      )}
+
+      {/* Register nickname */}
+      {step === 'register' && (
         <NicknameForm onSubmit={handleNicknameSubmit} />
-      ) : step === 'done' && event ? (
+      )}
+
+      {/* Stamp acquired */}
+      {step === 'done' && event && (
         <StampAcquired event={event} stampedAt={stampedAt} nickname={nickname} />
-      ) : step === 'already' && event ? (
-        <div className="w-full max-w-sm mx-auto text-center">
-          <div
-            className="w-[120px] h-[120px] rounded-full stamp-acquired flex flex-col items-center justify-center text-brand-deep mx-auto mb-6"
-            style={{ transform: 'rotate(-6deg)' }}
-          >
-            <Music size={34} strokeWidth={2} />
-          </div>
-          <h2 className="text-[20px] font-bold text-brand-deep mb-2">取得済みです</h2>
-          <p className="text-subtle text-sm mb-5">このライブのスタンプは取得済みです</p>
-          <div className="bg-brand-soft border border-brand-border rounded-2xl p-4 mb-6 text-left space-y-1">
-            <p className="font-bold text-ink text-sm">{event.title}</p>
-            {stampedAt && (
-              <p className="text-xs text-brand font-medium">
-                {new Date(stampedAt).toLocaleString('ja-JP', {
-                  year: 'numeric', month: 'numeric', day: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                })}
+      )}
+
+      {/* Already stamped */}
+      {step === 'already' && event && (
+        <div className="w-full max-w-sm mx-auto">
+          <div className="bg-white rounded-2xl overflow-hidden card-shadow">
+            <div className="h-2 header-grad" />
+            <div className="px-5 pt-5 text-center">
+              <p
+                className="text-[11px] tracking-widest text-muted mb-4"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              >
+                USED · <span className="font-bold text-accent">取得済み</span>
               </p>
-            )}
+              {/* Check stamp */}
+              <div
+                className="stamp-face w-[100px] h-[100px] rounded-full flex items-center justify-center text-accent-deep mx-auto"
+                style={{ transform: 'rotate(-6deg)' }}
+              >
+                <Check size={36} strokeWidth={2.5} />
+              </div>
+              <h2 className="text-[20px] font-bold text-ink mt-4 mb-1">取得済みです</h2>
+              <p className="text-muted text-[13px]">このライブのスタンプは取得済みです</p>
+            </div>
+
+            <Perforation />
+
+            <div className="px-5 pb-5">
+              <div className="space-y-2 mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-faint">EVENT</span>
+                  <span className="text-ink font-medium text-right max-w-[65%] truncate">{event.title}</span>
+                </div>
+                {stampedAt && (
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-faint">取得日時</span>
+                    <span className="text-ink font-medium">{formatStampDate(stampedAt)}</span>
+                  </div>
+                )}
+              </div>
+              <Barcode />
+            </div>
           </div>
-          <button
-            onClick={() => router.push('/stamp-book')}
-            className="w-full py-3.5 rounded-xl btn-brand text-white font-bold text-base"
-          >
-            スタンプ帳を見る
-          </button>
+
+          <div className="mt-4">
+            <button
+              onClick={() => router.push('/stamp-book')}
+              className="w-full py-[14px] rounded-xl btn-brand text-white font-bold text-[15px]"
+            >
+              チケットを見る
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="text-center">
-          <p className="text-subtle mb-4">{error}</p>
+      )}
+
+      {/* Error */}
+      {step === 'error' && (
+        <div className="text-center max-w-xs">
+          <div className="w-16 h-16 rounded-full bg-soft border border-teal-border flex items-center justify-center mx-auto mb-4 text-muted">
+            <AlertCircle size={28} strokeWidth={2} />
+          </div>
+          <h2 className="text-[18px] font-bold text-ink mb-2">イベントが見つかりません</h2>
+          {error && error !== 'イベントが見つかりません' && (
+            <p className="text-muted text-[13px] mb-6">{error}</p>
+          )}
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 rounded-xl btn-brand text-white font-bold text-sm"
+            className="px-8 py-3 rounded-xl btn-brand text-white font-bold text-[14px] mt-6"
           >
             トップへ戻る
           </button>

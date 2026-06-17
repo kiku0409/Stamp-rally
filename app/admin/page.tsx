@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Copy } from 'lucide-react';
+import { Plus, Copy, X } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAdminPassword } from '@/lib/adminAuth';
@@ -68,13 +68,15 @@ export default function AdminDashboard() {
     setStampersLoading(false);
   }
 
-  const qrUrl = qrEvent ? `${window.location.origin}/event/${qrEvent.qr_token}/stamp` : '';
+  const qrUrl = qrEvent
+    ? (typeof window !== 'undefined' ? window.location.origin : '') + `/event/${qrEvent.qr_token}/stamp`
+    : '';
 
   if (loading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-40">
-          <div className="w-10 h-10 rounded-full border-[3px] border-rule border-t-brand animate-spin" />
+          <div className="w-10 h-10 rounded-full border-[3px] border-line border-t-accent animate-spin" />
         </div>
       </AdminLayout>
     );
@@ -82,24 +84,24 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <h1 className="text-2xl font-bold text-ink mb-6">ダッシュボード</h1>
+      <h1 className="text-[22px] font-bold text-ink mb-5">ダッシュボード</h1>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white rounded-2xl p-5 border border-rule card-shadow text-center">
-          <p className="text-xs text-subtle mb-1">総スタンプ数</p>
-          <p className="text-[32px] font-bold text-brand">{totalStats.totalStamps}</p>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-white rounded-2xl p-5 border border-line card-shadow text-center">
+          <p className="text-[12px] text-muted mb-1">総スタンプ数</p>
+          <p className="text-[30px] font-bold text-accent">{totalStats.totalStamps}</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-rule card-shadow text-center">
-          <p className="text-xs text-subtle mb-1">総参加者数</p>
-          <p className="text-[32px] font-bold text-brand">{totalStats.totalParticipants}</p>
+        <div className="bg-white rounded-2xl p-5 border border-line card-shadow text-center">
+          <p className="text-[12px] text-muted mb-1">総参加者数</p>
+          <p className="text-[30px] font-bold text-accent">{totalStats.totalParticipants}</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-ink">イベント一覧</h2>
+        <h2 className="text-[15px] font-bold text-ink">イベント一覧</h2>
         <Link
           href="/admin/events/new"
-          className="flex items-center gap-1 px-3 py-2 rounded-[9px] btn-brand text-white text-sm font-bold"
+          className="flex items-center gap-1 px-3 py-2 rounded-[9px] btn-brand text-white text-[13px] font-bold"
         >
           <Plus size={14} strokeWidth={2.5} />
           新規作成
@@ -107,41 +109,41 @@ export default function AdminDashboard() {
       </div>
 
       {events.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 text-center border border-rule">
-          <p className="text-subtle mb-4">イベントがありません</p>
-          <Link href="/admin/events/new" className="text-brand font-medium text-sm">
+        <div className="bg-white rounded-2xl p-8 text-center border border-line card-shadow">
+          <p className="text-muted mb-4 text-[14px]">イベントがありません</p>
+          <Link href="/admin/events/new" className="text-accent font-medium text-[14px]">
             最初のイベントを作成する →
           </Link>
         </div>
       ) : (
         <div className="space-y-2.5">
           {events.map((ev) => (
-            <div key={ev.id} className="bg-white rounded-2xl p-4 border border-rule card-shadow">
+            <div key={ev.id} className="bg-white rounded-2xl p-4 border border-line card-shadow">
               <div className="flex items-start justify-between">
                 <button className="flex-1 text-left" onClick={() => openStampers(ev)}>
-                  <h3 className="font-bold text-ink text-sm">{ev.title}</h3>
-                  <p className="text-xs text-subtle mt-0.5">{formatDate(ev.event_date)} · {ev.venue}</p>
-                  <p className={`text-xs font-bold mt-1 ${ev.stampCount > 0 ? 'text-brand' : 'text-faint'}`}>
+                  <h3 className="font-bold text-ink text-[14px]">{ev.title}</h3>
+                  <p className="text-[12px] text-muted mt-0.5">{formatDate(ev.event_date)} · {ev.venue}</p>
+                  <p className={`text-[12px] font-bold mt-1 ${ev.stampCount > 0 ? 'text-accent' : 'text-faint'}`}>
                     スタンプ取得数 {ev.stampCount}
                   </p>
                 </button>
                 <div className="flex items-center gap-1.5 ml-3">
                   <button
                     onClick={() => setQrEvent(ev)}
-                    className="px-3 py-1.5 rounded-lg border border-rule text-xs text-subtle hover:border-brand hover:text-brand transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-line text-[12px] text-muted hover:border-accent hover:text-accent transition-colors"
                   >
                     QR
                   </button>
                   <Link
                     href={`/admin/events/new?title=${encodeURIComponent(ev.title)}&venue=${encodeURIComponent(ev.venue)}&description=${encodeURIComponent(ev.description ?? '')}`}
-                    className="p-1.5 rounded-lg border border-rule text-subtle hover:border-brand hover:text-brand transition-colors"
+                    className="p-1.5 rounded-lg border border-line text-muted hover:border-accent hover:text-accent transition-colors"
                     title="複製"
                   >
                     <Copy size={14} strokeWidth={2} />
                   </Link>
                   <Link
                     href={`/admin/events/${ev.id}`}
-                    className="px-3 py-1.5 rounded-lg border border-rule text-xs text-subtle hover:border-brand hover:text-brand transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-line text-[12px] text-muted hover:border-accent hover:text-accent transition-colors"
                   >
                     編集
                   </Link>
@@ -152,41 +154,47 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* QR Modal */}
       {qrEvent && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setQrEvent(null)}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm border border-rule" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-ink">{qrEvent.title}</h2>
-              <button onClick={() => setQrEvent(null)} className="text-faint text-xl leading-none">×</button>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm border border-line card-shadow" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-bold text-ink text-[15px] truncate flex-1 mr-2">{qrEvent.title}</h2>
+              <button onClick={() => setQrEvent(null)} className="text-faint hover:text-muted transition-colors">
+                <X size={20} strokeWidth={2} />
+              </button>
             </div>
             <QRCodeDisplay url={qrUrl} eventTitle={qrEvent.title} />
           </div>
         </div>
       )}
 
+      {/* Stampers modal */}
       {stampersEvent && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick={() => setStampersEvent(null)}>
-          <div className="bg-white rounded-t-2xl w-full max-w-lg p-6 max-h-[70vh] flex flex-col border-t border-rule" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-t-2xl w-full max-w-lg p-6 max-h-[70vh] flex flex-col border-t border-line" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="font-bold text-ink">{stampersEvent.title}</h2>
-                <p className="text-xs text-subtle">スタンプ取得者一覧</p>
+                <h2 className="font-bold text-ink text-[15px]">{stampersEvent.title}</h2>
+                <p className="text-[12px] text-muted">スタンプ取得者一覧</p>
               </div>
-              <button onClick={() => setStampersEvent(null)} className="text-faint text-xl leading-none">×</button>
+              <button onClick={() => setStampersEvent(null)} className="text-faint hover:text-muted transition-colors">
+                <X size={20} strokeWidth={2} />
+              </button>
             </div>
             <div className="overflow-y-auto flex-1">
               {stampersLoading ? (
                 <div className="flex justify-center py-8">
-                  <div className="w-8 h-8 rounded-full border-[3px] border-rule border-t-brand animate-spin" />
+                  <div className="w-8 h-8 rounded-full border-[3px] border-line border-t-accent animate-spin" />
                 </div>
               ) : stampers.length === 0 ? (
-                <p className="text-center text-subtle py-8 text-sm">まだスタンプ取得者がいません</p>
+                <p className="text-center text-muted py-8 text-[14px]">まだスタンプ取得者がいません</p>
               ) : (
-                <ul className="space-y-0">
+                <ul>
                   {stampers.map((s, i) => (
-                    <li key={i} className="flex items-center justify-between py-2.5 border-b border-rule last:border-0">
-                      <span className="font-medium text-ink text-sm">{s.participants?.nickname ?? '不明'}</span>
-                      <span className="text-xs text-faint">
+                    <li key={i} className="flex items-center justify-between py-2.5 border-b border-line last:border-0">
+                      <span className="font-medium text-ink text-[14px]">{s.participants?.nickname ?? '不明'}</span>
+                      <span className="text-[11px] text-faint" style={{ fontFamily: 'var(--font-mono)' }}>
                         {new Date(s.stamped_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </li>

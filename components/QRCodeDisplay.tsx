@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
+import { Download } from 'lucide-react';
 
 interface QRCodeDisplayProps {
   url: string;
@@ -17,7 +18,7 @@ export default function QRCodeDisplay({ url, eventTitle }: QRCodeDisplayProps) {
     QRCode.toCanvas(canvasRef.current, url, {
       width: 256,
       margin: 2,
-      color: { dark: '#1a1a2e', light: '#ffffff' },
+      color: { dark: '#17302E', light: '#ffffff' },
     });
     QRCode.toDataURL(url, { width: 256, margin: 2 }).then(setDataUrl);
   }, [url]);
@@ -32,12 +33,18 @@ export default function QRCodeDisplay({ url, eventTitle }: QRCodeDisplayProps) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <canvas ref={canvasRef} className="rounded-xl shadow-md" />
-      <p className="text-xs text-gray-500 break-all text-center max-w-xs">{url}</p>
+      <canvas ref={canvasRef} className="rounded-xl" style={{ boxShadow: '0 1px 2px rgba(7,60,56,.05), 0 6px 18px rgba(7,60,56,.07)' }} />
+      <p
+        className="text-[11px] text-muted break-all text-center max-w-xs"
+        style={{ fontFamily: 'var(--font-mono)' }}
+      >
+        {url}
+      </p>
       <button
         onClick={handleDownload}
-        className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-400 to-purple-500 text-white text-sm font-medium shadow active:scale-95 transition-transform"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl btn-brand text-white text-[14px] font-bold"
       >
+        <Download size={14} strokeWidth={2} />
         QRコードをダウンロード
       </button>
     </div>
