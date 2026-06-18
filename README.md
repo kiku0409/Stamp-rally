@@ -35,11 +35,14 @@ QRをかざすだけで、ライブの思い出が貯まる。
 
 ### 運営の使い方
 
-#### 来場の数字が、ひと目で
+#### プロジェクト単位で運用、承認制
 
-1. **管理者ログイン** — メールアドレスとパスワードで管理画面へ
-2. **全体の数字を確認** — 自分のイベントの総スタンプ数・総参加者数
-3. **イベントを管理** — 一覧から作成・編集・取得数を確認
+1. **セルフ登録** — メールアドレスとパスワードでアカウント作成
+2. **プロジェクトを申請** — フェスや連続ライブなどの単位で申請
+3. **スーパー管理者が承認** — 承認されるとそのプロジェクト内でイベントを自由に作成できる
+4. **複数人で共同編集** — プロジェクトのオーナーが他の管理者を招待できる
+
+> スーパー管理者は全プロジェクト・全イベントを閲覧でき、プロジェクト申請の承認/却下を行います（他人のイベントの編集はしません）。
 
 #### QRを発行して、貼るだけ
 
@@ -70,6 +73,7 @@ QRをかざすだけで、ライブの思い出が貯まる。
 - 実績・称号システム
 - 管理画面（イベント作成・QRコード生成・来場者数確認）
 - 同一ライブの重複スタンプ防止
+- プロジェクト承認ワークフロー（セルフ登録 → 申請 → スーパー管理者の承認 → 複数管理者で共同編集）
 
 ---
 
@@ -113,7 +117,23 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-> 管理者認証は Supabase Auth（email + password）を使用します。`ADMIN_PASSWORD` は不要です。管理者ユーザーは Supabase ダッシュボードの Authentication → Users で作成してください。
+> 管理者認証は Supabase Auth（email + password）を使用します。`ADMIN_PASSWORD` は不要です。
+
+---
+
+## 管理者・プロジェクトの仕組み
+
+- **セルフ登録**: 管理者は `/admin/signup` でアカウントを作成できます（Authentication → Email の「Confirm email」を OFF にしておくと登録後すぐ利用できます）。
+- **スーパー管理者**: 最初の管理者を Authentication → Users で作成し、その UID に対して以下を実行してスーパー管理者にします。
+
+```sql
+UPDATE auth.users
+SET raw_app_meta_data = raw_app_meta_data || '{"role": "super_admin"}'::jsonb
+WHERE id = '<UID>';
+```
+
+- **プロジェクト**: 管理者は `/admin/projects/new` でプロジェクトを申請。スーパー管理者が `/admin/super` で承認すると、そのプロジェクト内でイベントを作成できます。
+- **共同編集**: プロジェクトのオーナーは詳細画面から、登録済みの管理者をメールアドレスで招待できます。
 
 ---
 
@@ -131,7 +151,7 @@ npm run dev
 
 ### 管理画面
 
-`/admin/login` にアクセスし、Supabase Auth に登録した管理者のメールアドレスとパスワードでログインします。各管理者は自分が作成したイベントのみ閲覧・編集・削除できます（スーパー管理者は `/admin/admins` から管理者を追加可能）。
+`/admin/login` にアクセスし、Supabase Auth に登録した管理者のメールアドレスとパスワードでログインします。各管理者は自分が所属する承認済みプロジェクトのイベントのみ閲覧・編集・削除できます。スーパー管理者は `/admin/super` で承認・全体閲覧を行います。
 
 ---
 
@@ -163,14 +183,31 @@ SUPABASE_SERVICE_ROLE_KEY
 ## データベース構造
 
 ```
+projects
+├── id          UUID PK
+├── name        TEXT
+├── description TEXT
+├── status      TEXT             -- pending / approved / rejected
+├── created_by  UUID FK → auth.users.id  -- 申請者
+├── approved_by UUID FK → auth.users.id
+├── approved_at TIMESTAMPTZ
+└── created_at  TIMESTAMPTZ
+
+project_members
+├── id          UUID PK
+├── project_id  UUID FK → projects.id
+├── user_id     UUID FK → auth.users.id
+├── role        TEXT             -- owner / member
+└── UNIQUE(project_id, user_id)
+
 events
 ├── id          UUID PK
 ├── title       TEXT
 ├── event_date  DATE
 ├── venue       TEXT
 ├── description TEXT
-├── qr_token    UUID UNIQUE              -- QRコードに埋め込むトークン
-├── admin_id    UUID FK → auth.users.id  -- イベント所有者（管理者）
+├── qr_token    UUID UNIQUE      -- QRコードに埋め込むトークン
+├── project_id  UUID FK → projects.id  -- 所属プロジェクト
 └── created_at  TIMESTAMPTZ
 
 participants

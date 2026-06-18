@@ -56,36 +56,40 @@
 - ログイン: `supabase.auth.signInWithPassword()`。セッションは Supabase が localStorage で管理
 - API 認証: `Authorization: Bearer <access_token>` ヘッダー。サーバーは `supabase.auth.getUser(token)` で検証（`lib/authMiddleware.ts` の `requireAdmin`）
 - イベント所有者: `events.admin_id`（`auth.users(id)` 参照、NOT NULL）。作成時に自動セット、更新/削除時に所有者チェック
-- スーパー管理者: `auth.users.raw_app_meta_data` の `role: "super_admin"` で識別。`/admin/admins` から他の管理者を追加・削除可能
-
-### 関連ファイル
-| ファイル | 役割 |
-|---------|------|
-| `lib/adminAuth.ts` | クライアント側 Auth（signIn/signOut/getAccessToken/isSuperAdmin） |
-| `lib/authMiddleware.ts` | サーバー側 JWT 検証ヘルパー `requireAdmin` |
-| `app/admin/admins/page.tsx` | スーパー管理者専用 管理者一覧・追加・削除画面 |
-| `app/api/admin/users/route.ts` | 管理者 CRUD API（listUsers/createUser/deleteUser） |
-
-### 新しい管理者の追加手順
-1. スーパー管理者でログイン → ヘッダーの「管理者」リンク → `/admin/admins`
-2. メールアドレスと初期パスワードを入力して追加
-
-### スーパー管理者の作成（初回・SQL Editor で実行）
-```sql
--- ① Authentication → Users で管理者ユーザーを作成後、その UID に対して実行
-UPDATE auth.users
-SET raw_app_meta_data = raw_app_meta_data || '{"role": "super_admin"}'::jsonb
-WHERE id = '<UID>';
-```
-
-### DB マイグレーション（実行済み）
-```sql
-ALTER TABLE events ADD COLUMN admin_id UUID REFERENCES auth.users(id);
-UPDATE events SET admin_id = '<super_admin_uid>' WHERE admin_id IS NULL;
-ALTER TABLE events ALTER COLUMN admin_id SET NOT NULL;
-```
+- スーパー管理者: `auth.users.raw_app_meta_data` の `role: "super_admin"` で識別（※この段階の `/admin/admins` 画面は後述のプロジェクト承認ワークフローで `/admin/super` に置き換え済み）
 
 現スーパー管理者: `kikiki.4673@gmail.com`（UID: `dee565bd-ba21-44a3-bd54-7aa1745b0600`）
+
+---
+
+## プロジェクト承認ワークフロー（2026-06-18）
+
+上記の `events.admin_id`（イベント単一所有者）から **プロジェクト単位の承認制** へ移行。
+
+### モデル
+- `projects`（フェス/連続ライブ等。status: pending/approved/rejected）
+- `project_members`（owner/member。1プロジェクトに複数管理者）
+- `events.admin_id` → `events.project_id`
+- 管理者はセルフ登録 → プロジェクト申請 → スーパー管理者が承認 → そのプロジェクトで自由にイベント作成
+- オーナーが他の登録済み管理者をメール招待で追加
+- スーパー管理者は全プロジェクト・全イベントを**閲覧のみ**＋承認/却下
+
+### 主な関連ファイル
+| ファイル | 役割 |
+|---------|------|
+| `lib/authMiddleware.ts` | `requireAdmin` / `isSuperAdmin` / `getProjectRole` / `isApprovedMember` / `getEmailMap` / `findUserByEmail` |
+| `app/api/projects/**` | 申請・一覧・詳細・承認/却下・メンバー招待 |
+| `app/admin/signup` | セルフ登録 |
+| `app/admin/projects/**` | 一覧（/admin）・申請・詳細（イベント＋メンバー管理） |
+| `app/admin/super` | 承認待ち承認/却下・全体閲覧 |
+
+### DB マイグレーション
+`supabase/migrations/2026-06-18_project_approval_workflow.sql`
+- 既存イベントはスーパー管理者の「既存イベント」プロジェクトへ移行
+- **マイグレーションSQLとコードデプロイは同時に行う**（admin_id 依存の旧コードが動いている間に列を消すと壊れる）
+
+### Supabase 設定
+- Authentication → Email の「Confirm email」は OFF 推奨（セルフ登録後すぐ利用可能にするため）
 
 ---
 
@@ -101,7 +105,8 @@ ALTER TABLE events ALTER COLUMN admin_id SET NOT NULL;
 8. 管理画面 QR ボタン（イベント一覧から直接 QR モーダル）
 9. スタンプ取得者一覧（イベントタップ → ニックネームと取得日時のボトムシート）
 10. 取得済み QR 再スキャン時にイベント名と取得日時を表示
-11. 管理者マルチテナント対応（Supabase Auth・イベント所有者分離・スーパー管理者による管理者追加）
+11. 管理者マルチテナント対応（Supabase Auth・イベント所有者分離）
+12. プロジェクト承認ワークフロー（セルフ登録・プロジェクト申請/承認・複数管理者の共同編集・スーパー管理者の閲覧専用一括管理）
 
 ---
 
