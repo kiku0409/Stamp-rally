@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { requireAdmin, isAuthFailure } from '@/lib/authMiddleware';
 
 export async function GET(request: Request) {
-  const adminPassword = request.headers.get('x-admin-password');
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
+  const { user } = auth;
 
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get('event_id');
@@ -14,6 +14,17 @@ export async function GET(request: Request) {
   }
 
   const supabase = createAdminClient();
+
+  const { data: event } = await supabase
+    .from('events')
+    .select('admin_id')
+    .eq('id', eventId)
+    .maybeSingle();
+
+  if (!event || event.admin_id !== user.id) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const { data, error } = await supabase
     .from('event_stamps')
     .select('stamped_at, participants(nickname)')

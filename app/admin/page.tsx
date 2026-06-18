@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus, Copy, X } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
-import { getAdminPassword } from '@/lib/adminAuth';
+import { getAccessToken } from '@/lib/adminAuth';
 import { Event } from '@/types';
 import { formatDate } from '@/lib/utils';
 
@@ -30,11 +30,11 @@ export default function AdminDashboard() {
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    const pw = getAdminPassword();
-    const headers = { 'x-admin-password': pw };
+    const token = await getAccessToken();
+    const headers = { 'Authorization': `Bearer ${token}` };
     try {
       const [eventsRes, statsRes] = await Promise.all([
-        fetch('/api/events'),
+        fetch('/api/events', { headers }),
         fetch('/api/admin/stats', { headers }),
       ]);
       const eventsData = await eventsRes.json();
@@ -60,8 +60,9 @@ export default function AdminDashboard() {
     setStampersEvent(ev);
     setStampers([]);
     setStampersLoading(true);
+    const token = await getAccessToken();
     const res = await fetch(`/api/admin/event-stamps?event_id=${ev.id}`, {
-      headers: { 'x-admin-password': getAdminPassword() },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
     const data = await res.json();
     setStampers(Array.isArray(data) ? data : []);

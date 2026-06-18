@@ -3,31 +3,30 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut } from 'lucide-react';
-import { getAdminPassword, clearAdminPassword, verifyAdminPassword } from '@/lib/adminAuth';
+import { LogOut, Users } from 'lucide-react';
+import { getSession, signOut, getCurrentUser, isSuperAdmin } from '@/lib/adminAuth';
+import type { User } from '@supabase/supabase-js';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const pw = getAdminPassword();
-    if (!pw) {
-      router.replace('/admin/login');
-      return;
-    }
-    verifyAdminPassword(pw).then((ok) => {
-      if (!ok) {
-        clearAdminPassword();
+    getSession().then((session) => {
+      if (!session) {
         router.replace('/admin/login');
-      } else {
-        setChecking(false);
+        return;
       }
+      getCurrentUser().then((user) => {
+        setCurrentUser(user);
+        setChecking(false);
+      });
     });
   }, [router]);
 
-  const handleLogout = () => {
-    clearAdminPassword();
+  const handleLogout = async () => {
+    await signOut();
     router.push('/admin/login');
   };
 
@@ -43,9 +42,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen admin-bg">
       <header className="header-grad sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="w-2 h-2 rounded-full bg-white inline-block" />
             <Link href="/admin" className="font-bold text-white text-[14px]">管理画面</Link>
+            {isSuperAdmin(currentUser) && (
+              <Link
+                href="/admin/admins"
+                className="flex items-center gap-1 text-[12px] text-white/70 hover:text-white transition-colors"
+              >
+                <Users size={12} strokeWidth={2} />
+                管理者
+              </Link>
+            )}
           </div>
           <button
             onClick={handleLogout}

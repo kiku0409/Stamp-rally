@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { requireAdmin, isAuthFailure } from '@/lib/authMiddleware';
 
 export async function GET(
   _request: Request,
@@ -24,16 +25,26 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const adminPassword = request.headers.get('x-admin-password');
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
+  const { user } = auth;
 
   const { id } = await params;
+  const supabase = createAdminClient();
+
+  const { data: existing } = await supabase
+    .from('events')
+    .select('admin_id')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!existing || existing.admin_id !== user.id) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const body = await request.json();
   const { title, event_date, venue, description } = body;
 
-  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('events')
     .update({ title, event_date, venue, description })
@@ -49,13 +60,23 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const adminPassword = request.headers.get('x-admin-password');
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
+  const { user } = auth;
 
   const { id } = await params;
   const supabase = createAdminClient();
+
+  const { data: existing } = await supabase
+    .from('events')
+    .select('admin_id')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!existing || existing.admin_id !== user.id) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const { error } = await supabase.from('events').delete().eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

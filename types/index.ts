@@ -6,6 +6,7 @@ export interface Event {
   qr_token: string;
   description?: string;
   created_at: string;
+  admin_id?: string;
 }
 
 export interface Participant {

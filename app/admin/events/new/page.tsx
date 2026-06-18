@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
-import { getAdminPassword } from '@/lib/adminAuth';
+import { getAccessToken } from '@/lib/adminAuth';
 
 function NewEventForm() {
   const router = useRouter();
@@ -30,9 +30,10 @@ function NewEventForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    const token = await getAccessToken();
     const res = await fetch('/api/events', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': getAdminPassword() },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(form),
     });
     if (res.ok) {

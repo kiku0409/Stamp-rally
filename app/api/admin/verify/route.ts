@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin, isAuthFailure } from '@/lib/authMiddleware';
 
 export async function GET(request: Request) {
-  const adminPassword = request.headers.get('x-admin-password');
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
   return NextResponse.json({ ok: true });
 }

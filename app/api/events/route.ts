@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { requireAdmin, isAuthFailure } from '@/lib/authMiddleware';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
+  const { user } = auth;
+
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('events')
     .select('*')
+    .eq('admin_id', user.id)
     .order('event_date', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -13,10 +19,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const adminPassword = request.headers.get('x-admin-password');
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
+  const { user } = auth;
 
   const body = await request.json();
   const { title, event_date, venue, description } = body;
@@ -30,7 +35,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('events')
-    .insert({ title, event_date, venue, description, qr_token })
+    .insert({ title, event_date, venue, description, qr_token, admin_id: user.id })
     .select()
     .single();
 

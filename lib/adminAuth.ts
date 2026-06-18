@@ -1,23 +1,31 @@
-const ADMIN_STORAGE_KEY = 'stamp_rally_admin_pw';
+import { supabase } from './supabase';
+import type { User } from '@supabase/supabase-js';
 
-export function getAdminPassword(): string {
-  if (typeof window === 'undefined') return '';
-  return sessionStorage.getItem(ADMIN_STORAGE_KEY) || '';
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
 }
 
-export function setAdminPassword(password: string): void {
-  if (typeof window === 'undefined') return;
-  sessionStorage.setItem(ADMIN_STORAGE_KEY, password);
+export async function signOut() {
+  await supabase.auth.signOut();
 }
 
-export function clearAdminPassword(): void {
-  if (typeof window === 'undefined') return;
-  sessionStorage.removeItem(ADMIN_STORAGE_KEY);
+export async function getSession() {
+  const { data } = await supabase.auth.getSession();
+  return data.session;
 }
 
-export async function verifyAdminPassword(password: string): Promise<boolean> {
-  const res = await fetch('/api/admin/verify', {
-    headers: { 'x-admin-password': password },
-  });
-  return res.ok;
+export async function getAccessToken(): Promise<string> {
+  const session = await getSession();
+  return session?.access_token ?? '';
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const { data } = await supabase.auth.getUser();
+  return data.user;
+}
+
+export function isSuperAdmin(user: User | null): boolean {
+  return (user?.app_metadata as Record<string, unknown>)?.role === 'super_admin';
 }

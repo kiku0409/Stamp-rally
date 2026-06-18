@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
-import { getAdminPassword } from '@/lib/adminAuth';
+import { getAccessToken } from '@/lib/adminAuth';
 import { Event } from '@/types';
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,10 +22,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   useEffect(() => { loadEvent(); }, [id]);
 
   async function loadEvent() {
-    const pw = getAdminPassword();
+    const token = await getAccessToken();
+    const authHeader = { 'Authorization': `Bearer ${token}` };
     const [eventRes, statsRes] = await Promise.all([
       fetch(`/api/events/${id}`),
-      fetch(`/api/admin/stats?event_id=${id}`, { headers: { 'x-admin-password': pw } }),
+      fetch(`/api/admin/stats?event_id=${id}`, { headers: authHeader }),
     ]);
     const ev: Event = await eventRes.json();
     const stats = await statsRes.json();
@@ -42,9 +43,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const handleSave = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setSaving(true);
+    const token = await getAccessToken();
     const res = await fetch(`/api/events/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': getAdminPassword() },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(form),
     });
     if (res.ok) {
@@ -57,9 +59,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
   const handleDelete = async () => {
     if (!confirm(`「${event?.title}」を削除しますか？`)) return;
+    const token = await getAccessToken();
     const res = await fetch(`/api/events/${id}`, {
       method: 'DELETE',
-      headers: { 'x-admin-password': getAdminPassword() },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
     if (res.ok) router.push('/admin');
   };
@@ -88,13 +91,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           <h1 className="text-[20px] font-bold text-ink">イベント編集</h1>
         </div>
 
-        {/* Stamp count card */}
         <div className="bg-grad-soft border border-teal-border rounded-2xl p-4 mb-5">
           <p className="text-[12px] text-muted mb-1">スタンプ取得数</p>
           <p className="text-[30px] font-bold text-accent">{stampCount}</p>
         </div>
 
-        {/* QR card */}
         <div className="bg-white rounded-2xl p-4 border border-line card-shadow mb-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-ink text-[14px]">QRコード</h2>
@@ -108,7 +109,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           {showQR && <QRCodeDisplay url={qrUrl} eventTitle={form.title} />}
         </div>
 
-        {/* Edit form */}
         <form onSubmit={handleSave} className="space-y-4 bg-white rounded-2xl p-6 border border-line card-shadow mb-4">
           <div>
             <label className="block text-[13px] font-medium text-ink mb-1">イベント名</label>
@@ -161,7 +161,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           </button>
         </form>
 
-        {/* Delete */}
         <button
           onClick={handleDelete}
           className="w-full py-3 rounded-xl border border-danger-border text-danger text-[14px] font-medium flex items-center justify-center gap-2 hover:bg-danger-soft transition-colors"
