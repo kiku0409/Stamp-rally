@@ -3,6 +3,7 @@
 -- =====================================================
 
 -- Events table
+-- admin_id: 各イベントの所有者（管理者）。マルチテナント分離に使用。
 CREATE TABLE IF NOT EXISTS events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title       TEXT NOT NULL,
@@ -10,6 +11,7 @@ CREATE TABLE IF NOT EXISTS events (
   venue       TEXT NOT NULL,
   description TEXT,
   qr_token    UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+  admin_id    UUID NOT NULL REFERENCES auth.users(id),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
