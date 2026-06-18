@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
-import { requireAdmin, isAuthFailure } from '@/lib/authMiddleware';
+import { requireAdmin, isAuthFailure, isApprovedMember } from '@/lib/authMiddleware';
 
+// 取得: 来場者がQRからアクセスするため公開（id または qr_token で検索）
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -9,7 +10,6 @@ export async function GET(
   const { id } = await params;
   const supabase = createAdminClient();
 
-  // Support lookup by qr_token or id
   const isUUID = /^[0-9a-f-]{36}$/i.test(id);
   const query = supabase.from('events').select('*');
   const { data, error } = isUUID
@@ -21,6 +21,7 @@ export async function GET(
   return NextResponse.json(data);
 }
 
+// 編集: イベントが属するプロジェクトの承認済みメンバーのみ
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -34,11 +35,11 @@ export async function PUT(
 
   const { data: existing } = await supabase
     .from('events')
-    .select('admin_id')
+    .select('project_id')
     .eq('id', id)
     .maybeSingle();
 
-  if (!existing || existing.admin_id !== user.id) {
+  if (!existing || !(await isApprovedMember(supabase, user.id, existing.project_id))) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
@@ -56,6 +57,7 @@ export async function PUT(
   return NextResponse.json(data);
 }
 
+// 削除: イベントが属するプロジェクトの承認済みメンバーのみ
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -69,16 +71,15 @@ export async function DELETE(
 
   const { data: existing } = await supabase
     .from('events')
-    .select('admin_id')
+    .select('project_id')
     .eq('id', id)
     .maybeSingle();
 
-  if (!existing || existing.admin_id !== user.id) {
+  if (!existing || !(await isApprovedMember(supabase, user.id, existing.project_id))) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   const { error } = await supabase.from('events').delete().eq('id', id);
-
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

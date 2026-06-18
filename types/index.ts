@@ -1,3 +1,25 @@
+export type ProjectStatus = 'pending' | 'approved' | 'rejected';
+export type ProjectRole = 'owner' | 'member';
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: ProjectStatus;
+  created_by: string;
+  approved_by?: string;
+  approved_at?: string;
+  created_at: string;
+}
+
+export interface ProjectMember {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: ProjectRole;
+  created_at: string;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -6,7 +28,7 @@ export interface Event {
   qr_token: string;
   description?: string;
   created_at: string;
-  admin_id?: string;
+  project_id?: string;
 }
 
 export interface Participant {

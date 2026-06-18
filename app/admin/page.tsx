@@ -2,76 +2,45 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Copy, X } from 'lucide-react';
+import { Plus, FolderOpen } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
-import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
-import { Event } from '@/types';
-import { formatDate } from '@/lib/utils';
+import { Project, ProjectStatus, ProjectRole } from '@/types';
 
-interface EventWithStats extends Event {
-  stampCount: number;
+interface ProjectRow extends Project {
+  role?: ProjectRole;
 }
 
-interface Stamper {
-  stamped_at: string;
-  participants: { nickname: string } | null;
-}
+const STATUS_LABEL: Record<ProjectStatus, string> = {
+  pending: '承認待ち',
+  approved: '承認済み',
+  rejected: '却下',
+};
+
+const STATUS_CLASS: Record<ProjectStatus, string> = {
+  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  approved: 'bg-soft text-accent-deep border-teal-border',
+  rejected: 'bg-danger-soft text-danger border-danger-border',
+};
 
 export default function AdminDashboard() {
-  const [events, setEvents] = useState<EventWithStats[]>([]);
-  const [totalStats, setTotalStats] = useState({ totalStamps: 0, totalParticipants: 0 });
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [qrEvent, setQrEvent] = useState<EventWithStats | null>(null);
-  const [stampersEvent, setStampersEvent] = useState<EventWithStats | null>(null);
-  const [stampers, setStampers] = useState<Stamper[]>([]);
-  const [stampersLoading, setStampersLoading] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    const token = await getAccessToken();
-    const headers = { 'Authorization': `Bearer ${token}` };
     try {
-      const [eventsRes, statsRes] = await Promise.all([
-        fetch('/api/events', { headers }),
-        fetch('/api/admin/stats', { headers }),
-      ]);
-      const eventsData = await eventsRes.json();
-      const statsData = await statsRes.json();
-      const eventsArray: Event[] = Array.isArray(eventsData) ? eventsData : [];
-      const withStats = await Promise.all(
-        eventsArray.map(async (ev) => {
-          const r = await fetch(`/api/admin/stats?event_id=${ev.id}`, { headers });
-          const s = await r.json();
-          return { ...ev, stampCount: s.stampCount || 0 };
-        })
-      );
-      setEvents(withStats);
-      if (!statsData.error) setTotalStats(statsData);
+      const token = await getAccessToken();
+      const res = await fetch('/api/projects', { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      setProjects(Array.isArray(data) ? data : []);
     } catch {
       // silently handle
     } finally {
       setLoading(false);
     }
   }
-
-  async function openStampers(ev: EventWithStats) {
-    setStampersEvent(ev);
-    setStampers([]);
-    setStampersLoading(true);
-    const token = await getAccessToken();
-    const res = await fetch(`/api/admin/event-stamps?event_id=${ev.id}`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setStampers(Array.isArray(data) ? data : []);
-    setStampersLoading(false);
-  }
-
-  const qrUrl = qrEvent
-    ? (typeof window !== 'undefined' ? window.location.origin : '') + `/event/${qrEvent.qr_token}/stamp`
-    : '';
 
   if (loading) {
     return (
@@ -85,125 +54,52 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <h1 className="text-[22px] font-bold text-ink mb-5">ダッシュボード</h1>
-
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-white rounded-2xl p-5 border border-line card-shadow text-center">
-          <p className="text-[12px] text-muted mb-1">総スタンプ数</p>
-          <p className="text-[30px] font-bold text-accent">{totalStats.totalStamps}</p>
-        </div>
-        <div className="bg-white rounded-2xl p-5 border border-line card-shadow text-center">
-          <p className="text-[12px] text-muted mb-1">総参加者数</p>
-          <p className="text-[30px] font-bold text-accent">{totalStats.totalParticipants}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[15px] font-bold text-ink">イベント一覧</h2>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-[22px] font-bold text-ink">プロジェクト</h1>
         <Link
-          href="/admin/events/new"
+          href="/admin/projects/new"
           className="flex items-center gap-1 px-3 py-2 rounded-[9px] btn-brand text-white text-[13px] font-bold"
         >
           <Plus size={14} strokeWidth={2.5} />
-          新規作成
+          申請する
         </Link>
       </div>
 
-      {events.length === 0 ? (
+      {projects.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 text-center border border-line card-shadow">
-          <p className="text-muted mb-4 text-[14px]">イベントがありません</p>
-          <Link href="/admin/events/new" className="text-accent font-medium text-[14px]">
-            最初のイベントを作成する →
+          <FolderOpen size={28} strokeWidth={1.5} className="text-faint mx-auto mb-3" />
+          <p className="text-muted mb-4 text-[14px]">まだプロジェクトがありません</p>
+          <Link href="/admin/projects/new" className="text-accent font-medium text-[14px]">
+            プロジェクトを申請する →
           </Link>
+          <p className="text-[12px] text-faint mt-3">
+            フェスや連続ライブなどの単位で申請し、承認されるとイベントを作成できます。
+          </p>
         </div>
       ) : (
         <div className="space-y-2.5">
-          {events.map((ev) => (
-            <div key={ev.id} className="bg-white rounded-2xl p-4 border border-line card-shadow">
-              <div className="flex items-start justify-between">
-                <button className="flex-1 text-left" onClick={() => openStampers(ev)}>
-                  <h3 className="font-bold text-ink text-[14px]">{ev.title}</h3>
-                  <p className="text-[12px] text-muted mt-0.5">{formatDate(ev.event_date)} · {ev.venue}</p>
-                  <p className={`text-[12px] font-bold mt-1 ${ev.stampCount > 0 ? 'text-accent' : 'text-faint'}`}>
-                    スタンプ取得数 {ev.stampCount}
-                  </p>
-                </button>
-                <div className="flex items-center gap-1.5 ml-3">
-                  <button
-                    onClick={() => setQrEvent(ev)}
-                    className="px-3 py-1.5 rounded-lg border border-line text-[12px] text-muted hover:border-accent hover:text-accent transition-colors"
-                  >
-                    QR
-                  </button>
-                  <Link
-                    href={`/admin/events/new?title=${encodeURIComponent(ev.title)}&venue=${encodeURIComponent(ev.venue)}&description=${encodeURIComponent(ev.description ?? '')}`}
-                    className="p-1.5 rounded-lg border border-line text-muted hover:border-accent hover:text-accent transition-colors"
-                    title="複製"
-                  >
-                    <Copy size={14} strokeWidth={2} />
-                  </Link>
-                  <Link
-                    href={`/admin/events/${ev.id}`}
-                    className="px-3 py-1.5 rounded-lg border border-line text-[12px] text-muted hover:border-accent hover:text-accent transition-colors"
-                  >
-                    編集
-                  </Link>
+          {projects.map((p) => (
+            <Link
+              key={p.id}
+              href={`/admin/projects/${p.id}`}
+              className="block bg-white rounded-2xl p-4 border border-line card-shadow hover:border-accent transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-ink text-[15px] truncate">{p.name}</h3>
+                  {p.description && (
+                    <p className="text-[12px] text-muted mt-0.5 line-clamp-2">{p.description}</p>
+                  )}
+                  {p.role === 'owner' && (
+                    <span className="inline-block mt-1.5 text-[11px] text-faint">オーナー</span>
+                  )}
                 </div>
+                <span className={`shrink-0 text-[11px] font-medium px-2 py-1 rounded-full border ${STATUS_CLASS[p.status]}`}>
+                  {STATUS_LABEL[p.status]}
+                </span>
               </div>
-            </div>
+            </Link>
           ))}
-        </div>
-      )}
-
-      {/* QR Modal */}
-      {qrEvent && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setQrEvent(null)}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm border border-line card-shadow" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-bold text-ink text-[15px] truncate flex-1 mr-2">{qrEvent.title}</h2>
-              <button onClick={() => setQrEvent(null)} className="text-faint hover:text-muted transition-colors">
-                <X size={20} strokeWidth={2} />
-              </button>
-            </div>
-            <QRCodeDisplay url={qrUrl} eventTitle={qrEvent.title} />
-          </div>
-        </div>
-      )}
-
-      {/* Stampers modal */}
-      {stampersEvent && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick={() => setStampersEvent(null)}>
-          <div className="bg-white rounded-t-2xl w-full max-w-lg p-6 max-h-[70vh] flex flex-col border-t border-line" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-bold text-ink text-[15px]">{stampersEvent.title}</h2>
-                <p className="text-[12px] text-muted">スタンプ取得者一覧</p>
-              </div>
-              <button onClick={() => setStampersEvent(null)} className="text-faint hover:text-muted transition-colors">
-                <X size={20} strokeWidth={2} />
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1">
-              {stampersLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="w-8 h-8 rounded-full border-[3px] border-line border-t-accent animate-spin" />
-                </div>
-              ) : stampers.length === 0 ? (
-                <p className="text-center text-muted py-8 text-[14px]">まだスタンプ取得者がいません</p>
-              ) : (
-                <ul>
-                  {stampers.map((s, i) => (
-                    <li key={i} className="flex items-center justify-between py-2.5 border-b border-line last:border-0">
-                      <span className="font-medium text-ink text-[14px]">{s.participants?.nickname ?? '不明'}</span>
-                      <span className="text-[11px] text-faint" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {new Date(s.stamped_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
         </div>
       )}
     </AdminLayout>

@@ -50,7 +50,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       body: JSON.stringify(form),
     });
     if (res.ok) {
-      router.push('/admin');
+      router.push(backHref);
     } else {
       setError('保存に失敗しました');
       setSaving(false);
@@ -64,8 +64,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` },
     });
-    if (res.ok) router.push('/admin');
+    if (res.ok) router.push(backHref);
   };
+
+  const backHref = event?.project_id ? `/admin/projects/${event.project_id}` : '/admin';
 
   const qrUrl = event
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/event/${event.qr_token}/stamp`

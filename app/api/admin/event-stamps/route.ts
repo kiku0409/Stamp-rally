@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
-import { requireAdmin, isAuthFailure } from '@/lib/authMiddleware';
+import {
+  requireAdmin,
+  isAuthFailure,
+  isSuperAdmin,
+  getProjectRole,
+} from '@/lib/authMiddleware';
 
+// スタンプ取得者一覧: 該当イベントが属するプロジェクトのメンバーまたはスーパー管理者
 export async function GET(request: Request) {
   const auth = await requireAdmin(request);
   if (isAuthFailure(auth)) return auth;
@@ -17,13 +23,13 @@ export async function GET(request: Request) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('admin_id')
+    .select('project_id')
     .eq('id', eventId)
     .maybeSingle();
+  if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  if (!event || event.admin_id !== user.id) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const canView = isSuperAdmin(user) || (await getProjectRole(supabase, user.id, event.project_id)) !== null;
+  if (!canView) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const { data, error } = await supabase
     .from('event_stamps')
@@ -32,6 +38,5 @@ export async function GET(request: Request) {
     .order('stamped_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
   return NextResponse.json(data);
 }

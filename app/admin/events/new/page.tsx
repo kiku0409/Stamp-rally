@@ -9,6 +9,7 @@ import { getAccessToken } from '@/lib/adminAuth';
 function NewEventForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const projectId = searchParams.get('project_id');
   const [form, setForm] = useState({ title: '', event_date: '', venue: '', description: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,16 +29,20 @@ function NewEventForm() {
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
+    if (!projectId) {
+      setError('プロジェクトが指定されていません');
+      return;
+    }
     setLoading(true);
     setError('');
     const token = await getAccessToken();
     const res = await fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, project_id: projectId }),
     });
     if (res.ok) {
-      router.push('/admin');
+      router.push(`/admin/projects/${projectId}`);
     } else {
       const data = await res.json();
       setError(data.error || '作成に失敗しました');
