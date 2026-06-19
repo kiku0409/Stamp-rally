@@ -21,6 +21,38 @@ export interface ProjectMember {
   created_at: string;
 }
 
+export interface RewardTier {
+  id: string;
+  project_id: string;
+  threshold: number;
+  label: string;
+  created_at: string;
+}
+
+export interface ParticipantReward {
+  id: string;
+  participant_id: string;
+  tier_id: string;
+  project_id: string;
+  issued_at: string;
+}
+
+// 来場者スタンプ帳のプロジェクト単位集約（/api/stamp-book）
+export interface StampBookTier {
+  id: string;
+  threshold: number;
+  label: string;
+  earned: boolean;
+}
+
+export interface StampBookGroup {
+  project: { id: string; name: string };
+  count: number;
+  stamps: EventStamp[];
+  tiers: StampBookTier[];
+  rewards: { label: string; issued_at: string }[];
+}
+
 export interface Event {
   id: string;
   title: string;

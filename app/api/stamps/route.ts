@@ -1,6 +1,55 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
 
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+// スタンプ付与後、当該プロジェクトの特典段階を判定して未付与分を付与。新規付与のラベルを返す。
+async function issueRewards(
+  supabase: AdminClient,
+  participantId: string,
+  eventId: string
+): Promise<{ label: string }[]> {
+  const { data: event } = await supabase
+    .from('events')
+    .select('project_id')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (!event) return [];
+  const projectId = event.project_id;
+
+  // このプロジェクト内の参加者のスタンプ数
+  const { count } = await supabase
+    .from('event_stamps')
+    .select('id, events!inner(project_id)', { count: 'exact', head: true })
+    .eq('participant_id', participantId)
+    .eq('events.project_id', projectId);
+  const stampCount = count ?? 0;
+
+  // 達成済みの段階
+  const { data: tiers } = await supabase
+    .from('project_reward_tiers')
+    .select('id, label, threshold')
+    .eq('project_id', projectId)
+    .lte('threshold', stampCount);
+  if (!tiers || tiers.length === 0) return [];
+
+  // 既に付与済みの段階を除外
+  const { data: existing } = await supabase
+    .from('participant_rewards')
+    .select('tier_id')
+    .eq('participant_id', participantId)
+    .eq('project_id', projectId);
+  const existingIds = new Set((existing ?? []).map((r) => r.tier_id));
+
+  const newTiers = tiers.filter((t) => !existingIds.has(t.id));
+  if (newTiers.length === 0) return [];
+
+  await supabase.from('participant_rewards').insert(
+    newTiers.map((t) => ({ participant_id: participantId, tier_id: t.id, project_id: projectId }))
+  );
+  return newTiers.map((t) => ({ label: t.label }));
+}
+
 // GET: Get all stamps for a participant
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -58,5 +107,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ alreadyStamped: false, stamp: data }, { status: 201 });
+  const newRewards = await issueRewards(supabase, participant_id, event_id);
+
+  return NextResponse.json({ alreadyStamped: false, stamp: data, newRewards }, { status: 201 });
 }

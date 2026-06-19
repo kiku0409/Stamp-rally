@@ -61,27 +61,56 @@ CREATE TABLE IF NOT EXISTS event_stamps (
   UNIQUE (participant_id, event_id)
 );
 
+-- Reward tiers: プロジェクトごとの「◯個で特典」段階（複数）
+CREATE TABLE IF NOT EXISTS project_reward_tiers (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  threshold  INT NOT NULL CHECK (threshold > 0),
+  label      TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (project_id, threshold)
+);
+
+-- Participant rewards: 誰がどの段階を獲得したか
+CREATE TABLE IF NOT EXISTS participant_rewards (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  participant_id UUID NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
+  tier_id        UUID NOT NULL REFERENCES project_reward_tiers(id) ON DELETE CASCADE,
+  project_id     UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  issued_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (participant_id, tier_id)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_event_stamps_participant ON event_stamps(participant_id);
 CREATE INDEX IF NOT EXISTS idx_event_stamps_event      ON event_stamps(event_id);
 CREATE INDEX IF NOT EXISTS idx_events_qr_token         ON events(qr_token);
 CREATE INDEX IF NOT EXISTS idx_events_project          ON events(project_id);
 CREATE INDEX IF NOT EXISTS idx_project_members_user    ON project_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_reward_tiers_project    ON project_reward_tiers(project_id);
+CREATE INDEX IF NOT EXISTS idx_participant_rewards_participant ON participant_rewards(participant_id);
+CREATE INDEX IF NOT EXISTS idx_participant_rewards_project     ON participant_rewards(project_id);
 
 -- =====================================================
 -- Row Level Security (RLS)
 -- API はすべて service_role 経由でアクセスするため、書き込みは service_role に限定。
 -- =====================================================
 
-ALTER TABLE projects        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE project_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE events          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE participants    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE event_stamps    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_members      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE events               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE participants         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_stamps         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_reward_tiers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE participant_rewards  ENABLE ROW LEVEL SECURITY;
 
 -- Projects / members: service role only
 CREATE POLICY "projects_all_service"        ON projects        FOR ALL USING (auth.role() = 'service_role');
 CREATE POLICY "project_members_all_service" ON project_members FOR ALL USING (auth.role() = 'service_role');
+
+-- Reward tiers / participant rewards: service role only
+CREATE POLICY "reward_tiers_all_service"        ON project_reward_tiers FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "participant_rewards_all_service" ON participant_rewards  FOR ALL USING (auth.role() = 'service_role');
 
 -- Events: public read（来場者がQRからイベント情報を取得）, service role write
 CREATE POLICY "events_select_public" ON events FOR SELECT USING (true);

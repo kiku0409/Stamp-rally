@@ -3,11 +3,11 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound } from 'lucide-react';
+import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
-import { Event, Project, ProjectMember, ProjectRole, ProjectStatus } from '@/types';
+import { Event, Project, ProjectMember, ProjectRole, ProjectStatus, RewardTier } from '@/types';
 import { formatDate } from '@/lib/utils';
 
 interface MemberRow extends ProjectMember {
@@ -19,6 +19,12 @@ interface EventWithStats extends Event {
 interface Stamper {
   stamped_at: string;
   participants: { nickname: string } | null;
+}
+interface Recipient {
+  nickname: string;
+  label: string;
+  threshold: number;
+  issued_at: string;
 }
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -48,6 +54,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [stampersEvent, setStampersEvent] = useState<EventWithStats | null>(null);
   const [stampers, setStampers] = useState<Stamper[]>([]);
   const [stampersLoading, setStampersLoading] = useState(false);
+  const [rewardTiers, setRewardTiers] = useState<RewardTier[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [tierThreshold, setTierThreshold] = useState('');
+  const [tierLabel, setTierLabel] = useState('');
+  const [tierError, setTierError] = useState('');
+  const [addingTier, setAddingTier] = useState(false);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -64,6 +76,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     setProject(data.project);
     setMembers(data.members ?? []);
     setMyRole(data.myRole ?? null);
+    setRewardTiers(data.rewardTiers ?? []);
 
     const evs: Event[] = data.events ?? [];
     const withStats = await Promise.all(
@@ -74,7 +87,41 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       })
     );
     setEvents(withStats);
+
+    // 特典取得者一覧
+    const rr = await fetch(`/api/projects/${id}/rewards`, { headers });
+    if (rr.ok) setRecipients(await rr.json());
+
     setLoading(false);
+  }
+
+  async function handleAddTier(e: { preventDefault: () => void }) {
+    e.preventDefault();
+    setAddingTier(true);
+    setTierError('');
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}/reward-tiers`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ threshold: Number(tierThreshold), label: tierLabel }),
+    });
+    if (res.ok) {
+      setTierThreshold('');
+      setTierLabel('');
+      loadData();
+    } else {
+      const d = await res.json();
+      setTierError(d.error || '追加に失敗しました');
+    }
+    setAddingTier(false);
+  }
+
+  async function handleDeleteTier(tierId: string) {
+    if (!confirm('この段階を削除しますか？\n取得済みの記録も削除されます。')) return;
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}/reward-tiers?tier_id=${tierId}`, { method: 'DELETE', headers });
+    if (res.ok) loadData();
+    else { const d = await res.json(); alert(d.error || '削除に失敗しました'); }
   }
 
   async function handleInvite(e: { preventDefault: () => void }) {
@@ -238,6 +285,94 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             )}
           </section>
         )}
+
+        {/* Reward tiers */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Gift size={16} strokeWidth={2} className="text-accent" />
+            <h2 className="text-[15px] font-bold text-ink">特典段階</h2>
+          </div>
+          {rewardTiers.length === 0 ? (
+            <div className="bg-white rounded-2xl p-4 border border-line card-shadow">
+              <p className="text-muted text-[13px]">まだ特典段階がありません。{isOwner ? '下のフォームで追加できます。' : ''}</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {rewardTiers.map((t) => (
+                <div key={t.id} className="bg-white rounded-2xl p-3.5 border border-line card-shadow flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-[13px] font-bold text-accent shrink-0">{t.threshold}個</span>
+                    <span className="text-[13px] text-ink truncate">{t.label}</span>
+                  </div>
+                  {isOwner && (
+                    <button
+                      onClick={() => handleDeleteTier(t.id)}
+                      className="p-2 rounded-lg border border-danger-border text-danger hover:bg-danger-soft transition-colors shrink-0"
+                    >
+                      <Trash2 size={14} strokeWidth={2} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {isOwner && (
+            <form onSubmit={handleAddTier} className="mt-3 bg-white rounded-2xl p-4 border border-line card-shadow">
+              <p className="text-[12px] text-muted mb-2">スタンプ数の閾値と特典名を設定（複数段階可）。</p>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  value={tierThreshold}
+                  onChange={(e) => setTierThreshold(e.target.value)}
+                  placeholder="個数"
+                  required
+                  className="w-20 px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
+                />
+                <input
+                  value={tierLabel}
+                  onChange={(e) => setTierLabel(e.target.value)}
+                  placeholder="特典名（例: 限定ステッカー）"
+                  required
+                  className="flex-1 px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
+                />
+                <button
+                  type="submit"
+                  disabled={addingTier}
+                  className="px-4 rounded-xl btn-brand text-white font-bold text-[13px] disabled:opacity-50 disabled:shadow-none"
+                >
+                  {addingTier ? '...' : '追加'}
+                </button>
+              </div>
+              {tierError && <p className="text-danger text-[12px] mt-2">{tierError}</p>}
+            </form>
+          )}
+        </section>
+
+        {/* Reward recipients */}
+        <section className="mb-6">
+          <h2 className="text-[15px] font-bold text-ink mb-3">特典取得者（{recipients.length}）</h2>
+          {recipients.length === 0 ? (
+            <div className="bg-white rounded-2xl p-4 border border-line card-shadow">
+              <p className="text-muted text-[13px]">まだ特典取得者がいません</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-line card-shadow divide-y divide-line">
+              {recipients.map((r, i) => (
+                <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                  <div className="min-w-0">
+                    <span className="text-[14px] font-medium text-ink">{r.nickname}</span>
+                    <span className="text-[12px] text-muted ml-2">{r.label}（{r.threshold}個）</span>
+                  </div>
+                  <span className="text-[11px] text-faint shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {new Date(r.issued_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Members */}
         <section>

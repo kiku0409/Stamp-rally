@@ -18,17 +18,5 @@ export function formatDateTime(dateStr: string): string {
   });
 }
 
-export function getAchievementTitle(count: number): string {
-  if (count >= 20) return 'レジェンド参加者';
-  if (count >= 10) return '常連参加者';
-  if (count >= 5) return 'リピーター';
-  if (count >= 1) return 'ライブデビュー';
-  return '';
-}
-
-export function getNextAchievementTarget(count: number): { target: number; label: string } | null {
-  if (count < 5) return { target: 5, label: '5回参加' };
-  if (count < 10) return { target: 10, label: '10回参加' };
-  if (count < 20) return { target: 20, label: '20回参加' };
-  return null;
-}
+// 称号システムはプロジェクト単位の特典段階（project_reward_tiers）に統合したため、
+// 全体合計ベースの旧 getAchievementTitle / getNextAchievementTarget は廃止。

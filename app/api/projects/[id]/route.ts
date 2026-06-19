@@ -43,6 +43,12 @@ export async function GET(
     .eq('project_id', id)
     .order('event_date', { ascending: true });
 
+  const { data: rewardTiers } = await supabase
+    .from('project_reward_tiers')
+    .select('*')
+    .eq('project_id', id)
+    .order('threshold', { ascending: true });
+
   const emailMap = await getEmailMap(supabase, (members ?? []).map((m) => m.user_id));
   const membersWithEmail = (members ?? []).map((m) => ({ ...m, email: emailMap[m.user_id] ?? null }));
 
@@ -50,6 +56,7 @@ export async function GET(
     project,
     members: membersWithEmail,
     events: events ?? [],
+    rewardTiers: rewardTiers ?? [],
     myRole: myRole ?? null,
     isSuperAdmin: sa,
   });

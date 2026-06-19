@@ -56,6 +56,7 @@ export default function StampPage({ params }: StampPageProps) {
   const [stampedAt, setStampedAt] = useState('');
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
+  const [newRewards, setNewRewards] = useState<{ label: string }[]>([]);
 
   useEffect(() => {
     loadEvent();
@@ -118,6 +119,7 @@ export default function StampPage({ params }: StampPageProps) {
         setStep('already');
       } else {
         setStampedAt(data.stamp.stamped_at);
+        setNewRewards(Array.isArray(data.newRewards) ? data.newRewards : []);
         setStep('done');
       }
     } catch {
@@ -145,7 +147,18 @@ export default function StampPage({ params }: StampPageProps) {
 
       {/* Stamp acquired */}
       {step === 'done' && event && (
-        <StampAcquired event={event} stampedAt={stampedAt} nickname={nickname} />
+        <div className="w-full max-w-sm mx-auto">
+          <StampAcquired event={event} stampedAt={stampedAt} nickname={nickname} />
+          {newRewards.length > 0 && (
+            <div className="mt-4 bg-accent/5 border border-accent/30 rounded-2xl p-4 text-center">
+              <p className="text-[13px] font-bold text-accent-deep mb-1">🎉 特典を獲得しました！</p>
+              {newRewards.map((r, i) => (
+                <p key={i} className="text-[14px] font-bold text-ink">{r.label}</p>
+              ))}
+              <p className="text-[11px] text-muted mt-1">スタンプ帳の「TICKETS」で確認できます</p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Already stamped */}
