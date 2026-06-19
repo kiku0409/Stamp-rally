@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS projects (
   name        TEXT NOT NULL,
   description TEXT,
   status      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  join_code   TEXT NOT NULL UNIQUE,  -- 共同編集者がコードで参加するためのシリアルコード
   created_by  UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
   approved_by UUID REFERENCES auth.users(id),
   approved_at TIMESTAMPTZ,

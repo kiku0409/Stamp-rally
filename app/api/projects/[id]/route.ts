@@ -54,3 +54,26 @@ export async function GET(
     isSuperAdmin: sa,
   });
 }
+
+// 削除: プロジェクトのオーナーのみ（スーパー管理者の承認は不要）
+// project_members・events・event_stamps は FK の ON DELETE CASCADE で連鎖削除される
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
+
+  const { id } = await params;
+  const supabase = createAdminClient();
+
+  const role = await getProjectRole(supabase, auth.user.id, id);
+  if (role !== 'owner') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { error } = await supabase.from('projects').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true });
+}

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Music, Ticket } from 'lucide-react';
-import { Event, EventStamp } from '@/types';
+import { EventStamp } from '@/types';
 import { getLocalParticipant, clearLocalParticipant } from '@/lib/storage';
 import StampCard from '@/components/StampCard';
 import AchievementBadge from '@/components/AchievementBadge';
@@ -12,7 +12,6 @@ import QRScanner from '@/components/QRScanner';
 
 export default function StampBookPage() {
   const router = useRouter();
-  const [events, setEvents] = useState<Event[]>([]);
   const [stamps, setStamps] = useState<EventStamp[]>([]);
   const [loading, setLoading] = useState(true);
   const [participant, setParticipant] = useState<{ participant_id: string; nickname: string } | null>(null);
@@ -30,16 +29,9 @@ export default function StampBookPage() {
 
   async function loadData(participantId: string) {
     try {
-      const [eventsRes, stampsRes] = await Promise.all([
-        fetch('/api/events'),
-        fetch(`/api/stamps?participant_id=${participantId}`),
-      ]);
-      const [eventsData, stampsData] = await Promise.all([
-        eventsRes.json(),
-        stampsRes.json(),
-      ]);
-      setEvents(eventsData);
-      setStamps(stampsData);
+      const res = await fetch(`/api/stamps?participant_id=${participantId}`);
+      const data = await res.json();
+      setStamps(Array.isArray(data) ? data : []);
     } catch {
       // silently handle error
     } finally {
@@ -52,7 +44,8 @@ export default function StampBookPage() {
     router.push(`/event/${token}/stamp`);
   }
 
-  const stampMap = new Map(stamps.map((s) => [s.event_id, s]));
+  // 取得済みスタンプ（各stampにeventが埋め込まれている）を新しい順に表示
+  const collectedStamps = stamps.filter((s) => s.event);
   const stampCount = stamps.length;
 
   if (loading) {
@@ -167,15 +160,16 @@ export default function StampBookPage() {
         </div>
 
         <div>
-          <h2 className="text-[14px] font-bold text-ink mb-3">ライブ一覧</h2>
-          {events.length === 0 ? (
+          <h2 className="text-[14px] font-bold text-ink mb-3">取得したチケット</h2>
+          {collectedStamps.length === 0 ? (
             <div className="text-center py-8 text-muted">
-              <p className="text-[14px]">イベントがまだありません</p>
+              <p className="text-[14px]">まだスタンプがありません</p>
+              <p className="text-[12px] text-faint mt-1">会場のQRを読み取って獲得しましょう</p>
             </div>
           ) : (
             <div className="space-y-2.5">
-              {events.map((event) => (
-                <StampCard key={event.id} event={event} stamp={stampMap.get(event.id)} />
+              {collectedStamps.map((s) => (
+                <StampCard key={s.id} event={s.event!} stamp={s} />
               ))}
             </div>
           )}

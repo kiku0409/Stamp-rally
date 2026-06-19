@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen } from 'lucide-react';
+import { Plus, FolderOpen, KeyRound } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { getAccessToken } from '@/lib/adminAuth';
 import { Project, ProjectStatus, ProjectRole } from '@/types';
@@ -24,8 +25,12 @@ const STATUS_CLASS: Record<ProjectStatus, string> = {
 };
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState('');
 
   useEffect(() => { loadData(); }, []);
 
@@ -39,6 +44,25 @@ export default function AdminDashboard() {
       // silently handle
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleJoin(e: { preventDefault: () => void }) {
+    e.preventDefault();
+    setJoining(true);
+    setJoinError('');
+    const token = await getAccessToken();
+    const res = await fetch('/api/projects/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ code: joinCode }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      router.push(`/admin/projects/${data.project_id}`);
+    } else {
+      setJoinError(data.error || '参加に失敗しました');
+      setJoining(false);
     }
   }
 
@@ -102,6 +126,32 @@ export default function AdminDashboard() {
           ))}
         </div>
       )}
+
+      {/* Join by serial code */}
+      <form onSubmit={handleJoin} className="mt-6 bg-white rounded-2xl p-4 border border-line card-shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <KeyRound size={15} strokeWidth={2} className="text-accent" />
+          <span className="font-bold text-ink text-[13px]">参加コードでプロジェクトに参加</span>
+        </div>
+        <p className="text-[11px] text-muted mb-2">オーナーから受け取った参加コードを入力すると、共同編集者として参加できます。</p>
+        <div className="flex gap-2">
+          <input
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            placeholder="例: AB12CD34"
+            className="flex-1 px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white tracking-widest"
+            style={{ fontFamily: 'var(--font-mono)' }}
+          />
+          <button
+            type="submit"
+            disabled={joining || !joinCode}
+            className="px-4 rounded-xl btn-brand text-white font-bold text-[13px] disabled:opacity-50 disabled:shadow-none"
+          >
+            {joining ? '...' : '参加'}
+          </button>
+        </div>
+        {joinError && <p className="text-danger text-[12px] mt-2">{joinError}</p>}
+      </form>
     </AdminLayout>
   );
 }

@@ -6,6 +6,7 @@ export interface Project {
   name: string;
   description?: string;
   status: ProjectStatus;
+  join_code?: string;
   created_by: string;
   approved_by?: string;
   approved_at?: string;

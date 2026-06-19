@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Plus, X, UserPlus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
@@ -36,8 +37,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [project, setProject] = useState<Project | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [events, setEvents] = useState<EventWithStats[]>([]);
+  const router = useRouter();
   const [myRole, setMyRole] = useState<ProjectRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
   const [inviting, setInviting] = useState(false);
@@ -100,6 +103,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const res = await fetch(`/api/projects/${id}/members?user_id=${userId}`, { method: 'DELETE', headers });
     if (res.ok) loadData();
     else { const d = await res.json(); alert(d.error || '削除に失敗しました'); }
+  }
+
+  async function handleDeleteProject() {
+    if (!confirm('このプロジェクトを削除しますか？\n配下のイベント・スタンプもすべて削除され、元に戻せません。')) return;
+    setDeleting(true);
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}`, { method: 'DELETE', headers });
+    if (res.ok) {
+      router.push('/admin');
+    } else {
+      const d = await res.json();
+      alert(d.error || '削除に失敗しました');
+      setDeleting(false);
+    }
   }
 
   async function openStampers(ev: EventWithStats) {
@@ -271,7 +288,33 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               {inviteError && <p className="text-danger text-[12px] mt-2">{inviteError}</p>}
             </form>
           )}
+
+          {/* Join code (members only) */}
+          {myRole && project.join_code && (
+            <div className="mt-3 bg-grad-soft border border-teal-border rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1.5">
+                <KeyRound size={15} strokeWidth={2} className="text-accent-deep" />
+                <span className="font-bold text-ink text-[13px]">参加コード</span>
+              </div>
+              <p className="text-[11px] text-muted mb-2">このコードを共同編集者に伝えると、相手がコード入力で参加できます。</p>
+              <p className="text-[22px] font-bold text-accent-deep tracking-[0.3em]" style={{ fontFamily: 'var(--font-mono)' }}>
+                {project.join_code}
+              </p>
+            </div>
+          )}
         </section>
+
+        {/* Delete project (owner only) */}
+        {isOwner && (
+          <button
+            onClick={handleDeleteProject}
+            disabled={deleting}
+            className="w-full mt-6 py-3 rounded-xl border border-danger-border text-danger text-[14px] font-medium flex items-center justify-center gap-2 hover:bg-danger-soft transition-colors disabled:opacity-50"
+          >
+            <Trash2 size={14} strokeWidth={2} />
+            {deleting ? '削除中...' : 'このプロジェクトを削除'}
+          </button>
+        )}
       </div>
 
       {/* QR Modal */}

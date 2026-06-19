@@ -39,6 +39,13 @@ export async function GET(request: Request) {
   return NextResponse.json((projects ?? []).map((p) => ({ ...p, role: roleMap[p.id] })));
 }
 
+// 8桁の参加コードを生成（曖昧な文字を避けた英大文字＋数字）
+function generateJoinCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (b) => chars[b % chars.length]).join('');
+}
+
 // 申請: 誰でも（承認待ち状態で）プロジェクトを申請でき、申請者は owner になる
 export async function POST(request: Request) {
   const auth = await requireAdmin(request);
@@ -50,12 +57,22 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient();
 
-  const { data: project, error } = await supabase
-    .from('projects')
-    .insert({ name, description, created_by: user.id })
-    .select()
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // join_code の一意制約違反(23505)時は再採番してリトライ
+  let project = null;
+  let lastError = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({ name, description, created_by: user.id, join_code: generateJoinCode() })
+      .select()
+      .single();
+    if (!error) { project = data; break; }
+    lastError = error;
+    if (error.code !== '23505') break;
+  }
+  if (!project) {
+    return NextResponse.json({ error: lastError?.message ?? '作成に失敗しました' }, { status: 500 });
+  }
 
   const { error: mErr } = await supabase
     .from('project_members')
