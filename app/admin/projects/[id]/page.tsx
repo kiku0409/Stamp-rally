@@ -137,6 +137,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   const isApproved = project.status === 'approved';
   const isOwner = myRole === 'owner';
+  // 承認済みプロジェクトのメンバーのみ編集可。スーパー管理者(myRole=null)は閲覧のみ。
+  const canEdit = isApproved && myRole !== null;
 
   return (
     <AdminLayout>
@@ -170,13 +172,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-[15px] font-bold text-ink">イベント</h2>
-              <Link
-                href={`/admin/events/new?project_id=${id}`}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-[9px] btn-brand text-white text-[12px] font-bold"
-              >
-                <Plus size={13} strokeWidth={2.5} />
-                新規作成
-              </Link>
+              {canEdit && (
+                <Link
+                  href={`/admin/events/new?project_id=${id}`}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-[9px] btn-brand text-white text-[12px] font-bold"
+                >
+                  <Plus size={13} strokeWidth={2.5} />
+                  新規作成
+                </Link>
+              )}
             </div>
             {events.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center border border-line card-shadow">
@@ -201,12 +205,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         >
                           QR
                         </button>
-                        <Link
-                          href={`/admin/events/${ev.id}`}
-                          className="px-3 py-1.5 rounded-lg border border-line text-[12px] text-muted hover:border-accent hover:text-accent transition-colors"
-                        >
-                          編集
-                        </Link>
+                        {canEdit && (
+                          <Link
+                            href={`/admin/events/${ev.id}`}
+                            className="px-3 py-1.5 rounded-lg border border-line text-[12px] text-muted hover:border-accent hover:text-accent transition-colors"
+                          >
+                            編集
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>
