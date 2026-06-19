@@ -21,17 +21,19 @@ export default function StampBookPage() {
 
   useEffect(() => {
     const local = getLocalParticipant();
-    setParticipant(local);
-    if (local) {
-      loadData(local.participant_id);
+    // 読み取りには復元コードが必要。コードを持たない旧端末は復元/再登録へ誘導する。
+    if (local && local.recovery_code) {
+      setParticipant(local);
+      loadData(local.recovery_code);
     } else {
+      setParticipant(null);
       setLoading(false);
     }
   }, []);
 
-  async function loadData(participantId: string) {
+  async function loadData(code: string) {
     try {
-      const res = await fetch(`/api/stamp-book?participant_id=${participantId}`);
+      const res = await fetch(`/api/stamp-book?code=${encodeURIComponent(code)}`);
       const data = await res.json();
       setGroups(Array.isArray(data) ? data : []);
     } catch {

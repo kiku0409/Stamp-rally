@@ -60,6 +60,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [tierLabel, setTierLabel] = useState('');
   const [tierError, setTierError] = useState('');
   const [addingTier, setAddingTier] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [resubmitting, setResubmitting] = useState(false);
+  const [resubmitError, setResubmitError] = useState('');
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -74,6 +78,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
     setProject(data.project);
+    setEditName(data.project?.name ?? '');
+    setEditDesc(data.project?.description ?? '');
     setMembers(data.members ?? []);
     setMyRole(data.myRole ?? null);
     setRewardTiers(data.rewardTiers ?? []);
@@ -152,6 +158,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     else { const d = await res.json(); alert(d.error || '削除に失敗しました'); }
   }
 
+  async function handleResubmit(e: { preventDefault: () => void }) {
+    e.preventDefault();
+    setResubmitting(true);
+    setResubmitError('');
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName, description: editDesc, resubmit: true }),
+    });
+    if (res.ok) {
+      loadData();
+    } else {
+      const d = await res.json();
+      setResubmitError(d.error || '再申請に失敗しました');
+    }
+    setResubmitting(false);
+  }
+
   async function handleDeleteProject() {
     if (!confirm('このプロジェクトを削除しますか？\n配下のイベント・スタンプもすべて削除され、元に戻せません。')) return;
     setDeleting(true);
@@ -226,9 +251,42 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <p className="text-[13px] text-amber-800">
               {project.status === 'pending'
                 ? 'スーパー管理者の承認待ちです。承認されるとイベントを作成できます。'
-                : 'このプロジェクトは却下されました。'}
+                : 'このプロジェクトは却下されました。内容を修正して再申請できます。'}
             </p>
           </div>
+        )}
+
+        {/* Edit & resubmit (rejected, owner only) */}
+        {project.status === 'rejected' && isOwner && (
+          <form onSubmit={handleResubmit} className="bg-white rounded-2xl p-5 border border-line card-shadow mb-5 space-y-3">
+            <h2 className="font-bold text-ink text-[14px]">内容を修正して再申請</h2>
+            <div>
+              <label className="block text-[12px] font-medium text-ink mb-1">プロジェクト名</label>
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-ink mb-1">概要</label>
+              <textarea
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white resize-none"
+              />
+            </div>
+            {resubmitError && <p className="text-danger text-[12px]">{resubmitError}</p>}
+            <button
+              type="submit"
+              disabled={resubmitting}
+              className="w-full py-2.5 rounded-xl btn-brand text-white font-bold text-[14px] disabled:opacity-50 disabled:shadow-none"
+            >
+              {resubmitting ? '再申請中...' : '修正して再申請する'}
+            </button>
+          </form>
         )}
 
         {/* Events */}

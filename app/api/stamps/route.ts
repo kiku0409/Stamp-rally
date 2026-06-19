@@ -50,25 +50,8 @@ async function issueRewards(
   return newTiers.map((t) => ({ label: t.label }));
 }
 
-// GET: Get all stamps for a participant
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const participantId = searchParams.get('participant_id');
-
-  if (!participantId) {
-    return NextResponse.json({ error: 'participant_id is required' }, { status: 400 });
-  }
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from('event_stamps')
-    .select('*, event:events(*)')
-    .eq('participant_id', participantId)
-    .order('stamped_at', { ascending: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
-}
+// 一覧取得はプロジェクト単位集約の /api/stamp-book（recovery_code 認証）に統一したため、
+// participant_id だけで全スタンプを返す公開 GET は廃止した。
 
 // POST: Acquire a stamp
 export async function POST(request: Request) {

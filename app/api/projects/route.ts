@@ -57,6 +57,21 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient();
 
+  // 軽量スパム対策: 承認待ちの申請が一定数を超えたら新規申請を拒否
+  // （本格的なリクエストレート制限は Vercel KV / Upstash 等の外部ストアが必要）
+  const PENDING_LIMIT = 5;
+  const { count: pendingCount } = await supabase
+    .from('projects')
+    .select('id', { count: 'exact', head: true })
+    .eq('created_by', user.id)
+    .eq('status', 'pending');
+  if ((pendingCount ?? 0) >= PENDING_LIMIT) {
+    return NextResponse.json(
+      { error: `承認待ちの申請が${PENDING_LIMIT}件あります。承認・却下を待ってから申請してください。` },
+      { status: 429 }
+    );
+  }
+
   // join_code の一意制約違反(23505)時は再採番してリトライ
   let project = null;
   let lastError = null;

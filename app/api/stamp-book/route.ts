@@ -1,16 +1,28 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { normalizeCode } from '@/lib/code';
 import type { StampBookGroup } from '@/types';
 
-// 来場者のスタンプ帳をプロジェクト単位に集約して返す
+// 来場者のスタンプ帳をプロジェクト単位に集約して返す。
+// 本人の秘密である recovery_code を必須にし、participant_id だけでは読めないようにする。
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const participantId = searchParams.get('participant_id');
-  if (!participantId) {
-    return NextResponse.json({ error: 'participant_id is required' }, { status: 400 });
+  const code = searchParams.get('code');
+  if (!code) {
+    return NextResponse.json({ error: 'code is required' }, { status: 400 });
   }
 
   const supabase = createAdminClient();
+
+  const { data: participant } = await supabase
+    .from('participants')
+    .select('id')
+    .eq('recovery_code', normalizeCode(code))
+    .maybeSingle();
+  if (!participant) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const participantId = participant.id;
 
   // スタンプ（イベント＋プロジェクト名を埋め込み）
   const { data: stamps, error } = await supabase

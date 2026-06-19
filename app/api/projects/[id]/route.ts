@@ -62,6 +62,52 @@ export async function GET(
   });
 }
 
+// 更新: オーナーのみ。名称/概要の編集。resubmit=true かつ却下中なら承認待ちに戻す（再申請）。
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAdmin(request);
+  if (isAuthFailure(auth)) return auth;
+
+  const { id } = await params;
+  const supabase = createAdminClient();
+  if ((await getProjectRole(supabase, auth.user.id, id)) !== 'owner') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { name, description, resubmit } = await request.json();
+
+  const { data: current } = await supabase
+    .from('projects')
+    .select('status')
+    .eq('id', id)
+    .maybeSingle();
+  if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const update: Record<string, unknown> = {};
+  if (typeof name === 'string' && name.trim()) update.name = name.trim();
+  if (typeof description === 'string') update.description = description;
+  if (resubmit && current.status === 'rejected') {
+    update.status = 'pending';
+    update.approved_by = null;
+    update.approved_at = null;
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: '更新内容がありません' }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from('projects')
+    .update(update)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
+
 // 削除: プロジェクトのオーナーのみ（スーパー管理者の承認は不要）
 // project_members・events・event_stamps は FK の ON DELETE CASCADE で連鎖削除される
 export async function DELETE(
