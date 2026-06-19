@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, Ticket } from 'lucide-react';
-import { EventStamp } from '@/types';
-import { getLocalParticipant, clearLocalParticipant } from '@/lib/storage';
+import { Music, Ticket, KeyRound } from 'lucide-react';
+import { EventStamp, LocalParticipant } from '@/types';
+import { getLocalParticipant, setLocalParticipant, clearLocalParticipant } from '@/lib/storage';
+import { formatGrouped } from '@/lib/code';
 import StampCard from '@/components/StampCard';
 import AchievementBadge from '@/components/AchievementBadge';
 import QRScanner from '@/components/QRScanner';
@@ -14,8 +15,11 @@ export default function StampBookPage() {
   const router = useRouter();
   const [stamps, setStamps] = useState<EventStamp[]>([]);
   const [loading, setLoading] = useState(true);
-  const [participant, setParticipant] = useState<{ participant_id: string; nickname: string } | null>(null);
+  const [participant, setParticipant] = useState<LocalParticipant | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [restoreCode, setRestoreCode] = useState('');
+  const [restoreError, setRestoreError] = useState('');
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     const local = getLocalParticipant();
@@ -26,6 +30,30 @@ export default function StampBookPage() {
       setLoading(false);
     }
   }, []);
+
+  async function handleRestore(e: { preventDefault: () => void }) {
+    e.preventDefault();
+    setRestoring(true);
+    setRestoreError('');
+    try {
+      const res = await fetch('/api/participants/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: restoreCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRestoreError(data.error || '復元に失敗しました');
+        setRestoring(false);
+        return;
+      }
+      setLocalParticipant({ participant_id: data.id, nickname: data.nickname, recovery_code: data.recovery_code });
+      window.location.reload();
+    } catch {
+      setRestoreError('通信エラーが発生しました');
+      setRestoring(false);
+    }
+  }
 
   async function loadData(participantId: string) {
     try {
@@ -85,6 +113,32 @@ export default function StampBookPage() {
               トップへ戻る
             </Link>
           </div>
+
+          {/* Restore by recovery code */}
+          <form onSubmit={handleRestore} className="mt-6 bg-white rounded-2xl p-4 border border-line card-shadow text-left">
+            <div className="flex items-center gap-2 mb-2">
+              <KeyRound size={15} strokeWidth={2} className="text-accent" />
+              <span className="font-bold text-ink text-[13px]">復元コードで復元</span>
+            </div>
+            <p className="text-[11px] text-muted mb-2">以前の端末で控えた復元コードを入力すると、スタンプ帳を引き継げます。</p>
+            <div className="flex gap-2">
+              <input
+                value={restoreCode}
+                onChange={(e) => setRestoreCode(e.target.value.toUpperCase())}
+                placeholder="例: ABCD-EFGH-JKLM"
+                className="flex-1 px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white tracking-widest"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              />
+              <button
+                type="submit"
+                disabled={restoring || !restoreCode}
+                className="px-4 rounded-xl btn-brand text-white font-bold text-[13px] disabled:opacity-50 disabled:shadow-none"
+              >
+                {restoring ? '...' : '復元'}
+              </button>
+            </div>
+            {restoreError && <p className="text-danger text-[12px] mt-2">{restoreError}</p>}
+          </form>
         </div>
       </main>
     );
@@ -182,10 +236,26 @@ export default function StampBookPage() {
           QRを読み取ってスタンプ獲得
         </button>
 
+        {/* Recovery code */}
+        {participant.recovery_code && (
+          <div className="bg-grad-soft border border-teal-border rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <KeyRound size={15} strokeWidth={2} className="text-accent-deep" />
+              <span className="font-bold text-ink text-[13px]">復元コード</span>
+            </div>
+            <p className="text-[11px] text-muted mb-2">
+              端末を変えたり情報をリセットしても、このコードでスタンプ帳を復元できます。控えておいてください。
+            </p>
+            <p className="text-[20px] font-bold text-accent-deep tracking-[0.2em]" style={{ fontFamily: 'var(--font-mono)' }}>
+              {formatGrouped(participant.recovery_code)}
+            </p>
+          </div>
+        )}
+
         <div className="pt-2 border-t border-line">
           <button
             onClick={() => {
-              if (confirm('参加者情報をリセットしますか？スタンプ帳のデータは保持されます。')) {
+              if (confirm('参加者情報をリセットしますか？\n復元コードを控えていれば、別の端末や再登録時に復元できます。')) {
                 clearLocalParticipant();
                 window.location.href = '/';
               }

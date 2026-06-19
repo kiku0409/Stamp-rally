@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { generateCode } from '@/lib/code';
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -10,12 +11,24 @@ export async function POST(request: Request) {
   }
 
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from('participants')
-    .insert({ nickname: nickname.trim() })
-    .select()
-    .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  // recovery_code の一意制約違反(23505)時は再採番してリトライ
+  let participant = null;
+  let lastError = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data, error } = await supabase
+      .from('participants')
+      .insert({ nickname: nickname.trim(), recovery_code: generateCode(12) })
+      .select()
+      .single();
+    if (!error) { participant = data; break; }
+    lastError = error;
+    if (error.code !== '23505') break;
+  }
+
+  if (!participant) {
+    return NextResponse.json({ error: lastError?.message ?? '登録に失敗しました' }, { status: 500 });
+  }
+
+  return NextResponse.json(participant, { status: 201 });
 }

@@ -46,9 +46,10 @@ CREATE TABLE IF NOT EXISTS events (
 
 -- Participants table (no auth required)
 CREATE TABLE IF NOT EXISTS participants (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nickname   TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nickname      TEXT NOT NULL,
+  recovery_code TEXT NOT NULL UNIQUE,  -- 別端末からスタンプ帳を復元するためのコード
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Event stamps table

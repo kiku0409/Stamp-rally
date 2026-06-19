@@ -35,6 +35,7 @@ export interface Event {
 export interface Participant {
   id: string;
   nickname: string;
+  recovery_code?: string;
   created_at: string;
 }
 
@@ -49,6 +50,7 @@ export interface EventStamp {
 export interface LocalParticipant {
   participant_id: string;
   nickname: string;
+  recovery_code?: string;
 }
 
 export interface StampResult {

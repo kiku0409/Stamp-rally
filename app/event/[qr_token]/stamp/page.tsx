@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Music, Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
 import { Event } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import NicknameForm from '@/components/NicknameForm';
@@ -95,7 +95,7 @@ export default function StampPage({ params }: StampPageProps) {
       });
       if (!res.ok) throw new Error('参加者登録に失敗しました');
       const participant = await res.json();
-      setLocalParticipant({ participant_id: participant.id, nickname: nick });
+      setLocalParticipant({ participant_id: participant.id, nickname: nick, recovery_code: participant.recovery_code });
       setNickname(nick);
       await acquireStamp(event!.id, participant.id);
     } catch (e) {
