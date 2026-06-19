@@ -5,6 +5,10 @@
 
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS join_code TEXT;
 
+-- デプロイ完了までの間、旧コード（join_code を渡さない）での作成も失敗しないよう
+-- DBデフォルトで自動採番しておく（新コードは自前のコードを渡す）
+ALTER TABLE projects ALTER COLUMN join_code SET DEFAULT upper(substr(md5(random()::text), 1, 8));
+
 -- 既存行にランダムな8桁コードをバックフィル
 UPDATE projects
 SET join_code = upper(substr(md5(random()::text || id::text), 1, 8))
