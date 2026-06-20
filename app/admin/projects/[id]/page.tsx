@@ -3,12 +3,13 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift } from 'lucide-react';
+import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift, Pencil } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
 import { Event, Project, ProjectMember, ProjectRole, ProjectStatus, RewardTier } from '@/types';
 import { formatDate } from '@/lib/utils';
+import { toCsv, downloadCsv } from '@/lib/csv';
 
 interface MemberRow extends ProjectMember {
   email: string | null;
@@ -25,6 +26,7 @@ interface Recipient {
   label: string;
   threshold: number;
   issued_at: string;
+  redeemed_at: string | null;
 }
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -64,6 +66,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [editDesc, setEditDesc] = useState('');
   const [resubmitting, setResubmitting] = useState(false);
   const [resubmitError, setResubmitError] = useState('');
+  const [editTierId, setEditTierId] = useState<string | null>(null);
+  const [editTierThreshold, setEditTierThreshold] = useState('');
+  const [editTierLabel, setEditTierLabel] = useState('');
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -73,32 +78,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   }
 
   async function loadData() {
-    const headers = await authHeaders();
-    const res = await fetch(`/api/projects/${id}`, { headers });
-    if (!res.ok) { setLoading(false); return; }
-    const data = await res.json();
-    setProject(data.project);
-    setEditName(data.project?.name ?? '');
-    setEditDesc(data.project?.description ?? '');
-    setMembers(data.members ?? []);
-    setMyRole(data.myRole ?? null);
-    setRewardTiers(data.rewardTiers ?? []);
+    try {
+      const headers = await authHeaders();
+      const res = await fetch(`/api/projects/${id}`, { headers });
+      if (!res.ok) return;
+      const data = await res.json();
+      setProject(data.project);
+      setEditName(data.project?.name ?? '');
+      setEditDesc(data.project?.description ?? '');
+      setMembers(data.members ?? []);
+      setMyRole(data.myRole ?? null);
+      setRewardTiers(data.rewardTiers ?? []);
+      // stampCount は API が集約済み（イベント毎の逐次取得を廃止）
+      setEvents((data.events ?? []) as EventWithStats[]);
 
-    const evs: Event[] = data.events ?? [];
-    const withStats = await Promise.all(
-      evs.map(async (ev) => {
-        const r = await fetch(`/api/admin/stats?event_id=${ev.id}`, { headers });
-        const s = await r.json();
-        return { ...ev, stampCount: s.stampCount || 0 };
-      })
-    );
-    setEvents(withStats);
-
-    // 特典取得者一覧
-    const rr = await fetch(`/api/projects/${id}/rewards`, { headers });
-    if (rr.ok) setRecipients(await rr.json());
-
-    setLoading(false);
+      // 特典取得者一覧
+      const rr = await fetch(`/api/projects/${id}/rewards`, { headers });
+      if (rr.ok) setRecipients(await rr.json());
+    } catch {
+      // 失敗してもスピナーは止める
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleAddTier(e: { preventDefault: () => void }) {
@@ -128,6 +129,51 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const res = await fetch(`/api/projects/${id}/reward-tiers?tier_id=${tierId}`, { method: 'DELETE', headers });
     if (res.ok) loadData();
     else { const d = await res.json(); alert(d.error || '削除に失敗しました'); }
+  }
+
+  function exportRecipientsCsv() {
+    const rows = recipients.map((r) => [
+      r.nickname,
+      r.label,
+      r.threshold,
+      new Date(r.issued_at).toLocaleString('ja-JP'),
+      r.redeemed_at ? '引換済' : '未引換',
+      r.redeemed_at ? new Date(r.redeemed_at).toLocaleString('ja-JP') : '',
+    ]);
+    const csv = toCsv(['ニックネーム', '特典', '必要個数', '獲得日時', '引換状態', '引換日時'], rows);
+    downloadCsv(`特典取得者_${project?.name ?? ''}.csv`, csv);
+  }
+
+  async function exportStampsCsv() {
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}/stamps`, { headers });
+    if (!res.ok) { alert('取得に失敗しました'); return; }
+    const data: { event_title: string; nickname: string; stamped_at: string }[] = await res.json();
+    const rows = data.map((d) => [d.event_title, d.nickname, new Date(d.stamped_at).toLocaleString('ja-JP')]);
+    const csv = toCsv(['イベント', 'ニックネーム', '取得日時'], rows);
+    downloadCsv(`スタンプ取得者_${project?.name ?? ''}.csv`, csv);
+  }
+
+  function startEditTier(t: RewardTier) {
+    setEditTierId(t.id);
+    setEditTierThreshold(String(t.threshold));
+    setEditTierLabel(t.label);
+  }
+
+  async function handleSaveTier() {
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}/reward-tiers`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier_id: editTierId, threshold: Number(editTierThreshold), label: editTierLabel }),
+    });
+    if (res.ok) {
+      setEditTierId(null);
+      loadData();
+    } else {
+      const d = await res.json();
+      alert(d.error || '更新に失敗しました');
+    }
   }
 
   async function handleInvite(e: { preventDefault: () => void }) {
@@ -253,6 +299,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 ? 'スーパー管理者の承認待ちです。承認されるとイベントを作成できます。'
                 : 'このプロジェクトは却下されました。内容を修正して再申請できます。'}
             </p>
+            {project.status === 'rejected' && project.reject_reason && (
+              <p className="text-[12px] text-amber-900 mt-2 bg-amber-100 rounded-lg px-3 py-2">
+                却下理由: {project.reject_reason}
+              </p>
+            )}
           </div>
         )}
 
@@ -294,15 +345,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-[15px] font-bold text-ink">イベント</h2>
-              {canEdit && (
-                <Link
-                  href={`/admin/events/new?project_id=${id}`}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-[9px] btn-brand text-white text-[12px] font-bold"
-                >
-                  <Plus size={13} strokeWidth={2.5} />
-                  新規作成
-                </Link>
-              )}
+              <div className="flex items-center gap-2">
+                {events.length > 0 && (
+                  <button onClick={exportStampsCsv} className="text-[12px] text-accent font-medium border border-teal-border rounded-lg px-2.5 py-1.5 hover:bg-soft transition-colors">
+                    スタンプCSV
+                  </button>
+                )}
+                {canEdit && (
+                  <Link
+                    href={`/admin/events/new?project_id=${id}`}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-[9px] btn-brand text-white text-[12px] font-bold"
+                  >
+                    <Plus size={13} strokeWidth={2.5} />
+                    新規作成
+                  </Link>
+                )}
+              </div>
             </div>
             {events.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center border border-line card-shadow">
@@ -357,18 +415,47 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           ) : (
             <div className="space-y-2">
               {rewardTiers.map((t) => (
-                <div key={t.id} className="bg-white rounded-2xl p-3.5 border border-line card-shadow flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-[13px] font-bold text-accent shrink-0">{t.threshold}個</span>
-                    <span className="text-[13px] text-ink truncate">{t.label}</span>
-                  </div>
-                  {isOwner && (
-                    <button
-                      onClick={() => handleDeleteTier(t.id)}
-                      className="p-2 rounded-lg border border-danger-border text-danger hover:bg-danger-soft transition-colors shrink-0"
-                    >
-                      <Trash2 size={14} strokeWidth={2} />
-                    </button>
+                <div key={t.id} className="bg-white rounded-2xl p-3.5 border border-line card-shadow">
+                  {editTierId === t.id ? (
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        min={1}
+                        value={editTierThreshold}
+                        onChange={(e) => setEditTierThreshold(e.target.value)}
+                        className="w-16 px-2 py-2 rounded-lg border border-line focus:border-accent focus:outline-none text-[13px] text-ink bg-white"
+                      />
+                      <input
+                        value={editTierLabel}
+                        onChange={(e) => setEditTierLabel(e.target.value)}
+                        className="flex-1 px-2 py-2 rounded-lg border border-line focus:border-accent focus:outline-none text-[13px] text-ink bg-white"
+                      />
+                      <button onClick={handleSaveTier} className="px-3 py-2 rounded-lg btn-brand text-white text-[12px] font-bold">保存</button>
+                      <button onClick={() => setEditTierId(null)} className="px-2 py-2 rounded-lg border border-line text-muted text-[12px]">取消</button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-[13px] font-bold text-accent shrink-0">{t.threshold}個</span>
+                        <span className="text-[13px] text-ink truncate">{t.label}</span>
+                      </div>
+                      {isOwner && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => startEditTier(t)}
+                            className="p-2 rounded-lg border border-line text-muted hover:border-accent hover:text-accent transition-colors"
+                          >
+                            <Pencil size={14} strokeWidth={2} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTier(t.id)}
+                            className="p-2 rounded-lg border border-danger-border text-danger hover:bg-danger-soft transition-colors"
+                          >
+                            <Trash2 size={14} strokeWidth={2} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
@@ -410,7 +497,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Reward recipients */}
         <section className="mb-6">
-          <h2 className="text-[15px] font-bold text-ink mb-3">特典取得者（{recipients.length}）</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-bold text-ink">特典取得者（{recipients.length}）</h2>
+            <div className="flex items-center gap-2">
+              {recipients.length > 0 && (
+                <button onClick={exportRecipientsCsv} className="text-[12px] text-accent font-medium border border-teal-border rounded-lg px-2.5 py-1.5 hover:bg-soft transition-colors">
+                  CSV
+                </button>
+              )}
+              <Link href="/admin/redeem" className="text-[12px] text-white font-bold btn-brand rounded-lg px-2.5 py-1.5">
+                引き換えスキャン
+              </Link>
+            </div>
+          </div>
           {recipients.length === 0 ? (
             <div className="bg-white rounded-2xl p-4 border border-line card-shadow">
               <p className="text-muted text-[13px]">まだ特典取得者がいません</p>
@@ -423,9 +522,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-[14px] font-medium text-ink">{r.nickname}</span>
                     <span className="text-[12px] text-muted ml-2">{r.label}（{r.threshold}個）</span>
                   </div>
-                  <span className="text-[11px] text-faint shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {new Date(r.issued_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  {r.redeemed_at ? (
+                    <span className="text-[10px] text-danger font-medium shrink-0">引換済</span>
+                  ) : (
+                    <span className="text-[10px] text-accent font-medium shrink-0">未引換</span>
+                  )}
                 </div>
               ))}
             </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, ShieldCheck } from 'lucide-react';
+import { LogOut, ShieldCheck, Gift } from 'lucide-react';
 import { getSession, signOut, getCurrentUser, isSuperAdmin } from '@/lib/adminAuth';
 import type { User } from '@supabase/supabase-js';
 
@@ -45,6 +45,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3">
             <span className="w-2 h-2 rounded-full bg-white inline-block" />
             <Link href="/admin" className="font-bold text-white text-[14px]">管理画面</Link>
+            <Link
+              href="/admin/redeem"
+              className="flex items-center gap-1 text-[12px] text-white/70 hover:text-white transition-colors"
+            >
+              <Gift size={12} strokeWidth={2} />
+              引き換え
+            </Link>
             {isSuperAdmin(currentUser) && (
               <Link
                 href="/admin/super"

@@ -7,6 +7,7 @@ export interface Project {
   description?: string;
   status: ProjectStatus;
   join_code?: string;
+  reject_reason?: string;
   created_by: string;
   approved_by?: string;
   approved_at?: string;
@@ -34,6 +35,9 @@ export interface ParticipantReward {
   participant_id: string;
   tier_id: string;
   project_id: string;
+  redeem_code?: string;
+  redeemed_at?: string | null;
+  redeemed_by?: string | null;
   issued_at: string;
 }
 
@@ -45,12 +49,19 @@ export interface StampBookTier {
   earned: boolean;
 }
 
+export interface StampBookReward {
+  label: string;
+  issued_at: string;
+  redeem_code: string;
+  redeemed_at: string | null;
+}
+
 export interface StampBookGroup {
   project: { id: string; name: string };
   count: number;
   stamps: EventStamp[];
   tiers: StampBookTier[];
-  rewards: { label: string; issued_at: string }[];
+  rewards: StampBookReward[];
 }
 
 export interface Event {

@@ -16,9 +16,17 @@ export async function POST(
   const { id } = await params;
   const supabase = createAdminClient();
 
+  let reason: string | null = null;
+  try {
+    const body = await request.json();
+    if (typeof body?.reason === 'string' && body.reason.trim()) reason = body.reason.trim();
+  } catch {
+    // body 無しでも許容
+  }
+
   const { data, error } = await supabase
     .from('projects')
-    .update({ status: 'rejected', approved_by: auth.user.id, approved_at: new Date().toISOString() })
+    .update({ status: 'rejected', approved_by: auth.user.id, approved_at: new Date().toISOString(), reject_reason: reason })
     .eq('id', id)
     .select()
     .single();

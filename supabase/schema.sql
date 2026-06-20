@@ -13,9 +13,10 @@ CREATE TABLE IF NOT EXISTS projects (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT NOT NULL,
   description TEXT,
-  status      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
-  join_code   TEXT NOT NULL UNIQUE,  -- 共同編集者がコードで参加するためのシリアルコード
-  created_by  UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+  status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  join_code     TEXT NOT NULL UNIQUE,  -- 共同編集者がコードで参加するためのシリアルコード
+  reject_reason TEXT,                  -- 却下理由（オーナーが再申請時に参照）
+  created_by    UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
   approved_by UUID REFERENCES auth.users(id),
   approved_at TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -72,11 +73,15 @@ CREATE TABLE IF NOT EXISTS project_reward_tiers (
 );
 
 -- Participant rewards: 誰がどの段階を獲得したか
+-- redeem_code: 引き換えQRの値。redeemed_at が入ると使用済み。
 CREATE TABLE IF NOT EXISTS participant_rewards (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   participant_id UUID NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
   tier_id        UUID NOT NULL REFERENCES project_reward_tiers(id) ON DELETE CASCADE,
   project_id     UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  redeem_code    TEXT NOT NULL UNIQUE,
+  redeemed_at    TIMESTAMPTZ,
+  redeemed_by    UUID REFERENCES auth.users(id),
   issued_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (participant_id, tier_id)
 );

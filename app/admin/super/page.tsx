@@ -46,11 +46,17 @@ export default function SuperAdminPage() {
   }
 
   async function act(projectId: string, action: 'approve' | 'reject') {
+    let reason: string | null = null;
+    if (action === 'reject') {
+      reason = window.prompt('却下理由を入力してください（任意・申請者に表示されます）', '');
+      if (reason === null) return; // キャンセル
+    }
     setBusyId(projectId);
     const token = await getAccessToken();
     const res = await fetch(`/api/projects/${projectId}/${action}`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: action === 'reject' ? JSON.stringify({ reason }) : undefined,
     });
     if (res.ok) await loadData();
     else { const d = await res.json(); alert(d.error || '操作に失敗しました'); }

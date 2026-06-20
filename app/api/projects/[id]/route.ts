@@ -43,6 +43,19 @@ export async function GET(
     .eq('project_id', id)
     .order('event_date', { ascending: true });
 
+  // 各イベントのスタンプ数を1クエリで集計（クライアントの逐次取得を不要にする）
+  const eventList = events ?? [];
+  const eventIds = eventList.map((e) => e.id);
+  const countMap = new Map<string, number>();
+  if (eventIds.length > 0) {
+    const { data: stampRows } = await supabase
+      .from('event_stamps')
+      .select('event_id')
+      .in('event_id', eventIds);
+    for (const r of stampRows ?? []) countMap.set(r.event_id, (countMap.get(r.event_id) ?? 0) + 1);
+  }
+  const eventsWithCount = eventList.map((e) => ({ ...e, stampCount: countMap.get(e.id) ?? 0 }));
+
   const { data: rewardTiers } = await supabase
     .from('project_reward_tiers')
     .select('*')
@@ -55,7 +68,7 @@ export async function GET(
   return NextResponse.json({
     project,
     members: membersWithEmail,
-    events: events ?? [],
+    events: eventsWithCount,
     rewardTiers: rewardTiers ?? [],
     myRole: myRole ?? null,
     isSuperAdmin: sa,

@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Music, Ticket, KeyRound, Gift, ChevronRight } from 'lucide-react';
-import { StampBookGroup } from '@/types';
+import { StampBookGroup, StampBookReward } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import StampCard from '@/components/StampCard';
 import QRScanner from '@/components/QRScanner';
+import RewardTicketModal from '@/components/RewardTicketModal';
 
 export default function StampBookPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function StampBookPage() {
   const [restoreCode, setRestoreCode] = useState('');
   const [restoreError, setRestoreError] = useState('');
   const [restoring, setRestoring] = useState(false);
+  const [selectedReward, setSelectedReward] = useState<{ reward: StampBookReward; projectName: string } | null>(null);
 
   useEffect(() => {
     const local = getLocalParticipant();
@@ -190,7 +192,13 @@ export default function StampBookPage() {
             <p className="text-[12px] text-faint mt-1">会場のQRを読み取って獲得しましょう</p>
           </div>
         ) : (
-          groups.map((g) => <ProjectSection key={g.project.id} group={g} />)
+          groups.map((g) => (
+            <ProjectSection
+              key={g.project.id}
+              group={g}
+              onShowReward={(reward) => setSelectedReward({ reward, projectName: g.project.name })}
+            />
+          ))
         )}
 
         <button
@@ -200,11 +208,20 @@ export default function StampBookPage() {
           QRを読み取ってスタンプ獲得
         </button>
       </div>
+
+      {selectedReward && (
+        <RewardTicketModal
+          reward={selectedReward.reward}
+          nickname={participant.nickname}
+          projectName={selectedReward.projectName}
+          onClose={() => setSelectedReward(null)}
+        />
+      )}
     </main>
   );
 }
 
-function ProjectSection({ group }: { group: StampBookGroup }) {
+function ProjectSection({ group, onShowReward }: { group: StampBookGroup; onShowReward: (r: StampBookReward) => void }) {
   const { project, count, tiers, rewards, stamps } = group;
   const nextTier = tiers.find((t) => !t.earned);
   const progress = nextTier ? Math.min((count / nextTier.threshold) * 100, 100) : 100;
@@ -236,15 +253,23 @@ function ProjectSection({ group }: { group: StampBookGroup }) {
           </div>
         )}
 
-        {/* Earned reward tickets */}
+        {/* Earned reward tickets (tap to show QR) */}
         {rewards.length > 0 && (
           <div className="mt-3 space-y-2">
             {rewards.map((r, i) => (
-              <div key={i} className="flex items-center gap-2 bg-accent/5 border border-accent/30 rounded-xl px-3 py-2.5">
+              <button
+                key={i}
+                onClick={() => onShowReward(r)}
+                className="w-full flex items-center gap-2 bg-accent/5 border border-accent/30 rounded-xl px-3 py-2.5 text-left hover:bg-accent/10 transition-colors"
+              >
                 <Gift size={16} strokeWidth={2} className="text-accent-deep shrink-0" />
                 <span className="text-[13px] font-bold text-accent-deep flex-1">特典: {r.label}</span>
-                <span className="text-[10px] text-faint" style={{ fontFamily: 'var(--font-mono)' }}>獲得済み</span>
-              </div>
+                {r.redeemed_at ? (
+                  <span className="text-[10px] text-danger font-medium">引換済</span>
+                ) : (
+                  <span className="text-[11px] text-accent font-medium flex items-center gap-0.5">表示 <ChevronRight size={12} strokeWidth={2.5} /></span>
+                )}
+              </button>
             ))}
           </div>
         )}

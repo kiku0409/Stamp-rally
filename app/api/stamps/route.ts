@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { generateCode } from '@/lib/code';
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -44,10 +45,20 @@ async function issueRewards(
   const newTiers = tiers.filter((t) => !existingIds.has(t.id));
   if (newTiers.length === 0) return [];
 
-  await supabase.from('participant_rewards').insert(
-    newTiers.map((t) => ({ participant_id: participantId, tier_id: t.id, project_id: projectId }))
-  );
-  return newTiers.map((t) => ({ label: t.label }));
+  const granted: { label: string }[] = [];
+  for (const t of newTiers) {
+    // redeem_code の一意制約違反は再採番してリトライ
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { error } = await supabase
+        .from('participant_rewards')
+        .insert({ participant_id: participantId, tier_id: t.id, project_id: projectId, redeem_code: generateCode(10) });
+      if (!error) { granted.push({ label: t.label }); break; }
+      if (error.code !== '23505') break;
+      // 23505 が participant+tier の重複（並行付与）なら中断、redeem_code 重複なら再試行
+      if (existingIds.has(t.id)) break;
+    }
+  }
+  return granted;
 }
 
 // 一覧取得はプロジェクト単位集約の /api/stamp-book（recovery_code 認証）に統一したため、

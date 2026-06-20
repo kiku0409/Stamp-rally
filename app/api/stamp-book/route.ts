@@ -55,17 +55,17 @@ export async function GET(request: Request) {
   if (projectIds.length > 0) {
     const [{ data: tiers }, { data: rewards }] = await Promise.all([
       supabase.from('project_reward_tiers').select('*').in('project_id', projectIds).order('threshold', { ascending: true }),
-      supabase.from('participant_rewards').select('project_id, issued_at, tier:project_reward_tiers(label)').eq('participant_id', participantId).in('project_id', projectIds),
+      supabase.from('participant_rewards').select('project_id, issued_at, redeem_code, redeemed_at, tier:project_reward_tiers(label)').eq('participant_id', participantId).in('project_id', projectIds),
     ]);
 
     for (const t of tiers ?? []) {
       const g = groups.get(t.project_id);
       if (g) g.tiers.push({ id: t.id, threshold: t.threshold, label: t.label, earned: g.count >= t.threshold });
     }
-    type RewardRow = { project_id: string; issued_at: string; tier?: { label: string } | null };
+    type RewardRow = { project_id: string; issued_at: string; redeem_code: string; redeemed_at: string | null; tier?: { label: string } | null };
     for (const r of (rewards ?? []) as unknown as RewardRow[]) {
       const g = groups.get(r.project_id);
-      if (g) g.rewards.push({ label: r.tier?.label ?? '特典', issued_at: r.issued_at });
+      if (g) g.rewards.push({ label: r.tier?.label ?? '特典', issued_at: r.issued_at, redeem_code: r.redeem_code, redeemed_at: r.redeemed_at });
     }
   }
 
