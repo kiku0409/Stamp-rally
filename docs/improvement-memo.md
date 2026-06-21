@@ -45,9 +45,13 @@
 
 ## C. ユーザー機能
 
-### C-1. ユーザー名の変更
-- **現状**: `/profile` ページでニックネーム変更は実装済み（`lib/storage.ts` の localStorage）。
-- **要望内容の確認が必要**: すでに変更できるが、UI上わかりにくい？それとも別の制約がある？
+### C-1. ユーザー名（ニックネーム）の変更
+- **現状**: `/profile` ページはニックネームを**表示するだけ**で編集UIは未実装（`app/profile/page.tsx`）。
+- **要望**: プロフィールページでニックネームをタップ・編集できるようにしたい。
+- **実装内容**:
+  - ニックネーム欄をタップでテキスト入力に切り替え（インライン編集）
+  - 保存時は `lib/storage.ts` の `setLocalParticipant` で localStorage 更新
+  - DB側の `participants.nickname` も更新（`PATCH /api/participants`）
 
 ---
 
