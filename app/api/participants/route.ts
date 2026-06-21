@@ -32,3 +32,24 @@ export async function POST(request: Request) {
 
   return NextResponse.json(participant, { status: 201 });
 }
+
+export async function PATCH(request: Request) {
+  const body = await request.json();
+  const { participant_id, nickname } = body;
+
+  if (!participant_id || !nickname?.trim()) {
+    return NextResponse.json({ error: 'participant_id and nickname are required' }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('participants')
+    .update({ nickname: nickname.trim() })
+    .eq('id', participant_id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

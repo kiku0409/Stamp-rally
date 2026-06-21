@@ -162,7 +162,7 @@ export default function StampBookPage() {
                   {participant.nickname} さん
                   <ChevronRight size={15} strokeWidth={2.5} className="text-white/60 group-hover:text-white transition-colors" />
                 </h1>
-                <p className="text-white/70 text-[12px]">タップでユーザー情報・復元コード</p>
+                <p className="text-white/70 text-[10px]">タップでユーザー情報・復元コード</p>
               </div>
             </button>
             <div className="text-right">
