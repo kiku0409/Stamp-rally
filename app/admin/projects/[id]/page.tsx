@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift, Pencil } from 'lucide-react';
+import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift, Pencil, Check } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
@@ -69,6 +69,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [editTierId, setEditTierId] = useState<string | null>(null);
   const [editTierThreshold, setEditTierThreshold] = useState('');
   const [editTierLabel, setEditTierLabel] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -237,6 +239,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
+  async function handleSaveName() {
+    if (!editName.trim()) return;
+    setSavingName(true);
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName }),
+    });
+    if (res.ok) {
+      setEditingName(false);
+      loadData();
+    }
+    setSavingName(false);
+  }
+
   async function openStampers(ev: EventWithStats) {
     setStampersEvent(ev);
     setStampers([]);
@@ -282,7 +300,33 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <Link href="/admin" className="text-muted hover:text-ink transition-colors">
             <ChevronLeft size={20} strokeWidth={2} />
           </Link>
-          <h1 className="text-[20px] font-bold text-ink flex-1 truncate">{project.name}</h1>
+          {editingName && isOwner ? (
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                autoFocus
+                maxLength={50}
+                className="flex-1 min-w-0 text-[18px] font-bold text-ink border-b-2 border-accent outline-none bg-transparent"
+              />
+              <button onClick={handleSaveName} disabled={savingName || !editName.trim()} className="text-accent-deep disabled:opacity-40 shrink-0">
+                <Check size={18} strokeWidth={2.5} />
+              </button>
+              <button onClick={() => setEditingName(false)} className="text-muted shrink-0">
+                <X size={18} strokeWidth={2.5} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <h1 className="text-[20px] font-bold text-ink truncate">{project.name}</h1>
+              {isOwner && (
+                <button onClick={() => setEditingName(true)} className="text-muted hover:text-accent-deep transition-colors shrink-0">
+                  <Pencil size={14} strokeWidth={2} />
+                </button>
+              )}
+            </div>
+          )}
           <span className={`shrink-0 text-[11px] font-medium px-2 py-1 rounded-full border ${STATUS_CLASS[project.status]}`}>
             {STATUS_LABEL[project.status]}
           </span>
