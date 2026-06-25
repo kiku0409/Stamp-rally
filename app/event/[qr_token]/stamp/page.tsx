@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle, KeyRound } from 'lucide-react';
 import { Event } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import NicknameForm from '@/components/NicknameForm';
@@ -57,6 +57,10 @@ export default function StampPage({ params }: StampPageProps) {
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const [newRewards, setNewRewards] = useState<{ label: string }[]>([]);
+  const [showRestore, setShowRestore] = useState(false);
+  const [restoreCode, setRestoreCode] = useState('');
+  const [restoreError, setRestoreError] = useState('');
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     loadEvent();
@@ -83,6 +87,31 @@ export default function StampPage({ params }: StampPageProps) {
     } catch {
       setError('通信エラーが発生しました');
       setStep('error');
+    }
+  }
+
+  async function handleRestore(e: { preventDefault: () => void }) {
+    e.preventDefault();
+    setRestoring(true);
+    setRestoreError('');
+    try {
+      const res = await fetch('/api/participants/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: restoreCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRestoreError(data.error || '復元に失敗しました');
+        setRestoring(false);
+        return;
+      }
+      setLocalParticipant({ participant_id: data.id, nickname: data.nickname, recovery_code: data.recovery_code });
+      setNickname(data.nickname);
+      await acquireStamp(event!.id, data.id);
+    } catch {
+      setRestoreError('通信エラーが発生しました');
+      setRestoring(false);
     }
   }
 
@@ -142,7 +171,46 @@ export default function StampPage({ params }: StampPageProps) {
 
       {/* Register nickname */}
       {step === 'register' && (
-        <NicknameForm onSubmit={handleNicknameSubmit} />
+        <div className="w-full max-w-sm mx-auto">
+          <NicknameForm onSubmit={handleNicknameSubmit} />
+          <div className="mt-4">
+            {!showRestore ? (
+              <button
+                onClick={() => setShowRestore(true)}
+                className="w-full text-[13px] text-muted text-center py-2 hover:text-accent transition-colors"
+              >
+                すでに登録済みの方はこちら
+              </button>
+            ) : (
+              <form onSubmit={handleRestore} className="bg-white rounded-2xl p-4 border border-line card-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <KeyRound size={15} strokeWidth={2} className="text-accent" />
+                  <span className="font-bold text-ink text-[13px]">復元コードで再開</span>
+                </div>
+                <p className="text-[11px] text-muted mb-3">
+                  以前のスタンプを引き継いでスタンプを取得します。
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    value={restoreCode}
+                    onChange={(e) => setRestoreCode(e.target.value.toUpperCase())}
+                    placeholder="例: ABCD-EFGH-JKLM"
+                    className="flex-1 px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white tracking-widest"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={restoring || !restoreCode}
+                    className="px-4 rounded-xl btn-brand text-white font-bold text-[13px] disabled:opacity-50 disabled:shadow-none"
+                  >
+                    {restoring ? '...' : '再開'}
+                  </button>
+                </div>
+                {restoreError && <p className="text-danger text-[12px] mt-2">{restoreError}</p>}
+              </form>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Stamp acquired */}
