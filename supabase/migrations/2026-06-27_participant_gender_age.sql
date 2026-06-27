@@ -1,0 +1,3 @@
+ALTER TABLE participants
+  ADD COLUMN IF NOT EXISTS gender    TEXT,
+  ADD COLUMN IF NOT EXISTS age_group TEXT;
