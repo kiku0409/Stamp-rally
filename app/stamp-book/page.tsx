@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, Ticket, KeyRound, Gift, ChevronRight } from 'lucide-react';
+import { Music, Ticket, KeyRound, Gift, ChevronRight, Check } from 'lucide-react';
 import { StampBookGroup, StampBookReward } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import StampCard from '@/components/StampCard';
@@ -20,10 +20,14 @@ export default function StampBookPage() {
   const [restoreError, setRestoreError] = useState('');
   const [restoring, setRestoring] = useState(false);
   const [selectedReward, setSelectedReward] = useState<{ reward: StampBookReward; projectName: string } | null>(null);
+  const [redemptionPopup, setRedemptionPopup] = useState<{ label: string } | null>(null);
+
+  // Tracks redeem_codes already known to be redeemed, to detect new redemptions
+  const redeemedCodesRef = useRef<Set<string>>(new Set());
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
   useEffect(() => {
     const local = getLocalParticipant();
-    // 読み取りには復元コードが必要。コードを持たない旧端末は復元/再登録へ誘導する。
     if (local && local.recovery_code) {
       setParticipant(local);
       loadData(local.recovery_code);
@@ -37,13 +41,64 @@ export default function StampBookPage() {
     try {
       const res = await fetch(`/api/stamp-book?code=${encodeURIComponent(code)}`);
       const data = await res.json();
-      setGroups(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        setGroups(data);
+        // Seed known redeemed codes so we don't show a popup for already-redeemed rewards
+        const already = new Set(
+          data.flatMap((g: StampBookGroup) =>
+            g.rewards.filter((r) => r.redeemed_at).map((r) => r.redeem_code)
+          )
+        );
+        redeemedCodesRef.current = already;
+        setRecoveryCode(code);
+      }
     } catch {
       // silently handle error
     } finally {
       setLoading(false);
     }
   }
+
+  // Polling: detect when admin redeems a reward and show popup
+  useEffect(() => {
+    if (!recoveryCode) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/stamp-book?code=${encodeURIComponent(recoveryCode)}`);
+        const data: StampBookGroup[] = await res.json();
+        if (!Array.isArray(data)) return;
+
+        let newLabel: string | null = null;
+        for (const group of data) {
+          for (const reward of group.rewards) {
+            if (reward.redeemed_at && !redeemedCodesRef.current.has(reward.redeem_code)) {
+              redeemedCodesRef.current.add(reward.redeem_code);
+              newLabel = reward.label;
+            }
+          }
+        }
+
+        setGroups(data);
+        if (newLabel) setRedemptionPopup({ label: newLabel });
+
+        // Stop polling when no unredeemed rewards remain
+        const hasUnredeemed = data.some((g) => g.rewards.some((r) => !r.redeemed_at));
+        if (!hasUnredeemed) clearInterval(interval);
+      } catch {
+        // silently ignore polling errors
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [recoveryCode]);
+
+  // Auto-close redemption popup after 4 seconds
+  useEffect(() => {
+    if (!redemptionPopup) return;
+    const timer = setTimeout(() => setRedemptionPopup(null), 4000);
+    return () => clearTimeout(timer);
+  }, [redemptionPopup]);
 
   async function handleRestore(e: { preventDefault: () => void }) {
     e.preventDefault();
@@ -148,11 +203,27 @@ export default function StampBookPage() {
     <main className="min-h-screen bg-screen-bg">
       {showScanner && <QRScanner onScan={handleQRScan} onClose={() => setShowScanner(false)} />}
 
+      {/* Redemption popup */}
+      {redemptionPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setRedemptionPopup(null)}
+        >
+          <div className="bg-white rounded-3xl p-8 mx-6 text-center shadow-2xl">
+            <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+              <Check size={40} strokeWidth={2.5} className="text-accent" />
+            </div>
+            <h2 className="text-[22px] font-bold text-ink mb-2">受取完了！</h2>
+            <p className="text-[15px] font-bold text-accent-deep">{redemptionPopup.label}</p>
+            <p className="text-[12px] text-muted mt-3">タップして閉じる</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="header-grad sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 pt-4 pb-0">
           <div className="flex items-center justify-between mb-4">
-            {/* Nickname area → profile */}
             <button onClick={() => router.push('/profile')} className="flex items-center gap-3 text-left group">
               <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
                 <span className="text-white font-bold text-[15px]">{initial}</span>
@@ -253,7 +324,7 @@ function ProjectSection({ group, onShowReward }: { group: StampBookGroup; onShow
           </div>
         )}
 
-        {/* Earned reward tickets (tap to show QR) */}
+        {/* Earned reward tickets */}
         {rewards.length > 0 && (
           <div className="mt-3 space-y-2">
             {rewards.map((r, i) => (
@@ -265,9 +336,9 @@ function ProjectSection({ group, onShowReward }: { group: StampBookGroup; onShow
                 <Gift size={16} strokeWidth={2} className="text-accent-deep shrink-0" />
                 <span className="text-[13px] font-bold text-accent-deep flex-1">特典: {r.label}</span>
                 {r.redeemed_at ? (
-                  <span className="text-[10px] text-danger font-medium">引換済</span>
+                  <span className="text-[10px] text-faint font-medium">受取済み</span>
                 ) : (
-                  <span className="text-[11px] text-accent font-medium flex items-center gap-0.5">表示 <ChevronRight size={12} strokeWidth={2.5} /></span>
+                  <span className="text-[11px] text-accent font-medium flex items-center gap-0.5">受取可能 <ChevronRight size={12} strokeWidth={2.5} /></span>
                 )}
               </button>
             ))}
