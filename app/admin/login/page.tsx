@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 import { signIn } from '@/lib/adminAuth';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -53,14 +54,25 @@ export default function AdminLoginPage() {
             required
             autoFocus
           />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="パスワード"
-            className="w-full px-4 py-3.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[15px] bg-white text-ink"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="パスワード"
+              className="w-full px-4 py-3.5 pr-12 rounded-xl border border-line focus:border-accent focus:outline-none text-[15px] bg-white text-ink"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors"
+              tabIndex={-1}
+              aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
+            >
+              {showPassword ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
+            </button>
+          </div>
           {error && <p className="text-danger text-[13px] text-center">{error}</p>}
           <button
             type="submit"

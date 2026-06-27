@@ -115,17 +115,17 @@ export default function StampPage({ params }: StampPageProps) {
     }
   }
 
-  async function handleNicknameSubmit(nick: string) {
+  async function handleNicknameSubmit(nick: string, gender: string, ageGroup: string) {
     setStep('stamping');
     try {
       const res = await fetch('/api/participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nick }),
+        body: JSON.stringify({ nickname: nick, gender, age_group: ageGroup }),
       });
       if (!res.ok) throw new Error('参加者登録に失敗しました');
       const participant = await res.json();
-      setLocalParticipant({ participant_id: participant.id, nickname: nick, recovery_code: participant.recovery_code });
+      setLocalParticipant({ participant_id: participant.id, nickname: nick, recovery_code: participant.recovery_code, gender, age_group: ageGroup });
       setNickname(nick);
       await acquireStamp(event!.id, participant.id);
     } catch (e) {
