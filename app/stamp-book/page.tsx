@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, Ticket, KeyRound, Gift, ChevronRight } from 'lucide-react';
+import { Music, Ticket, KeyRound, Gift, ChevronRight, Check } from 'lucide-react';
 import { StampBookGroup, StampBookReward } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import StampCard from '@/components/StampCard';
@@ -14,12 +14,17 @@ export default function StampBookPage() {
   const router = useRouter();
   const [groups, setGroups] = useState<StampBookGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [participant, setParticipant] = useState<{ participant_id: string; nickname: string } | null>(null);
+  const [participant, setParticipant] = useState<{ participant_id: string; nickname: string; recovery_code?: string } | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const [restoreCode, setRestoreCode] = useState('');
   const [restoreError, setRestoreError] = useState('');
   const [restoring, setRestoring] = useState(false);
   const [selectedReward, setSelectedReward] = useState<{ reward: StampBookReward; projectName: string } | null>(null);
+  const [redeemPopup, setRedeemPopup] = useState<{ label: string } | null>(null);
+
+  // Maps redeem_code → label for rewards that were unredeemed on last render
+  const prevUnredeemedRef = useRef<Map<string, string>>(new Map());
+  const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const local = getLocalParticipant();
@@ -32,6 +37,61 @@ export default function StampBookPage() {
       setLoading(false);
     }
   }, []);
+
+  // Track unredeemed rewards to detect redemption
+  useEffect(() => {
+    const map = new Map<string, string>();
+    for (const g of groups) {
+      for (const r of g.rewards) {
+        if (!r.redeemed_at) map.set(r.redeem_code, r.label);
+      }
+    }
+    prevUnredeemedRef.current = map;
+  }, [groups]);
+
+  // 3-second polling to detect when a reward gets redeemed
+  useEffect(() => {
+    if (!participant?.recovery_code) return;
+    const code = participant.recovery_code;
+
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/stamp-book?code=${encodeURIComponent(code)}`);
+        const data: StampBookGroup[] = await res.json();
+        if (!Array.isArray(data)) return;
+
+        const prev = prevUnredeemedRef.current;
+        let newlyRedeemed: string | null = null;
+        for (const g of data) {
+          for (const r of g.rewards) {
+            if (r.redeemed_at && prev.has(r.redeem_code)) {
+              newlyRedeemed = r.label;
+              prev.delete(r.redeem_code);
+            }
+          }
+        }
+
+        if (newlyRedeemed) {
+          setRedeemPopup({ label: newlyRedeemed });
+          if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+          popupTimerRef.current = setTimeout(() => setRedeemPopup(null), 3500);
+        }
+
+        setGroups(data);
+
+        // Stop polling when no unredeemed rewards remain
+        const hasUnredeemed = data.some(g => g.rewards.some(r => !r.redeemed_at));
+        if (!hasUnredeemed) clearInterval(id);
+      } catch {
+        // silently handle network errors
+      }
+    }, 3000);
+
+    return () => {
+      clearInterval(id);
+      if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+    };
+  }, [participant]);
 
   async function loadData(code: string) {
     try {
@@ -147,6 +207,22 @@ export default function StampBookPage() {
   return (
     <main className="min-h-screen bg-screen-bg">
       {showScanner && <QRScanner onScan={handleQRScan} onClose={() => setShowScanner(false)} />}
+
+      {/* Redeem completion popup */}
+      {redeemPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setRedeemPopup(null)}
+        >
+          <div className="bg-white rounded-2xl px-8 py-10 mx-6 flex flex-col items-center gap-4 shadow-xl text-center">
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+              <Check size={40} strokeWidth={2.5} className="text-green-600" />
+            </div>
+            <p className="text-[26px] font-bold text-ink">受取完了！</p>
+            <p className="text-[15px] text-muted">「{redeemPopup.label}」</p>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="header-grad sticky top-0 z-10">
