@@ -4,7 +4,7 @@ import { generateCode } from '@/lib/code';
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { nickname } = body;
+  const { nickname, gender, age_group } = body;
 
   if (!nickname?.trim()) {
     return NextResponse.json({ error: 'Nickname is required' }, { status: 400 });
@@ -12,13 +12,17 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient();
 
+  const baseData: Record<string, string> = { nickname: nickname.trim() };
+  if (gender) baseData.gender = gender;
+  if (age_group) baseData.age_group = age_group;
+
   // recovery_code の一意制約違反(23505)時は再採番してリトライ
   let participant = null;
   let lastError = null;
   for (let attempt = 0; attempt < 5; attempt++) {
     const { data, error } = await supabase
       .from('participants')
-      .insert({ nickname: nickname.trim(), recovery_code: generateCode(12) })
+      .insert({ ...baseData, recovery_code: generateCode(12) })
       .select()
       .single();
     if (!error) { participant = data; break; }

@@ -79,6 +79,8 @@ export interface Participant {
   id: string;
   nickname: string;
   recovery_code?: string;
+  gender?: string;
+  age_group?: string;
   created_at: string;
 }
 

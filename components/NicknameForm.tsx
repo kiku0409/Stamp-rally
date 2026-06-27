@@ -4,12 +4,30 @@ import { useState } from 'react';
 import { User } from 'lucide-react';
 
 interface NicknameFormProps {
-  onSubmit: (nickname: string) => void;
+  onSubmit: (nickname: string, gender: string, ageGroup: string) => void;
   loading?: boolean;
 }
 
+const GENDER_OPTIONS = [
+  { value: 'male',   label: '男性' },
+  { value: 'female', label: '女性' },
+  { value: 'other',  label: 'その他' },
+];
+
+const AGE_OPTIONS = [
+  { value: '10s',  label: '10代' },
+  { value: '20s',  label: '20代' },
+  { value: '30s',  label: '30代' },
+  { value: '40s',  label: '40代' },
+  { value: '50s+', label: '50代以上' },
+];
+
 export default function NicknameForm({ onSubmit, loading }: NicknameFormProps) {
   const [nickname, setNickname] = useState('');
+  const [gender, setGender]     = useState('');
+  const [ageGroup, setAgeGroup] = useState('');
+
+  const canSubmit = nickname.trim() && gender && ageGroup && !loading;
 
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -43,16 +61,17 @@ export default function NicknameForm({ onSubmit, loading }: NicknameFormProps) {
       <div className="bg-white rounded-b-2xl px-5 pb-5 pt-5 card-shadow">
         <div className="text-center mb-6">
           <h2 className="text-[20px] font-bold text-ink mb-1.5">ニックネームを登録</h2>
-          <p className="text-muted text-[13px]">表示される名前を入力してください</p>
+          <p className="text-muted text-[13px]">表示される名前と属性を入力してください</p>
         </div>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (nickname.trim()) onSubmit(nickname.trim());
+            if (canSubmit) onSubmit(nickname.trim(), gender, ageGroup);
           }}
           className="space-y-4"
         >
+          {/* Nickname */}
           <div>
             <input
               type="text"
@@ -68,9 +87,52 @@ export default function NicknameForm({ onSubmit, loading }: NicknameFormProps) {
               {nickname.length}/20
             </p>
           </div>
+
+          {/* Gender */}
+          <div>
+            <p className="text-[12px] font-medium text-muted mb-2">性別</p>
+            <div className="flex gap-2">
+              {GENDER_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGender(opt.value)}
+                  className={`flex-1 py-2.5 rounded-xl border text-[13px] font-medium transition-colors ${
+                    gender === opt.value
+                      ? 'btn-brand text-white border-transparent'
+                      : 'border-line text-muted bg-white hover:border-accent hover:text-accent'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Age group */}
+          <div>
+            <p className="text-[12px] font-medium text-muted mb-2">年代</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {AGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setAgeGroup(opt.value)}
+                  className={`flex-1 min-w-[56px] py-2.5 rounded-xl border text-[13px] font-medium transition-colors ${
+                    ageGroup === opt.value
+                      ? 'btn-brand text-white border-transparent'
+                      : 'border-line text-muted bg-white hover:border-accent hover:text-accent'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             type="submit"
-            disabled={!nickname.trim() || loading}
+            disabled={!canSubmit}
             className="w-full py-[14px] rounded-xl btn-brand text-white font-bold text-[15px] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {loading ? '登録中...' : '登録する'}

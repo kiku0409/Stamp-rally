@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS participants (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nickname      TEXT NOT NULL,
   recovery_code TEXT NOT NULL UNIQUE,  -- 別端末からスタンプ帳を復元するためのコード
+  gender        TEXT CHECK (gender IN ('male', 'female', 'other')),
+  age_group     TEXT CHECK (age_group IN ('10s', '20s', '30s', '40s', '50s+')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
