@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, KeyRound, ChevronRight, UserPlus } from 'lucide-react';
+import { Music, KeyRound, ChevronRight, UserPlus, Check, QrCode } from 'lucide-react';
 import { useStampBook } from './StampBookContext';
 import { setLocalParticipant } from '@/lib/storage';
 import { getTheme, headerGradient, Theme } from '@/lib/themes';
-import { StampBookGroup } from '@/types';
+import { StampBookGroup, EventStamp } from '@/types';
 
 export default function StampBookHomePage() {
   const { participant, groups, loading, setShowScanner } = useStampBook();
@@ -149,7 +150,12 @@ export default function StampBookHomePage() {
           </div>
         ) : (
           groups.map((g) => (
-            <ProjectOverviewCard key={g.project.id} group={g} theme={getTheme(g.project.theme_id)} />
+            <ProjectOverviewCard
+              key={g.project.id}
+              group={g}
+              theme={getTheme(g.project.theme_id)}
+              onScanQR={() => setShowScanner(true)}
+            />
           ))
         )}
       </div>
@@ -157,51 +163,153 @@ export default function StampBookHomePage() {
   );
 }
 
-function ProjectOverviewCard({ group, theme }: { group: StampBookGroup; theme: Theme }) {
-  const { project, count, tiers } = group;
+function ProjectOverviewCard({ group, theme, onScanQR }: {
+  group: StampBookGroup;
+  theme: Theme;
+  onScanQR: () => void;
+}) {
+  const router = useRouter();
+  const { project, count, tiers, stamps } = group;
   const nextTier = tiers.find((t) => !t.earned);
-  const progress = nextTier ? Math.min((count / nextTier.threshold) * 100, 100) : 100;
+  const recentStamps = stamps.slice(0, 3);
+  const hasMoreStamps = stamps.length > 3;
+
+  // 進捗バーの計算
+  let progressPercent: number;
+  let progressLabel: React.ReactNode;
+  let progressSub: string;
+  let onProgressTap: () => void;
+  const allEarned = tiers.length > 0 && !nextTier;
+
+  if (tiers.length > 0) {
+    if (nextTier) {
+      progressPercent = Math.min((count / nextTier.threshold) * 100, 100);
+      progressLabel = <>あと <strong style={{ color: theme.accentDeep }}>{nextTier.threshold - count}</strong> 個で「{nextTier.label}」</>;
+      progressSub = `${count}/${nextTier.threshold}`;
+    } else {
+      progressPercent = 100;
+      progressLabel = null;
+      progressSub = '';
+    }
+    onProgressTap = () => router.push('/stamp-book/rewards');
+  } else {
+    // 特典なし → 10個単位の汎用バー
+    const milestone = (Math.floor(count / 10) + 1) * 10;
+    const base = milestone - 10;
+    progressPercent = ((count - base) / 10) * 100;
+    progressLabel = <>あと <strong style={{ color: theme.accentDeep }}>{milestone - count}</strong> 個で {milestone} 個達成！</>;
+    progressSub = `${count - base}/10`;
+    onProgressTap = () => router.push('/stamp-book/stamps');
+  }
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden card-shadow border border-line">
       <div className="h-1.5" style={{ background: headerGradient(theme) }} />
 
+      {/* バナー画像（将来実装） */}
       {project.banner_url && (
         <img src={project.banner_url} alt="" className="w-full h-36 object-cover" />
       )}
 
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="p-4 space-y-3">
+        {/* プロジェクト名 + スタンプ数 */}
+        <div className="flex items-center justify-between">
           <h2 className="font-bold text-ink text-[16px] truncate flex-1">{project.name}</h2>
           <span className="text-[13px] font-bold ml-2 shrink-0" style={{ color: theme.accent }}>{count} 個</span>
         </div>
 
+        {/* 会場マップ（将来実装） */}
         {project.venue_map_url && (
-          <img src={project.venue_map_url} alt="会場マップ" className="w-full rounded-xl mb-3 object-contain max-h-48" />
+          <img src={project.venue_map_url} alt="会場マップ" className="w-full rounded-xl object-contain max-h-48" />
         )}
 
-        {tiers.length > 0 && (
-          <div className="rounded-xl p-3" style={{ background: theme.soft, border: `1px solid ${theme.track}` }}>
-            {nextTier ? (
-              <>
-                <div className="flex justify-between text-[12px] mb-1.5">
-                  <span className="text-muted">
-                    あと <span className="font-bold" style={{ color: theme.accentDeep }}>{nextTier.threshold - count}</span> 個で「{nextTier.label}」
-                  </span>
-                  <span className="text-muted" style={{ fontFamily: 'var(--font-mono)' }}>{count}/{nextTier.threshold}</span>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ background: theme.track }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%`, background: `linear-gradient(180deg, ${theme.headerFrom}, ${theme.accent})` }}
-                  />
-                </div>
-              </>
-            ) : (
-              <p className="text-[12px] font-medium text-center" style={{ color: theme.accent }}>全ての特典を達成しました！</p>
+        {/* 直近スタンプ（最大3件） */}
+        {recentStamps.length > 0 && (
+          <div>
+            <p className="text-[11px] font-medium text-muted mb-1.5">最近のスタンプ</p>
+            <div className="rounded-xl overflow-hidden border border-line divide-y divide-line">
+              {recentStamps.map((s) => (
+                <MiniStampRow key={s.id} stamp={s} theme={theme} />
+              ))}
+            </div>
+            {hasMoreStamps && (
+              <button
+                onClick={() => router.push('/stamp-book/stamps')}
+                className="mt-2 w-full text-center text-[12px] font-bold py-2 rounded-xl transition-colors"
+                style={{ color: theme.accent, background: `${theme.accent}10` }}
+              >
+                詳細はコチラ →
+              </button>
             )}
           </div>
         )}
+
+        {/* 進捗バー（タップで特典/スタンプ一覧へ） */}
+        <button
+          onClick={onProgressTap}
+          className="w-full rounded-xl p-3 text-left"
+          style={{ background: theme.soft, border: `1px solid ${theme.track}` }}
+        >
+          {allEarned ? (
+            <p className="text-[12px] font-medium text-center" style={{ color: theme.accent }}>全ての特典を達成しました！</p>
+          ) : (
+            <>
+              <div className="flex justify-between text-[12px] mb-1.5">
+                <span className="text-muted">{progressLabel}</span>
+                <span className="text-muted" style={{ fontFamily: 'var(--font-mono)' }}>{progressSub}</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: theme.track }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%`, background: `linear-gradient(180deg, ${theme.headerFrom}, ${theme.accent})` }}
+                />
+              </div>
+            </>
+          )}
+        </button>
+
+        {/* QR読み取りボタン */}
+        <button
+          onClick={onScanQR}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold border transition-colors"
+          style={{ color: theme.accent, borderColor: `${theme.accent}60`, background: `${theme.accent}08` }}
+        >
+          <QrCode size={15} strokeWidth={2} />
+          QRコードはこちら
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MiniStampRow({ stamp, theme }: { stamp: EventStamp; theme: Theme }) {
+  const event = stamp.event;
+  if (!event) return null;
+  const d = new Date(stamp.stamped_at);
+  const dateStr = d.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' });
+
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white">
+      <div
+        className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center overflow-hidden"
+        style={{
+          background: `radial-gradient(circle at 36% 26%, #FFFFFF 0%, ${theme.soft} 46%, ${theme.track} 100%)`,
+          color: theme.accentDeep,
+        }}
+      >
+        {event.icon_url ? (
+          <img src={event.icon_url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <Music size={12} strokeWidth={2} />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-medium text-ink truncate">{event.title}</p>
+        <p className="text-[11px] text-muted truncate">{event.venue}</p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <Check size={11} strokeWidth={2.5} style={{ color: theme.accent }} />
+        <span className="text-[10px] font-medium" style={{ color: theme.accent, fontFamily: 'var(--font-mono)' }}>{dateStr}</span>
       </div>
     </div>
   );
