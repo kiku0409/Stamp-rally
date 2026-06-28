@@ -212,7 +212,7 @@ export default function StampBookPage() {
     );
   }
 
-  const profileLabel = [participant.age_group, participant.gender].filter(Boolean).join(' / ') || 'スタンプ帳';
+  const initial = participant.nickname.charAt(0).toUpperCase();
 
   return (
     <main className="min-h-screen bg-screen-bg">
@@ -238,14 +238,14 @@ export default function StampBookPage() {
       <div className="header-grad sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 pt-4 pb-0">
           <div className="flex items-center justify-between mb-4">
-            {/* Profile area → profile page */}
+            {/* Nickname area → profile */}
             <button onClick={() => router.push('/profile')} className="flex items-center gap-3 text-left group">
               <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
-                <Music size={18} strokeWidth={2} className="text-white" />
+                <span className="text-white font-bold text-[15px]">{initial}</span>
               </div>
               <div>
                 <h1 className="font-bold text-white text-[17px] leading-tight flex items-center gap-1">
-                  {profileLabel}
+                  {participant.nickname} さん
                   <ChevronRight size={15} strokeWidth={2.5} className="text-white/60 group-hover:text-white transition-colors" />
                 </h1>
                 <p className="text-white/70 text-[10px]">タップでユーザー情報・復元コード</p>

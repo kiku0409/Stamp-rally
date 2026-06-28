@@ -6,12 +6,13 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { nickname, gender, age_group } = body;
 
+  if (!nickname?.trim()) {
+    return NextResponse.json({ error: 'Nickname is required' }, { status: 400 });
+  }
+
   const supabase = createAdminClient();
 
-  // nickname が未指定の場合は性別・年代から自動生成
-  const resolvedNickname = nickname?.trim() || `${age_group ?? ''}${gender ?? ''}来場者` || '来場者';
-
-  const baseData: Record<string, string> = { nickname: resolvedNickname };
+  const baseData: Record<string, string> = { nickname: nickname.trim() };
   if (gender) baseData.gender = gender;
   if (age_group) baseData.age_group = age_group;
 
