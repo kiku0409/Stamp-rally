@@ -61,18 +61,21 @@ export default function StampBookPage() {
         if (!Array.isArray(data)) return;
 
         const prev = prevUnredeemedRef.current;
-        let newlyRedeemed: string | null = null;
+        let newlyRedeemed: { label: string; redeemCode: string } | null = null;
         for (const g of data) {
           for (const r of g.rewards) {
             if (r.redeemed_at && prev.has(r.redeem_code)) {
-              newlyRedeemed = r.label;
+              newlyRedeemed = { label: r.label, redeemCode: r.redeem_code };
               prev.delete(r.redeem_code);
             }
           }
         }
 
         if (newlyRedeemed) {
-          setRedeemPopup({ label: newlyRedeemed });
+          const { label, redeemCode } = newlyRedeemed;
+          // Close the QR modal if it's displaying the redeemed reward, then show popup on top
+          setSelectedReward(current => current?.reward.redeem_code === redeemCode ? null : current);
+          setRedeemPopup({ label });
           if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
           popupTimerRef.current = setTimeout(() => setRedeemPopup(null), 3500);
         }
