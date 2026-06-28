@@ -1,6 +1,6 @@
 # 引き継ぎメモ（HANDOFF）
 
-最終更新: 2026-06-28 / ブランチ: `main`（全変更コミット済み・本番デプロイ済み）
+最終更新: 2026-06-29 / ブランチ: `main`（全変更コミット済み・本番デプロイ済み）
 
 次のセッションがこれだけ読めば再開できるようにまとめた運用・状態メモ。ユーザー向けの仕様は `README.md`、過去経緯は `docs/progress.md` も参照。
 
@@ -33,9 +33,35 @@
 
 ## 2. 現在の実装状況（全て `main` にコミット済み・本番反映済み）
 
-### 直近セッション（2026-06-28）で実装・完了したもの
+### 直近セッション（2026-06-29）で実装・完了したもの
 
-#### A. 受取完了ポップアップのレイヤー修正（`app/stamp-book/page.tsx`）
+#### F. プロジェクトテーマパック（6色）
+
+- `lib/themes.ts` 新規作成: teal/pink/blue/orange/purple/green の6テーマ定義（ヘッダーグラデーション・アクセント・ソフト・トラック色）
+- 管理画面プロジェクト詳細（`app/admin/projects/[id]/page.tsx`）: オーナーのみ見えるテーマ選択UI（スウォッチボタン）を追加。選択で即時 PUT /api/projects/[id]
+- `app/stamp-book/page.tsx` + `components/StampCard.tsx`: プロジェクトごとにテーマ色をインラインスタイルで適用（複数プロジェクトが同時表示されるため CSS 変数は不使用）
+- DB: `projects.theme_id TEXT DEFAULT 'teal'` を追加済み（Supabase 実施完了）
+- コミット: `d84d6bd`
+
+#### G. イベントアイコン画像アップロード
+
+- `app/api/events/upload-icon/route.ts` 新規: multipart → Supabase Storage（`event-icons` バケット）→ public URL 返却
+- イベント作成・編集フォームに「画像を選択」ボタン追加（60px円形プレビュー・削除ボタン付き）
+- `app/api/events/route.ts` POST / `app/api/events/[id]/route.ts` PUT: `icon_url` を受け取り保存
+- `components/StampCard.tsx`: `icon_url` があれば円形画像表示、なければ Music アイコン
+- DB: `events.icon_url TEXT` を追加済み（Supabase 実施完了）
+- Supabase Storage: `event-icons` バケット（Public=ON）作成済み
+- コミット: `d84d6bd`
+
+### 前セッション（2026-06-28）で実装・完了したもの
+
+#### E. プロフィールページの刷新（`app/profile/page.tsx`）
+- ニックネーム・性別・年代を1枚カードで表示＆編集可能に（鉛筆ボタンで編集モード）
+- 旧ユーザー（性別・年代未設定）も後から入力可能
+- 「ログアウト」ボタン追加（localStorage クリア → `/stamp-book` へリダイレクト）
+- コミット: `7849d93`
+
+#### A–D. 受取完了ポップアップのレイヤー修正（`app/stamp-book/page.tsx`）
 管理者が特典を引き換えた際、来場者がQRモーダルを開いていると背面にポップアップが出るバグを修正。
 
 - ポーリングで引き換え検出時、`setSelectedReward(current => current?.reward.redeem_code === redeemCode ? null : current)` でモーダルを先に閉じ、その後ポップアップを表示
@@ -57,12 +83,6 @@
 - ニックネーム入力を維持（削除→復元の経緯あり）
 - 年代選択（ドロップダウン: 10代/20代/...）→ **年齢入力（数値: 1〜120）** に変更
 - コミット: `4760faa`
-
-#### E. プロフィールページの刷新（`app/profile/page.tsx`）
-- 性別・年齢（`age_group` カラムに数値文字列で格納）を表示
-- 「ログアウト」ボタン追加（localStorage クリア → `/stamp-book` へリダイレクト）
-- 復元コード表示は維持
-- コミット: `7849d93`
 
 ### 以前のセッション（本番反映済み）
 - 管理者引き換え画面の2段階確認（`app/admin/redeem/page.tsx`）
@@ -93,14 +113,13 @@
 ## 4. 次にやること
 
 ### 候補（優先度順）
-1. 引き換え統計ダッシュボード（付与数・引換数・引換率）
-2. 取得者/スタンプ一覧の検索・フィルタ・ページング
-3. プロフィールページにニックネーム編集機能を再追加（直前セッションで一時削除、復元スコープ外として保留中）
-4. `age_group` カラムを `age INTEGER` にマイグレーション
-5. 本人確認強化（メール/LINE連携）
-6. 本格的レート制限（KV導入）
-7. 体験系: ランキング、SNSシェア、プッシュ通知
-8. 監査ログ（操作履歴）
+1. `age_group` カラムを `age INTEGER` にマイグレーション（現状は数値文字列が入っている）
+2. 本人確認強化（メール/LINE連携）
+3. 本格的レート制限（KV導入）
+4. 体験系: ランキング、SNSシェア、プッシュ通知
+5. 監査ログ（操作履歴）
+6. 引き換え統計ダッシュボード（付与数・引換数・引換率）← 最低優先度
+7. 取得者/スタンプ一覧の検索・フィルタ・ページング ← 最低優先度
 
 ---
 
@@ -118,8 +137,8 @@
 
 ## 6. 主要ファイルの地図
 
-- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/page.tsx`、`app/profile/page.tsx`、`app/register/page.tsx`（新規）、`components/RewardTicketModal.tsx`、`components/NicknameForm.tsx`
-- 管理: `app/admin/login/page.tsx`、`app/admin/redeem/page.tsx`（2段階確認）、`app/admin/page.tsx`、`app/admin/projects/[id]/page.tsx`、`app/admin/super/page.tsx`
-- API: `app/api/projects/**`、`app/api/events/**`、`app/api/stamps/route.ts`（qr_token対応・並列化）、`app/api/stamp-book`、`app/api/rewards/redeem`、`app/api/participants/route.ts`
+- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/page.tsx`（テーマ対応済み）、`app/profile/page.tsx`（ニックネーム・性別・年代編集）、`app/register/page.tsx`、`components/RewardTicketModal.tsx`、`components/NicknameForm.tsx`、`components/StampCard.tsx`（テーマ・アイコン対応）
+- 管理: `app/admin/login/page.tsx`、`app/admin/redeem/page.tsx`（2段階確認）、`app/admin/page.tsx`、`app/admin/projects/[id]/page.tsx`（テーマ選択UI）、`app/admin/events/new/page.tsx`（アイコン対応）、`app/admin/events/[id]/page.tsx`（アイコン対応）、`app/admin/super/page.tsx`
+- API: `app/api/projects/**`（theme_id対応）、`app/api/events/**`（icon_url対応）、`app/api/events/upload-icon/route.ts`（新規）、`app/api/stamps/route.ts`、`app/api/stamp-book`（theme_id対応）、`app/api/rewards/redeem`、`app/api/participants/route.ts`（gender/age_group対応）
 - テスト: `playwright.config.ts`、`tests/redeem-flow.spec.ts`
-- 共通: `lib/supabase.ts` / `lib/authMiddleware.ts` / `lib/adminAuth.ts` / `lib/code.ts` / `lib/storage.ts` / `types/index.ts`
+- 共通: `lib/supabase.ts` / `lib/authMiddleware.ts` / `lib/adminAuth.ts` / `lib/code.ts` / `lib/storage.ts` / `lib/themes.ts`（新規）/ `types/index.ts`
