@@ -231,10 +231,14 @@ export default function StampPage({ params }: StampPageProps) {
               </p>
               {/* Check stamp */}
               <div
-                className="stamp-face w-[100px] h-[100px] rounded-full flex items-center justify-center text-accent-deep mx-auto"
+                className="stamp-face w-[100px] h-[100px] rounded-full flex items-center justify-center text-accent-deep mx-auto overflow-hidden"
                 style={{ transform: 'rotate(-6deg)' }}
               >
-                <Check size={36} strokeWidth={2.5} />
+                {event.icon_url ? (
+                  <img src={event.icon_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <Check size={36} strokeWidth={2.5} />
+                )}
               </div>
               <h2 className="text-[20px] font-bold text-ink mt-4 mb-1">取得済みです</h2>
               <p className="text-muted text-[13px]">このライブのスタンプは取得済みです</p>
