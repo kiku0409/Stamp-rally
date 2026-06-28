@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, Ticket, KeyRound, Gift, ChevronRight, Check } from 'lucide-react';
+import { Music, Ticket, KeyRound, Gift, ChevronRight, Check, UserPlus } from 'lucide-react';
 import { StampBookGroup, StampBookReward } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import StampCard from '@/components/StampCard';
@@ -158,7 +158,7 @@ export default function StampBookPage() {
           <h1 className="text-[24px] font-bold text-ink mb-2">TICKETS</h1>
           <p className="text-muted text-[14px] mb-7 leading-relaxed">
             スタンプを取得するとここに記録されます。<br />
-            まずは会場のQRコードを読み取ってください。
+            会場のQRコードを読み取るか、先にアカウントを作成できます。
           </p>
           <div className="space-y-3">
             <button
@@ -167,6 +167,13 @@ export default function StampBookPage() {
             >
               QRを読み取る
             </button>
+            <Link
+              href="/register"
+              className="flex items-center justify-center gap-2 w-full py-[14px] rounded-xl border border-accent text-accent font-bold text-[15px] hover:bg-accent/5 transition-colors"
+            >
+              <UserPlus size={17} strokeWidth={2} />
+              アカウントを作成する
+            </Link>
             <Link
               href="/"
               className="block w-full py-3 rounded-xl border border-line text-muted text-[14px] font-medium text-center hover:border-accent hover:text-accent transition-colors"
