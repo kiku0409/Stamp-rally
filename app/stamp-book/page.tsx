@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Music, Ticket, KeyRound, Gift, ChevronRight, Check, UserPlus } from 'lucide-react';
-import { StampBookGroup, StampBookReward } from '@/types';
+import { StampBookGroup, StampBookReward, LocalParticipant } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
 import StampCard from '@/components/StampCard';
 import QRScanner from '@/components/QRScanner';
@@ -14,7 +14,7 @@ export default function StampBookPage() {
   const router = useRouter();
   const [groups, setGroups] = useState<StampBookGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [participant, setParticipant] = useState<{ participant_id: string; nickname: string; recovery_code?: string } | null>(null);
+  const [participant, setParticipant] = useState<LocalParticipant | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const [restoreCode, setRestoreCode] = useState('');
   const [restoreError, setRestoreError] = useState('');
@@ -212,7 +212,7 @@ export default function StampBookPage() {
     );
   }
 
-  const initial = participant.nickname.charAt(0).toUpperCase();
+  const profileLabel = [participant.age_group, participant.gender].filter(Boolean).join(' / ') || 'スタンプ帳';
 
   return (
     <main className="min-h-screen bg-screen-bg">
@@ -238,14 +238,14 @@ export default function StampBookPage() {
       <div className="header-grad sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 pt-4 pb-0">
           <div className="flex items-center justify-between mb-4">
-            {/* Nickname area → profile */}
+            {/* Profile area → profile page */}
             <button onClick={() => router.push('/profile')} className="flex items-center gap-3 text-left group">
               <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
-                <span className="text-white font-bold text-[15px]">{initial}</span>
+                <Music size={18} strokeWidth={2} className="text-white" />
               </div>
               <div>
                 <h1 className="font-bold text-white text-[17px] leading-tight flex items-center gap-1">
-                  {participant.nickname} さん
+                  {profileLabel}
                   <ChevronRight size={15} strokeWidth={2.5} className="text-white/60 group-hover:text-white transition-colors" />
                 </h1>
                 <p className="text-white/70 text-[10px]">タップでユーザー情報・復元コード</p>

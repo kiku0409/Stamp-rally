@@ -10,19 +10,19 @@ export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState('');
 
-  async function handleSubmit(nick: string, gender: string, ageGroup: string) {
+  async function handleSubmit(gender: string, ageGroup: string) {
     setError('');
     try {
       const res = await fetch('/api/participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nick, gender, age_group: ageGroup }),
+        body: JSON.stringify({ gender, age_group: ageGroup }),
       });
       if (!res.ok) throw new Error('登録に失敗しました');
       const participant = await res.json();
       setLocalParticipant({
         participant_id: participant.id,
-        nickname: nick,
+        nickname: participant.nickname,
         recovery_code: participant.recovery_code,
         gender,
         age_group: ageGroup,

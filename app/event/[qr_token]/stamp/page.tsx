@@ -54,7 +54,6 @@ export default function StampPage({ params }: StampPageProps) {
   const [step, setStep] = useState<Step>('loading');
   const [event, setEvent] = useState<Event | null>(null);
   const [stampedAt, setStampedAt] = useState('');
-  const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const [newRewards, setNewRewards] = useState<{ label: string }[]>([]);
   const [showRestore, setShowRestore] = useState(false);
@@ -65,7 +64,6 @@ export default function StampPage({ params }: StampPageProps) {
   useEffect(() => {
     const local = getLocalParticipant();
     if (local) {
-      setNickname(local.nickname);
       acquireStamp(local.participant_id);
     } else {
       setStep('register');
@@ -120,7 +118,6 @@ export default function StampPage({ params }: StampPageProps) {
         return;
       }
       setLocalParticipant({ participant_id: data.id, nickname: data.nickname, recovery_code: data.recovery_code });
-      setNickname(data.nickname);
       await acquireStamp(data.id);
     } catch {
       setRestoreError('通信エラーが発生しました');
@@ -128,18 +125,17 @@ export default function StampPage({ params }: StampPageProps) {
     }
   }
 
-  async function handleNicknameSubmit(nick: string, gender: string, ageGroup: string) {
+  async function handleNicknameSubmit(gender: string, ageGroup: string) {
     setStep('stamping');
     try {
       const res = await fetch('/api/participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nick, gender, age_group: ageGroup }),
+        body: JSON.stringify({ gender, age_group: ageGroup }),
       });
       if (!res.ok) throw new Error('参加者登録に失敗しました');
       const participant = await res.json();
-      setLocalParticipant({ participant_id: participant.id, nickname: nick, recovery_code: participant.recovery_code, gender, age_group: ageGroup });
-      setNickname(nick);
+      setLocalParticipant({ participant_id: participant.id, nickname: participant.nickname, recovery_code: participant.recovery_code, gender, age_group: ageGroup });
       await acquireStamp(participant.id);
     } catch (e) {
       setError((e as Error).message);
@@ -204,7 +200,7 @@ export default function StampPage({ params }: StampPageProps) {
       {/* Stamp acquired */}
       {step === 'done' && event && (
         <div className="w-full max-w-sm mx-auto">
-          <StampAcquired event={event} stampedAt={stampedAt} nickname={nickname} />
+          <StampAcquired event={event} stampedAt={stampedAt} />
           {newRewards.length > 0 && (
             <div className="mt-4 bg-accent/5 border border-accent/30 rounded-2xl p-4 text-center">
               <p className="text-[13px] font-bold text-accent-deep mb-1">🎉 特典を獲得しました！</p>
