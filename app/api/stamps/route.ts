@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   if (qr_token) {
     const { data: ev } = await supabase
       .from('events')
-      .select('id, title, event_date, venue, qr_token, description, project_id, created_at')
+      .select('id, title, event_date, venue, qr_token, description, project_id, created_at, icon_url')
       .eq('qr_token', qr_token)
       .maybeSingle();
     if (!ev) {
