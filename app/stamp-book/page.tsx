@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, KeyRound, ChevronRight, UserPlus, Check, QrCode } from 'lucide-react';
+import { Music, KeyRound, UserPlus, Check, QrCode } from 'lucide-react';
 import { useStampBook } from './StampBookContext';
 import { setLocalParticipant } from '@/lib/storage';
 import { getTheme, headerGradient, Theme } from '@/lib/themes';
@@ -112,35 +112,8 @@ export default function StampBookHomePage() {
   }
 
   // ── ログイン済み ────────────────────────────────────────────
-  const initial = participant.nickname.charAt(0).toUpperCase();
-  const totalStamps = groups.reduce((sum, g) => sum + g.count, 0);
-
   return (
     <main>
-      {/* Gradient header */}
-      <div className="header-grad sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between">
-            <Link href="/profile" className="flex items-center gap-3 text-left group">
-              <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
-                <span className="text-white font-bold text-[15px]">{initial}</span>
-              </div>
-              <div>
-                <h1 className="font-bold text-white text-[17px] leading-tight flex items-center gap-1">
-                  {participant.nickname} さん
-                  <ChevronRight size={15} strokeWidth={2.5} className="text-white/60 group-hover:text-white transition-colors" />
-                </h1>
-                <p className="text-white/70 text-[10px]">タップでユーザー情報・復元コード</p>
-              </div>
-            </Link>
-            <div className="text-right">
-              <p className="text-white/60 text-[11px]">獲得スタンプ</p>
-              <p className="text-white text-[24px] font-bold leading-tight">{totalStamps}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Project overview cards */}
       <div className="max-w-lg mx-auto p-4 space-y-4 pt-4">
         {groups.length === 0 ? (
