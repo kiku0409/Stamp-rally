@@ -12,6 +12,7 @@ export interface Project {
   approved_by?: string;
   approved_at?: string;
   created_at: string;
+  theme_id?: string;
 }
 
 export interface ProjectMember {
@@ -57,7 +58,7 @@ export interface StampBookReward {
 }
 
 export interface StampBookGroup {
-  project: { id: string; name: string };
+  project: { id: string; name: string; theme_id?: string };
   count: number;
   stamps: EventStamp[];
   tiers: StampBookTier[];
@@ -71,6 +72,7 @@ export interface Event {
   venue: string;
   qr_token: string;
   description?: string;
+  icon_url?: string;
   created_at: string;
   project_id?: string;
 }

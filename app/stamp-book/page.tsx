@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Music, Ticket, KeyRound, Gift, ChevronRight, Check, UserPlus } from 'lucide-react';
 import { StampBookGroup, StampBookReward, LocalParticipant } from '@/types';
 import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
+import { getTheme, headerGradient, Theme } from '@/lib/themes';
 import StampCard from '@/components/StampCard';
 import QRScanner from '@/components/QRScanner';
 import RewardTicketModal from '@/components/RewardTicketModal';
@@ -282,6 +283,7 @@ export default function StampBookPage() {
             <ProjectSection
               key={g.project.id}
               group={g}
+              theme={getTheme(g.project.theme_id)}
               onShowReward={(reward) => setSelectedReward({ reward, projectName: g.project.name })}
             />
           ))
@@ -307,34 +309,40 @@ export default function StampBookPage() {
   );
 }
 
-function ProjectSection({ group, onShowReward }: { group: StampBookGroup; onShowReward: (r: StampBookReward) => void }) {
+function ProjectSection({ group, onShowReward, theme }: { group: StampBookGroup; onShowReward: (r: StampBookReward) => void; theme: Theme }) {
   const { project, count, tiers, rewards, stamps } = group;
   const nextTier = tiers.find((t) => !t.earned);
   const progress = nextTier ? Math.min((count / nextTier.threshold) * 100, 100) : 100;
 
   return (
     <section className="bg-white rounded-2xl border border-line card-shadow overflow-hidden">
-      <div className="px-4 pt-4">
+      {/* Colored top bar */}
+      <div className="h-1.5" style={{ background: headerGradient(theme) }} />
+
+      <div className="px-4 pt-3">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-ink text-[15px] truncate">{project.name}</h2>
-          <span className="shrink-0 ml-2 text-[12px] font-bold text-accent">{count} 個</span>
+          <span className="shrink-0 ml-2 text-[12px] font-bold" style={{ color: theme.accent }}>{count} 個</span>
         </div>
 
         {/* Reward progress */}
         {tiers.length > 0 && (
-          <div className="mt-3 bg-grad-soft border border-teal-border rounded-xl p-3">
+          <div className="mt-3 rounded-xl p-3" style={{ background: theme.soft, border: `1px solid ${theme.track}` }}>
             {nextTier ? (
               <>
                 <div className="flex justify-between text-[12px] mb-1.5">
-                  <span className="text-muted">あと <span className="font-bold text-accent-deep">{nextTier.threshold - count}</span> 個で「{nextTier.label}」</span>
+                  <span className="text-muted">あと <span className="font-bold" style={{ color: theme.accentDeep }}>{nextTier.threshold - count}</span> 個で「{nextTier.label}」</span>
                   <span className="text-muted" style={{ fontFamily: 'var(--font-mono)' }}>{count}/{nextTier.threshold}</span>
                 </div>
-                <div className="h-2 rounded-full bg-track overflow-hidden">
-                  <div className="h-full progress-grad rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: theme.track }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%`, background: `linear-gradient(180deg, ${theme.headerFrom}, ${theme.accent})` }}
+                  />
                 </div>
               </>
             ) : (
-              <p className="text-[12px] text-accent font-medium text-center">全ての特典を達成しました！</p>
+              <p className="text-[12px] font-medium text-center" style={{ color: theme.accent }}>全ての特典を達成しました！</p>
             )}
           </div>
         )}
@@ -346,14 +354,15 @@ function ProjectSection({ group, onShowReward }: { group: StampBookGroup; onShow
               <button
                 key={i}
                 onClick={() => onShowReward(r)}
-                className="w-full flex items-center gap-2 bg-accent/5 border border-accent/30 rounded-xl px-3 py-2.5 text-left hover:bg-accent/10 transition-colors"
+                className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors"
+                style={{ background: `${theme.accent}10`, border: `1px solid ${theme.accent}40` }}
               >
-                <Gift size={16} strokeWidth={2} className="text-accent-deep shrink-0" />
-                <span className="text-[13px] font-bold text-accent-deep flex-1">特典: {r.label}</span>
+                <Gift size={16} strokeWidth={2} className="shrink-0" style={{ color: theme.accentDeep }} />
+                <span className="text-[13px] font-bold flex-1" style={{ color: theme.accentDeep }}>特典: {r.label}</span>
                 {r.redeemed_at ? (
                   <span className="text-[10px] text-danger font-medium">引換済</span>
                 ) : (
-                  <span className="text-[11px] text-accent font-medium flex items-center gap-0.5">表示 <ChevronRight size={12} strokeWidth={2.5} /></span>
+                  <span className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: theme.accent }}>表示 <ChevronRight size={12} strokeWidth={2.5} /></span>
                 )}
               </button>
             ))}
@@ -364,7 +373,7 @@ function ProjectSection({ group, onShowReward }: { group: StampBookGroup; onShow
       {/* Stamps in this project */}
       <div className="p-4 space-y-2.5">
         {stamps.map((s) => (
-          <StampCard key={s.id} event={s.event!} stamp={s} />
+          <StampCard key={s.id} event={s.event!} stamp={s} theme={theme} />
         ))}
       </div>
     </section>

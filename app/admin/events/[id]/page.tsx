@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { ChevronLeft, Trash2, ImagePlus, X } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
@@ -18,6 +18,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [error, setError] = useState('');
   const [stampCount, setStampCount] = useState(0);
   const [showQR, setShowQR] = useState(false);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadEvent(); }, [id]);
 
@@ -32,6 +36,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     const stats = await statsRes.json();
     setEvent(ev);
     setForm({ title: ev.title, event_date: ev.event_date, venue: ev.venue, description: ev.description || '' });
+    setIconUrl(ev.icon_url ?? null);
+    setIconPreview(ev.icon_url ?? null);
     setStampCount(stats.stampCount || 0);
     setLoading(false);
   }
@@ -40,6 +46,35 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  async function handleIconChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIconPreview(URL.createObjectURL(file));
+    setUploading(true);
+    const token = await getAccessToken();
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/events/upload-icon', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: fd,
+    });
+    if (res.ok) {
+      const { url } = await res.json();
+      setIconUrl(url);
+    } else {
+      setError('画像のアップロードに失敗しました');
+      setIconPreview(event?.icon_url ?? null);
+    }
+    setUploading(false);
+  }
+
+  function removeIcon() {
+    setIconPreview(null);
+    setIconUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   const handleSave = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setSaving(true);
@@ -47,7 +82,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     const res = await fetch(`/api/events/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, icon_url: iconUrl }),
     });
     if (res.ok) {
       router.push(backHref);
@@ -142,6 +177,31 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               required
               className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
             />
+          </div>
+          <div>
+            <label className="block text-[13px] font-medium text-ink mb-1">アイコン画像（任意）</label>
+            {iconPreview ? (
+              <div className="flex items-center gap-3">
+                <div className="w-[60px] h-[60px] rounded-full overflow-hidden shrink-0 border border-line">
+                  <img src={iconPreview} alt="" className="w-full h-full object-cover" />
+                </div>
+                <button type="button" onClick={removeIcon} className="flex items-center gap-1 text-[12px] text-danger">
+                  <X size={13} strokeWidth={2} />
+                  削除
+                </button>
+                {uploading && <span className="text-[12px] text-muted">アップロード中...</span>}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-line text-[13px] text-muted hover:border-accent hover:text-accent transition-colors w-full justify-center"
+              >
+                <ImagePlus size={16} strokeWidth={2} />
+                画像を選択
+              </button>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
           </div>
           <div>
             <label className="block text-[13px] font-medium text-ink mb-1">説明</label>

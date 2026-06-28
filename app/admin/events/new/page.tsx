@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ImagePlus, X } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { getAccessToken } from '@/lib/adminAuth';
 
@@ -13,6 +13,10 @@ function NewEventForm() {
   const [form, setForm] = useState({ title: '', event_date: '', venue: '', description: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const title = searchParams.get('title');
@@ -27,6 +31,35 @@ function NewEventForm() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  async function handleIconChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIconPreview(URL.createObjectURL(file));
+    setUploading(true);
+    const token = await getAccessToken();
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/events/upload-icon', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: fd,
+    });
+    if (res.ok) {
+      const { url } = await res.json();
+      setIconUrl(url);
+    } else {
+      setError('画像のアップロードに失敗しました');
+      setIconPreview(null);
+    }
+    setUploading(false);
+  }
+
+  function removeIcon() {
+    setIconPreview(null);
+    setIconUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!projectId) {
@@ -39,7 +72,7 @@ function NewEventForm() {
     const res = await fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ ...form, project_id: projectId }),
+      body: JSON.stringify({ ...form, project_id: projectId, icon_url: iconUrl }),
     });
     if (res.ok) {
       router.push(`/admin/projects/${projectId}`);
@@ -95,6 +128,31 @@ function NewEventForm() {
               required
               className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
             />
+          </div>
+          <div>
+            <label className="block text-[13px] font-medium text-ink mb-1">アイコン画像（任意）</label>
+            {iconPreview ? (
+              <div className="flex items-center gap-3">
+                <div className="w-[60px] h-[60px] rounded-full overflow-hidden shrink-0 border border-line">
+                  <img src={iconPreview} alt="" className="w-full h-full object-cover" />
+                </div>
+                <button type="button" onClick={removeIcon} className="flex items-center gap-1 text-[12px] text-danger">
+                  <X size={13} strokeWidth={2} />
+                  削除
+                </button>
+                {uploading && <span className="text-[12px] text-muted">アップロード中...</span>}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-line text-[13px] text-muted hover:border-accent hover:text-accent transition-colors w-full justify-center"
+              >
+                <ImagePlus size={16} strokeWidth={2} />
+                画像を選択
+              </button>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
           </div>
           <div>
             <label className="block text-[13px] font-medium text-ink mb-1">説明（任意）</label>

@@ -24,16 +24,16 @@ export async function GET(request: Request) {
   }
   const participantId = participant.id;
 
-  // スタンプ（イベント＋プロジェクト名を埋め込み）
+  // スタンプ（イベント＋プロジェクト名・テーマを埋め込み）
   const { data: stamps, error } = await supabase
     .from('event_stamps')
-    .select('*, event:events(*, project:projects(id, name))')
+    .select('*, event:events(*, project:projects(id, name, theme_id))')
     .eq('participant_id', participantId)
     .order('stamped_at', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   type StampRow = {
-    event?: { project_id?: string; project?: { id: string; name: string } | null } | null;
+    event?: { project_id?: string; project?: { id: string; name: string; theme_id?: string } | null } | null;
   };
   const rows = (stamps ?? []) as StampRow[];
 
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     const proj = s.event?.project;
     if (!proj) continue;
     if (!groups.has(proj.id)) {
-      groups.set(proj.id, { project: { id: proj.id, name: proj.name }, count: 0, stamps: [], tiers: [], rewards: [] });
+      groups.set(proj.id, { project: { id: proj.id, name: proj.name, theme_id: proj.theme_id }, count: 0, stamps: [], tiers: [], rewards: [] });
     }
     const g = groups.get(proj.id)!;
     g.count += 1;

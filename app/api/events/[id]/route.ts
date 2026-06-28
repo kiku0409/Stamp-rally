@@ -44,11 +44,14 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { title, event_date, venue, description } = body;
+  const { title, event_date, venue, description, icon_url } = body;
+
+  const update: Record<string, unknown> = { title, event_date, venue, description };
+  if (typeof icon_url === 'string') update.icon_url = icon_url || null;
 
   const { data, error } = await supabase
     .from('events')
-    .update({ title, event_date, venue, description })
+    .update(update)
     .eq('id', id)
     .select()
     .single();

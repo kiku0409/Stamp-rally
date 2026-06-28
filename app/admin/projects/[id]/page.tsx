@@ -10,6 +10,7 @@ import { getAccessToken } from '@/lib/adminAuth';
 import { Event, Project, ProjectMember, ProjectRole, ProjectStatus, RewardTier } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { toCsv, downloadCsv } from '@/lib/csv';
+import { THEMES, getTheme, headerGradient } from '@/lib/themes';
 
 interface MemberRow extends ProjectMember {
   email: string | null;
@@ -71,6 +72,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [editTierLabel, setEditTierLabel] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [savingName, setSavingName] = useState(false);
+  const [themeId, setThemeId] = useState('teal');
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -88,6 +90,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       setProject(data.project);
       setEditName(data.project?.name ?? '');
       setEditDesc(data.project?.description ?? '');
+      setThemeId(data.project?.theme_id ?? 'teal');
       setMembers(data.members ?? []);
       setMyRole(data.myRole ?? null);
       setRewardTiers(data.rewardTiers ?? []);
@@ -255,6 +258,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     setSavingName(false);
   }
 
+  async function handleSaveTheme(newThemeId: string) {
+    setThemeId(newThemeId);
+    const headers = await authHeaders();
+    await fetch(`/api/projects/${id}`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme_id: newThemeId }),
+    });
+  }
+
   async function openStampers(ev: EventWithStats) {
     setStampersEvent(ev);
     setStampers([]);
@@ -382,6 +395,45 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               {resubmitting ? '再申請中...' : '修正して再申請する'}
             </button>
           </form>
+        )}
+
+        {/* Theme selector (owner only, approved projects) */}
+        {isApproved && isOwner && (
+          <section className="mb-6">
+            <div
+              className="h-1.5 rounded-t-xl"
+              style={{ background: headerGradient(getTheme(themeId)) }}
+            />
+            <div className="bg-white rounded-b-2xl p-4 border border-t-0 border-line card-shadow">
+              <h2 className="text-[14px] font-bold text-ink mb-3">テーマカラー</h2>
+              <div className="grid grid-cols-3 gap-2">
+                {THEMES.map((t) => {
+                  const selected = themeId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => handleSaveTheme(t.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-[12px] font-medium transition-all ${
+                        selected
+                          ? 'border-transparent text-white'
+                          : 'border-line text-muted hover:border-line/60'
+                      }`}
+                      style={selected ? { background: headerGradient(t) } : {}}
+                    >
+                      <span
+                        className="w-4 h-4 rounded-full shrink-0 border-2"
+                        style={{
+                          background: `linear-gradient(135deg, ${t.headerFrom}, ${t.headerTo})`,
+                          borderColor: selected ? 'rgba(255,255,255,0.6)' : t.accent,
+                        }}
+                      />
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Events */}

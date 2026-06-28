@@ -89,7 +89,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const { name, description, resubmit } = await request.json();
+  const { name, description, resubmit, theme_id } = await request.json();
 
   const { data: current } = await supabase
     .from('projects')
@@ -101,6 +101,7 @@ export async function PUT(
   const update: Record<string, unknown> = {};
   if (typeof name === 'string' && name.trim()) update.name = name.trim();
   if (typeof description === 'string') update.description = description;
+  if (typeof theme_id === 'string' && theme_id) update.theme_id = theme_id;
   if (resubmit && current.status === 'rejected') {
     update.status = 'pending';
     update.approved_by = null;
