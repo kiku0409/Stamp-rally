@@ -7,12 +7,20 @@ import { getLocalParticipant, setLocalParticipant, clearLocalParticipant } from 
 import { formatGrouped } from '@/lib/code';
 import { LocalParticipant } from '@/types';
 
+const GENDERS = ['男性', '女性', 'その他'];
+const AGE_GROUPS = ['10代', '20代', '30代', '40代', '50代以上'];
+
+const selectClass =
+  'w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white appearance-none';
+
 export default function ProfilePage() {
   const router = useRouter();
   const [participant, setParticipant] = useState<LocalParticipant | null>(null);
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
   const [nicknameInput, setNicknameInput] = useState('');
+  const [genderInput, setGenderInput] = useState('');
+  const [ageGroupInput, setAgeGroupInput] = useState('');
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,6 +41,8 @@ export default function ProfilePage() {
   function startEdit() {
     if (!participant) return;
     setNicknameInput(participant.nickname);
+    setGenderInput(participant.gender ?? '');
+    setAgeGroupInput(participant.age_group ?? '');
     setEditing(true);
   }
 
@@ -40,16 +50,26 @@ export default function ProfilePage() {
     setEditing(false);
   }
 
-  async function saveNickname() {
+  async function saveProfile() {
     if (!participant || !nicknameInput.trim()) return;
     setSaving(true);
     try {
       await fetch('/api/participants', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participant_id: participant.participant_id, nickname: nicknameInput.trim() }),
+        body: JSON.stringify({
+          participant_id: participant.participant_id,
+          nickname: nicknameInput.trim(),
+          gender: genderInput || undefined,
+          age_group: ageGroupInput || undefined,
+        }),
       });
-      const updated = { ...participant, nickname: nicknameInput.trim() };
+      const updated: LocalParticipant = {
+        ...participant,
+        nickname: nicknameInput.trim(),
+        gender: genderInput || undefined,
+        age_group: ageGroupInput || undefined,
+      };
       setLocalParticipant(updated);
       setParticipant(updated);
       setEditing(false);
@@ -78,37 +98,79 @@ export default function ProfilePage() {
       </div>
 
       <div className="max-w-lg mx-auto p-4 space-y-4">
-        {/* Nickname */}
+        {/* User info card */}
         <div className="bg-white rounded-2xl p-5 border border-line card-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-soft border border-teal-border flex items-center justify-center text-accent-deep flex-shrink-0">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-full bg-soft border border-teal-border flex items-center justify-center text-accent-deep flex-shrink-0 mt-0.5">
               <User size={22} strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-muted mb-0.5">ニックネーム</p>
               {editing ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={inputRef}
-                    value={nicknameInput}
-                    onChange={e => setNicknameInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') saveNickname(); if (e.key === 'Escape') cancelEdit(); }}
-                    maxLength={20}
-                    className="flex-1 text-[18px] font-bold text-ink border-b-2 border-accent outline-none bg-transparent"
-                  />
-                  <button onClick={saveNickname} disabled={saving || !nicknameInput.trim()} className="text-accent-deep disabled:opacity-40">
-                    <Check size={20} strokeWidth={2.5} />
-                  </button>
-                  <button onClick={cancelEdit} className="text-muted">
-                    <X size={20} strokeWidth={2.5} />
-                  </button>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[11px] text-muted mb-1">ニックネーム</p>
+                    <input
+                      ref={inputRef}
+                      value={nicknameInput}
+                      onChange={e => setNicknameInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Escape') cancelEdit(); }}
+                      maxLength={20}
+                      className="w-full text-[16px] font-bold text-ink border-b-2 border-accent outline-none bg-transparent pb-1"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[11px] text-muted mb-1">性別</p>
+                      <select value={genderInput} onChange={e => setGenderInput(e.target.value)} className={selectClass}>
+                        <option value="">未設定</option>
+                        {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted mb-1">年代</p>
+                      <select value={ageGroupInput} onChange={e => setAgeGroupInput(e.target.value)} className={selectClass}>
+                        <option value="">未設定</option>
+                        {AGE_GROUPS.map(a => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={saveProfile}
+                      disabled={saving || !nicknameInput.trim()}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-brand text-white text-[13px] font-bold disabled:opacity-40 disabled:shadow-none"
+                    >
+                      <Check size={14} strokeWidth={2.5} />
+                      {saving ? '保存中...' : '保存'}
+                    </button>
+                    <button onClick={cancelEdit} className="px-4 py-2 rounded-xl border border-line text-muted text-[13px]">
+                      キャンセル
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-[18px] font-bold text-ink">{participant.nickname}</p>
-                  <button onClick={startEdit} className="text-muted hover:text-accent-deep transition-colors">
-                    <Pencil size={14} strokeWidth={2} />
-                  </button>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[11px] text-muted">ニックネーム</p>
+                    <button onClick={startEdit} className="text-muted hover:text-accent-deep transition-colors p-1 -mr-1">
+                      <Pencil size={14} strokeWidth={2} />
+                    </button>
+                  </div>
+                  <p className="text-[18px] font-bold text-ink mb-3">{participant.nickname}</p>
+                  <div className="grid grid-cols-2 gap-3 border-t border-line pt-3">
+                    <div>
+                      <p className="text-[11px] text-muted mb-0.5">性別</p>
+                      <p className={`text-[14px] font-medium ${participant.gender ? 'text-ink' : 'text-faint'}`}>
+                        {participant.gender ?? '未設定'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted mb-0.5">年代</p>
+                      <p className={`text-[14px] font-medium ${participant.age_group ? 'text-ink' : 'text-faint'}`}>
+                        {participant.age_group ?? '未設定'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

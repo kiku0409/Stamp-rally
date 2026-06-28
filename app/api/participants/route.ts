@@ -39,16 +39,25 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const body = await request.json();
-  const { participant_id, nickname } = body;
+  const { participant_id, nickname, gender, age_group } = body;
 
-  if (!participant_id || !nickname?.trim()) {
-    return NextResponse.json({ error: 'participant_id and nickname are required' }, { status: 400 });
+  if (!participant_id) {
+    return NextResponse.json({ error: 'participant_id is required' }, { status: 400 });
+  }
+
+  const updates: Record<string, string> = {};
+  if (nickname?.trim()) updates.nickname = nickname.trim();
+  if (gender) updates.gender = gender;
+  if (age_group) updates.age_group = age_group;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
 
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('participants')
-    .update({ nickname: nickname.trim() })
+    .update(updates)
     .eq('id', participant_id);
 
   if (error) {

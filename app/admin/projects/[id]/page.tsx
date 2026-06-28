@@ -672,8 +672,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Stampers modal */}
       {stampersEvent && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick={() => setStampersEvent(null)}>
-          <div className="bg-white rounded-t-2xl w-full max-w-lg p-6 max-h-[70vh] flex flex-col border-t border-line" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setStampersEvent(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[70vh] flex flex-col border border-line card-shadow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-bold text-ink text-[15px]">{stampersEvent.title}</h2>
