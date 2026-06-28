@@ -35,6 +35,28 @@
 
 ### 直近セッション（2026-06-29）で実装・完了したもの
 
+#### H. 来場者画面 ボトムナビ4タブ構成への再設計
+
+旧: `app/stamp-book/page.tsx` 1ページにQR・スタンプ・引換券・ユーザー情報が集約
+新: `layout.tsx` + 3ページ + Context で疎結合な4タブ構成
+
+- `app/stamp-book/StampBookContext.tsx` 新規: データ取得・3秒ポーリング・visibilitychange再フェッチ・QRスキャナー開閉・引換ポップアップを Context に集約
+- `components/BottomNav.tsx` 新規: 固定ボトムバー（ホーム/スタンプ/QR中央円形/チケット）。`usePathname()` でアクティブタブ強調。QRボタンはページ遷移なく `setShowScanner(true)`
+- `app/stamp-book/layout.tsx` 新規: `StampBookProvider` ラップ、QRScannerモーダル・引換ポップアップ・RewardTicketModal・共通グラデーションヘッダー（ログイン時のみ）・BottomNav を一括管理
+- `app/stamp-book/page.tsx` ホームタブに刷新: 未ログイン時=ウェルカム画面、ログイン時=`ProjectOverviewCard` 一覧（バナー・スタンプ数・直近3件の MiniStampRow・進捗バー（タップでスタンプ/特典タブへ）・QRボタン）
+- `app/stamp-book/stamps/page.tsx` 新規: スタンプ一覧タブ（`ProjectSection` + `StampCard` 一覧）
+- `app/stamp-book/rewards/page.tsx` 新規: 引換券一覧タブ（プロジェクト別・引換済みバッジ・タップで RewardTicketModal）
+- コミット: `7ab442c`（4タブ）、`9a33021`（ホームカード拡充）、`ecc7816`（ヘッダーをレイアウトへ移動）
+
+#### G2. イベントアイコン表示バグ修正
+
+- `components/StampAcquired.tsx`: スタンプ取得完了画面でも `event.icon_url` を円形表示（旧: Music アイコン固定）
+- `app/event/[qr_token]/stamp/page.tsx`: 「取得済み」表示時も `event.icon_url` を表示（旧: チェックマーク固定）
+- `app/api/stamps/route.ts`: events の select に `icon_url` を追加（これが根本原因; スタンプAPIがアイコンURLを返していなかった）
+- コミット: `86c8762`、`0040b2f`
+
+### 前セッション（2026-06-29）で実装・完了したもの
+
 #### F. プロジェクトテーマパック（6色）
 
 - `lib/themes.ts` 新規作成: teal/pink/blue/orange/purple/green の6テーマ定義（ヘッダーグラデーション・アクセント・ソフト・トラック色）
@@ -137,7 +159,7 @@
 
 ## 6. 主要ファイルの地図
 
-- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/page.tsx`（テーマ対応済み）、`app/profile/page.tsx`（ニックネーム・性別・年代編集）、`app/register/page.tsx`、`components/RewardTicketModal.tsx`、`components/NicknameForm.tsx`、`components/StampCard.tsx`（テーマ・アイコン対応）
+- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/layout.tsx`（共通ヘッダー・モーダル群）、`app/stamp-book/StampBookContext.tsx`（データ共有）、`app/stamp-book/page.tsx`（ホーム）、`app/stamp-book/stamps/page.tsx`（スタンプ一覧）、`app/stamp-book/rewards/page.tsx`（引換券）、`app/profile/page.tsx`、`app/register/page.tsx`、`components/BottomNav.tsx`（新規）、`components/RewardTicketModal.tsx`、`components/NicknameForm.tsx`、`components/StampCard.tsx`（テーマ・アイコン対応）、`components/StampAcquired.tsx`（アイコン対応）
 - 管理: `app/admin/login/page.tsx`、`app/admin/redeem/page.tsx`（2段階確認）、`app/admin/page.tsx`、`app/admin/projects/[id]/page.tsx`（テーマ選択UI）、`app/admin/events/new/page.tsx`（アイコン対応）、`app/admin/events/[id]/page.tsx`（アイコン対応）、`app/admin/super/page.tsx`
 - API: `app/api/projects/**`（theme_id対応）、`app/api/events/**`（icon_url対応）、`app/api/events/upload-icon/route.ts`（新規）、`app/api/stamps/route.ts`、`app/api/stamp-book`（theme_id対応）、`app/api/rewards/redeem`、`app/api/participants/route.ts`（gender/age_group対応）
 - テスト: `playwright.config.ts`、`tests/redeem-flow.spec.ts`
