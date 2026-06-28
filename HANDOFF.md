@@ -1,6 +1,6 @@
 # 引き継ぎメモ（HANDOFF）
 
-最終更新: 2026-06-27 / ブランチ: `claude/trading-partner-history-vvtz7r`
+最終更新: 2026-06-28 / ブランチ: `main`（全変更コミット済み・本番デプロイ済み）
 
 次のセッションがこれだけ読めば再開できるようにまとめた運用・状態メモ。ユーザー向けの仕様は `README.md`、過去経緯は `docs/progress.md` も参照。
 
@@ -31,43 +31,45 @@
 
 ---
 
-## 2. 現在の実装状況（未コミット・このセッションの成果）
+## 2. 現在の実装状況（全て `main` にコミット済み・本番反映済み）
 
-### 今セッションで実装・完了済み（未コミット）
+### 直近セッション（2026-06-28）で実装・完了したもの
 
-#### A. 管理者引き換え画面の2段階確認（`app/admin/redeem/page.tsx`）
-ともやさんフィードバック対応。ステートマシンを全面刷新。
+#### A. 受取完了ポップアップのレイヤー修正（`app/stamp-book/page.tsx`）
+管理者が特典を引き換えた際、来場者がQRモーダルを開いていると背面にポップアップが出るバグを修正。
 
-```
-scan → loading → preview → confirm（NEW）→ redeeming → done（NEW）
-```
+- ポーリングで引き換え検出時、`setSelectedReward(current => current?.reward.redeem_code === redeemCode ? null : current)` でモーダルを先に閉じ、その後ポップアップを表示
+- コミット: `7fd801d`
 
-- **preview（未引き換え）**: 「引き換えする」ボタン → POST はせず `confirm` へ
-- **preview（引き換え済み）**: 赤バナーで日時表示
-- **confirm（NEW）**: 黄色注意テキスト「引き換えると取り消せません」＋「確定（引き換える）」/「戻る」
-- **done（NEW）**: 大きな緑チェック＋「引き換え完了！」＋名前・特典名
-- Playwright E2E で10サイクル全パス確認済み（15.8秒）
+#### B. スタンプ取得のレスポンス高速化（`app/api/stamps/route.ts`、`app/event/[qr_token]/stamp/page.tsx`）
+登録済みユーザーのスタンプ取得フローを 2往復→1往復 に削減。
 
-#### B. 来場者スタンプ帳の受取完了ポップアップ（`app/stamp-book/page.tsx`）
-3秒ポーリングで `redeemed_at` の `null → 非null` 変化を検出しポップアップ表示。
+- `POST /api/stamps` が `qr_token` を受け付け、イベント情報も一緒に返却。クライアントは `GET /api/events` を呼ばなくなった
+- `issueRewards` 内の DB クエリを並列化（スタンプ数・tier一覧・付与済み一覧を `Promise.all`）
+- コミット: `09d12e9`
 
-- `useEffect` で `setInterval(3000)` + `prevUnredeemedRef`（Map: redeem_code→label）で前回の未引き換え状態を追跡
-- 変化検出 → `redeemPopup` state セット → 3.5秒後自動クローズ（タップでも閉じる）
-- 未引き換え報酬がゼロになったら `clearInterval` でポーリング停止
-- 全画面オーバーレイ: 緑チェック + 「受取完了！」+ 特典名
-- ※ Playwright 外のため手動確認が必要（管理者が引き換え → 3秒以内にポップアップ出るか）
+#### C. QRなしでアカウント作成できるフロー（`app/register/page.tsx`、`app/stamp-book/page.tsx`）
+新規ユーザーがQRスキャンなしでも登録できる `/register` ページを新設。スタンプ帳の空状態に「アカウントを作成する」ボタンを追加。
 
-#### C. 管理者ログイン画面のパスワード表示切り替え（`app/admin/login/page.tsx`）
-- `showPassword` state + `Eye`/`EyeOff` アイコン（lucide-react）
-- パスワード入力欄の右端にトグルボタン（`tabIndex={-1}` でタブ移動を妨げない）
+- コミット: `dd2b9c8`
 
-#### D. Playwright E2E テスト環境（新規）
-- `playwright.config.ts`: port 3001 で起動（port 3000 は別アプリが占有）
-- `tests/redeem-flow.spec.ts`: `beforeAll` で Supabase service role によりテストデータ自動生成 → 10サイクル実行 → `afterAll` でクリーンアップ
-- `@playwright/test` + `dotenv` を devDependencies に追加
+#### D. ユーザー登録フォームの改修（`components/NicknameForm.tsx`）
+- ニックネーム入力を維持（削除→復元の経緯あり）
+- 年代選択（ドロップダウン: 10代/20代/...）→ **年齢入力（数値: 1〜120）** に変更
+- コミット: `4760faa`
 
-### 過去セッションの実装（本番反映済み）
-詳細は前回 HANDOFF の「2. 現在の実装状況」を参照（認証・ロール、プロジェクト承認ワークフロー、スタンプ、特典 など）。
+#### E. プロフィールページの刷新（`app/profile/page.tsx`）
+- 性別・年齢（`age_group` カラムに数値文字列で格納）を表示
+- 「ログアウト」ボタン追加（localStorage クリア → `/stamp-book` へリダイレクト）
+- 復元コード表示は維持
+- コミット: `7849d93`
+
+### 以前のセッション（本番反映済み）
+- 管理者引き換え画面の2段階確認（`app/admin/redeem/page.tsx`）
+- 管理者ログイン画面のパスワード表示切り替え（`app/admin/login/page.tsx`）
+- Playwright E2E テスト環境（`playwright.config.ts`、`tests/redeem-flow.spec.ts`）
+- スタンプ帳の3秒ポーリングによる受取完了ポップアップ
+- 来場者の復元コードによる別端末引き継ぎ（BUG-001修正）
 
 ---
 
@@ -75,27 +77,26 @@ scan → loading → preview → confirm（NEW）→ redeeming → done（NEW）
 
 > 新規バグ・機能要望は **`BUGS.md`** に追記すること（Claudeも自動参照する）。以下はアーキテクチャ上の注意点。
 
-1. **来場者ポップアップの手動確認**: Playwright はブラウザ単体テスト。管理者が引き換えた後3秒以内にポップアップが出るかは、2画面（管理者・来場者）を同時に開いた状態での実機確認が必要。
-2. **Playwright は port 3001 専用**: `playwright.config.ts` の `baseURL` と `webServer` が port 3001 に設定。テスト実行前に `npm run dev -- -p 3001` が必要（または Playwright の `webServer` が自動起動）。
-3. **復元コード未保持の旧端末**: recovery_code 機能より前に登録した端末は `/stamp-book` が表示されない（許容中）。
-4. **段階の閾値編集は非遡及**: tier の threshold を変えても既存付与は再評価しない（label 編集は安全）。
-5. **段階の削除はカスケード**: tier 削除で当該 `participant_rewards` も消える。削除時は確認ダイアログあり。
-6. **本格的レート制限なし**: 申請数上限のみ。将来 Vercel KV / Upstash 導入を検討。
-7. **本人確認は復元コード止まり**: 高価値特典では、コード共有/流出で他人引き換えの余地。将来メール/LINE連携で強化想定。
-8. **lint**: `useEffect` 内で後方宣言の関数を呼ぶ等の既存パターン警告が残るがビルドは通る。`tsc --noEmit` はクリーン。
+1. **スタンプ取得ロード時間**: 現状 0.5秒以上かかる場合がある（今後の課題）。1往復化・並列クエリ化は済み。Vercel コールドスタートが主因。
+2. **age_group カラムに数値文字列を格納**: DBの `age_group TEXT` カラムに "25" のような数値文字列が入る。カラム名と実データが乖離しているが、マイグレーションは未実施。将来 `age INTEGER` カラムへの移行を検討。
+3. **来場者ポップアップの手動確認**: 管理者が引き換え後3秒以内にポップアップが出るかは2画面同時での実機確認が必要。
+4. **Playwright は port 3001 専用**: テスト実行前に `npm run dev -- -p 3001` が必要。
+5. **復元コード未保持の旧端末**: recovery_code 機能より前に登録した端末は `/stamp-book` が表示されない（許容中）。
+6. **段階の閾値編集は非遡及**: tier の threshold を変えても既存付与は再評価しない（label 編集は安全）。
+7. **段階の削除はカスケード**: tier 削除で当該 `participant_rewards` も消える。削除時は確認ダイアログあり。
+8. **本格的レート制限なし**: 申請数上限のみ。将来 Vercel KV / Upstash 導入を検討。
+9. **本人確認は復元コード止まり**: 高価値特典では、コード共有/流出で他人引き換えの余地。将来メール/LINE連携で強化想定。
+10. **lint**: `useEffect` 内で後方宣言の関数を呼ぶ等の既存パターン警告が残るがビルドは通る。`tsc --noEmit` はクリーン（ローカル環境。このリモート環境では node_modules の型が未インストールのためエラーが出るが無視してよい）。
 
 ---
 
 ## 4. 次にやること
 
-### 最優先
-1. **来場者ポップアップの実機確認**（2画面同時）
-   - スタンプ帳を開いたまま、管理者が `/admin/redeem` で同一参加者の特典を引き換え
-   - 3秒以内に「受取完了！」ポップアップが出るか確認（Vercel 本番でテスト）
-
-### その後の候補（優先度順）
-2. 引き換え統計ダッシュボード（付与数・引換数・引換率）
-3. 取得者/スタンプ一覧の検索・フィルタ・ページング
+### 候補（優先度順）
+1. 引き換え統計ダッシュボード（付与数・引換数・引換率）
+2. 取得者/スタンプ一覧の検索・フィルタ・ページング
+3. プロフィールページにニックネーム編集機能を再追加（直前セッションで一時削除、復元スコープ外として保留中）
+4. `age_group` カラムを `age INTEGER` にマイグレーション
 5. 本人確認強化（メール/LINE連携）
 6. 本格的レート制限（KV導入）
 7. 体験系: ランキング、SNSシェア、プッシュ通知
@@ -106,6 +107,7 @@ scan → loading → preview → confirm（NEW）→ redeeming → done（NEW）
 ## 5. 開発・デプロイの作法
 
 - **ブランチ**: `main` は本番。機能ごとに feature ブランチ → `main` に ff マージ → push で自動デプロイ。
+- **プランモード**: 変更前に必ずプランモードでユーザーに確認してから実装すること（直前セッションでニックネーム削除の手戻りが発生した教訓）。
 - **DB変更を伴う場合の順序**: Supabase SQL Editor でマイグレーション実行 → その後 `main` マージ。逆順だと一時的に壊れる（過去に経験済み）。
 - **port**: dev サーバーは通常 3000。別アプリが 3000 を占有している場合は `npm run dev -- -p 3001`。Playwright は port 3001 設定済み。
 - **Playwright テスト**: `npx playwright install chromium` が初回必要。`TEST_ADMIN_EMAIL`/`TEST_ADMIN_PASSWORD` を `.env.local` に要設定。テストは Supabase にテストデータを自動生成・削除する。
@@ -116,8 +118,8 @@ scan → loading → preview → confirm（NEW）→ redeeming → done（NEW）
 
 ## 6. 主要ファイルの地図
 
-- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/page.tsx`、`app/profile/page.tsx`、`components/RewardTicketModal.tsx`
-- 管理: `app/admin/login/page.tsx`（パスワード表示切り替え追加）、`app/admin/redeem/page.tsx`（2段階確認）、`app/admin/page.tsx`、`app/admin/projects/[id]/page.tsx`、`app/admin/super/page.tsx`
-- API: `app/api/projects/**`、`app/api/events/**`、`app/api/stamps`、`app/api/stamp-book`、`app/api/rewards/redeem`
+- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/page.tsx`、`app/profile/page.tsx`、`app/register/page.tsx`（新規）、`components/RewardTicketModal.tsx`、`components/NicknameForm.tsx`
+- 管理: `app/admin/login/page.tsx`、`app/admin/redeem/page.tsx`（2段階確認）、`app/admin/page.tsx`、`app/admin/projects/[id]/page.tsx`、`app/admin/super/page.tsx`
+- API: `app/api/projects/**`、`app/api/events/**`、`app/api/stamps/route.ts`（qr_token対応・並列化）、`app/api/stamp-book`、`app/api/rewards/redeem`、`app/api/participants/route.ts`
 - テスト: `playwright.config.ts`、`tests/redeem-flow.spec.ts`
 - 共通: `lib/supabase.ts` / `lib/authMiddleware.ts` / `lib/adminAuth.ts` / `lib/code.ts` / `lib/storage.ts` / `types/index.ts`
