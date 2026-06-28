@@ -70,12 +70,18 @@ export default function StampAcquired({ event, stampedAt }: StampAcquiredProps) 
 
           {/* Stamp */}
           <div
-            className="stamp-face w-[110px] h-[110px] rounded-full flex flex-col items-center justify-center text-accent-deep mx-auto animate-stamp-pop"
+            className="stamp-face w-[110px] h-[110px] rounded-full flex flex-col items-center justify-center text-accent-deep mx-auto animate-stamp-pop overflow-hidden"
           >
-            <Music size={30} strokeWidth={2} />
-            <span className="text-[11px] font-bold mt-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              {mmdd}
-            </span>
+            {event.icon_url ? (
+              <img src={event.icon_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <>
+                <Music size={30} strokeWidth={2} />
+                <span className="text-[11px] font-bold mt-1" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {mmdd}
+                </span>
+              </>
+            )}
           </div>
 
           <h2 className="text-[22px] font-bold text-ink mt-4 mb-1 animate-fade-up">スタンプ獲得</h2>
