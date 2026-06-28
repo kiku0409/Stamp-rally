@@ -214,14 +214,6 @@ export default function StampPage({ params }: StampPageProps) {
               <p className="text-[11px] text-muted mt-1">スタンプ帳の「TICKETS」で確認できます</p>
             </div>
           )}
-          <div className="mt-4">
-            <button
-              onClick={() => router.push('/stamp-book')}
-              className="w-full py-[14px] rounded-xl btn-brand text-white font-bold text-[15px]"
-            >
-              スタンプ帳を見る
-            </button>
-          </div>
         </div>
       )}
 
