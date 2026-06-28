@@ -63,29 +63,42 @@ export default function StampPage({ params }: StampPageProps) {
   const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
-    loadEvent();
+    const local = getLocalParticipant();
+    if (local) {
+      setNickname(local.nickname);
+      acquireStamp(local.participant_id);
+    } else {
+      setStep('register');
+    }
   }, [qr_token]);
 
-  async function loadEvent() {
+  // Acquire stamp using qr_token; event data is returned in the response
+  // so no separate event fetch is needed.
+  async function acquireStamp(participantId: string) {
+    setStep('stamping');
     try {
-      const res = await fetch(`/api/events/${qr_token}`);
+      const res = await fetch('/api/stamps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participant_id: participantId, qr_token }),
+      });
+      const data = await res.json();
       if (!res.ok) {
-        setError('イベントが見つかりません');
+        setError(data.error || 'スタンプ取得に失敗しました');
         setStep('error');
         return;
       }
-      const ev: Event = await res.json();
-      setEvent(ev);
-
-      const local = getLocalParticipant();
-      if (local) {
-        setNickname(local.nickname);
-        await acquireStamp(ev.id, local.participant_id);
+      if (data.event) setEvent(data.event as Event);
+      if (data.alreadyStamped) {
+        if (data.stamp?.stamped_at) setStampedAt(data.stamp.stamped_at);
+        setStep('already');
       } else {
-        setStep('register');
+        setStampedAt(data.stamp.stamped_at);
+        setNewRewards(Array.isArray(data.newRewards) ? data.newRewards : []);
+        setStep('done');
       }
     } catch {
-      setError('通信エラーが発生しました');
+      setError('スタンプ取得に失敗しました');
       setStep('error');
     }
   }
@@ -108,7 +121,7 @@ export default function StampPage({ params }: StampPageProps) {
       }
       setLocalParticipant({ participant_id: data.id, nickname: data.nickname, recovery_code: data.recovery_code });
       setNickname(data.nickname);
-      await acquireStamp(event!.id, data.id);
+      await acquireStamp(data.id);
     } catch {
       setRestoreError('通信エラーが発生しました');
       setRestoring(false);
@@ -127,32 +140,9 @@ export default function StampPage({ params }: StampPageProps) {
       const participant = await res.json();
       setLocalParticipant({ participant_id: participant.id, nickname: nick, recovery_code: participant.recovery_code, gender, age_group: ageGroup });
       setNickname(nick);
-      await acquireStamp(event!.id, participant.id);
+      await acquireStamp(participant.id);
     } catch (e) {
       setError((e as Error).message);
-      setStep('error');
-    }
-  }
-
-  async function acquireStamp(eventId: string, participantId: string) {
-    setStep('stamping');
-    try {
-      const res = await fetch('/api/stamps', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participant_id: participantId, event_id: eventId }),
-      });
-      const data = await res.json();
-      if (data.alreadyStamped) {
-        if (data.stamp?.stamped_at) setStampedAt(data.stamp.stamped_at);
-        setStep('already');
-      } else {
-        setStampedAt(data.stamp.stamped_at);
-        setNewRewards(Array.isArray(data.newRewards) ? data.newRewards : []);
-        setStep('done');
-      }
-    } catch {
-      setError('スタンプ取得に失敗しました');
       setStep('error');
     }
   }
@@ -163,9 +153,7 @@ export default function StampPage({ params }: StampPageProps) {
       {(step === 'loading' || step === 'stamping') && (
         <div className="text-center">
           <div className="w-[54px] h-[54px] mx-auto mb-4 rounded-full border-[3px] border-line border-t-accent animate-spin" />
-          <p className="text-muted text-[14px]">
-            {step === 'loading' ? '読み込み中...' : 'スタンプ取得中...'}
-          </p>
+          <p className="text-muted text-[14px]">スタンプ取得中...</p>
         </div>
       )}
 
@@ -226,6 +214,14 @@ export default function StampPage({ params }: StampPageProps) {
               <p className="text-[11px] text-muted mt-1">スタンプ帳の「TICKETS」で確認できます</p>
             </div>
           )}
+          <div className="mt-4">
+            <button
+              onClick={() => router.push('/stamp-book')}
+              className="w-full py-[14px] rounded-xl btn-brand text-white font-bold text-[15px]"
+            >
+              スタンプ帳を見る
+            </button>
+          </div>
         </div>
       )}
 
