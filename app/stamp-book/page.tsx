@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { Music, KeyRound, UserPlus, Check, QrCode, MapPin, Clock } from 'lucide-react';
 import { useStampBook } from './StampBookContext';
 import { setLocalParticipant } from '@/lib/storage';
-import { getTheme, headerGradient, Theme } from '@/lib/themes';
+import { getTheme, Theme } from '@/lib/themes';
 import { StampBookGroup, EventStamp, ProjectImage } from '@/types';
 
 export default function StampBookHomePage() {
-  const { participant, groups, loading, setShowScanner, activeProjectId, setActiveProject } = useStampBook();
+  const { participant, groups, loading, setShowScanner, activeProjectId } = useStampBook();
   const [restoreCode, setRestoreCode] = useState('');
   const [restoreError, setRestoreError] = useState('');
   const [restoring, setRestoring] = useState(false);
@@ -116,33 +116,6 @@ export default function StampBookHomePage() {
 
   return (
     <main>
-      {/* Project switcher (multiple projects only) */}
-      {groups.length > 1 && (
-        <div
-          className="flex gap-2 px-4 py-2 overflow-x-auto"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          {groups.map(g => {
-            const t = getTheme(g.project.theme_id);
-            const isActive = g.project.id === activeGroup?.project.id;
-            return (
-              <button
-                key={g.project.id}
-                onClick={() => setActiveProject(g.project.id)}
-                className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold border transition-all"
-                style={
-                  isActive
-                    ? { background: headerGradient(t), color: '#fff', borderColor: 'transparent' }
-                    : { borderColor: t.accent, color: t.accent, background: 'transparent' }
-                }
-              >
-                {g.project.name}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {activeGroup ? (
         <ProjectView group={activeGroup} onScanQR={() => setShowScanner(true)} />
       ) : (
@@ -323,7 +296,7 @@ function MiniStampRow({ stamp, theme }: { stamp: EventStamp; theme: Theme }) {
   const dateStr = d.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' });
 
   return (
-    <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white">
+    <div className="flex items-center gap-2.5 px-3 py-2.5" style={{ background: 'var(--color-card-bg, white)' }}>
       <div
         className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center overflow-hidden"
         style={{

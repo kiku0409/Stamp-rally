@@ -8,6 +8,10 @@ export interface Theme {
   soft: string;
   track: string;
   screenBg?: string;
+  cardBg?: string;
+  ink?: string;
+  muted?: string;
+  line?: string;
 }
 
 export const THEMES: Theme[] = [
@@ -92,6 +96,10 @@ export const THEMES: Theme[] = [
     soft: '#141a0e',
     track: '#2a2a2a',
     screenBg: '#0e0e0e',
+    cardBg: '#1c1c1c',
+    ink: '#e8e8e8',
+    muted: '#9a9a9a',
+    line: '#2f2f2f',
   },
 ];
 

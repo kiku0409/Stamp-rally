@@ -10,7 +10,7 @@ import StampCard from '@/components/StampCard';
 
 export default function StampsPage() {
   const router = useRouter();
-  const { participant, groups, loading, setSelectedReward } = useStampBook();
+  const { participant, groups, loading, setSelectedReward, activeProjectId } = useStampBook();
 
   useEffect(() => {
     if (!loading && !participant) {
@@ -35,21 +35,22 @@ export default function StampsPage() {
         <h1 className="text-[17px] font-bold text-ink">スタンプ一覧</h1>
       </div>
 
-      {groups.length === 0 ? (
-        <div className="text-center py-16 text-muted">
-          <p className="text-[14px]">まだスタンプがありません</p>
-          <p className="text-[12px] text-faint mt-1">会場のQRコードを読み取って獲得しましょう</p>
-        </div>
-      ) : (
-        groups.map((g) => (
+      {(() => {
+        const activeGroup = groups.find(g => g.project.id === activeProjectId) ?? groups[0] ?? null;
+        if (!activeGroup) return (
+          <div className="text-center py-16 text-muted">
+            <p className="text-[14px]">まだスタンプがありません</p>
+            <p className="text-[12px] text-faint mt-1">会場のQRコードを読み取って獲得しましょう</p>
+          </div>
+        );
+        return (
           <ProjectSection
-            key={g.project.id}
-            group={g}
-            theme={getTheme(g.project.theme_id)}
-            onShowReward={(reward) => setSelectedReward({ reward, projectName: g.project.name })}
+            group={activeGroup}
+            theme={getTheme(activeGroup.project.theme_id)}
+            onShowReward={(reward) => setSelectedReward({ reward, projectName: activeGroup.project.name })}
           />
-        ))
-      )}
+        );
+      })()}
     </main>
   );
 }
@@ -64,7 +65,7 @@ function ProjectSection({ group, theme, onShowReward }: {
   const progress = nextTier ? Math.min((count / nextTier.threshold) * 100, 100) : 100;
 
   return (
-    <section className="bg-white rounded-2xl border border-line card-shadow overflow-hidden">
+    <section className="rounded-2xl border border-line card-shadow overflow-hidden" style={{ background: 'var(--color-card-bg, white)' }}>
       <div className="h-1.5" style={{ background: headerGradient(theme) }} />
 
       <div className="px-4 pt-3">

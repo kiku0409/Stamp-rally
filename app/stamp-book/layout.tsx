@@ -43,6 +43,10 @@ function StampBookShell({ children }: { children: React.ReactNode }) {
     '--color-soft': activeTheme.soft,
     '--color-track': activeTheme.track,
     '--color-screen-bg': activeTheme.screenBg ?? '#F1F8F7',
+    ...(activeTheme.ink && { '--color-ink': activeTheme.ink }),
+    ...(activeTheme.muted && { '--color-muted': activeTheme.muted }),
+    ...(activeTheme.line && { '--color-line': activeTheme.line }),
+    ...(activeTheme.cardBg && { '--color-card-bg': activeTheme.cardBg }),
   } as React.CSSProperties;
 
   return (
