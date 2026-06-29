@@ -35,83 +35,52 @@
 
 ### 直近セッション（2026-06-29）で実装・完了したもの
 
-#### H. 来場者画面 ボトムナビ4タブ構成への再設計
+#### I. パターンB プロジェクト別全体テーマ切り替え（コミット: `9ddc817`）
+
+来場者スタンプ帳のUI全体（ヘッダー・ボトムナビ・アクセントカラー）がアクティブプロジェクトのテーマカラーに自動切り替わる仕組みを実装。
+
+- `lib/themes.ts`: `shibuya-fes`（ピンク#F06EA0 → シアン#5BC8D8）、`street-live`（黒#111111 + コーラル#E84E68）の2テーマ追加。`screenBg` オプションフィールドも追加
+- `lib/storage.ts`: `getActiveProjectId` / `setActiveProjectId` ヘルパー追加（localStorage キー `stamp_rally_active_project`）
+- `app/globals.css`: `header-grad` を `var(--color-header-from/to)` で CSS変数化。`btn-brand` を `var(--color-accent/accent-deep)` で CSS変数化
+- `app/stamp-book/StampBookContext.tsx`: `activeProjectId` state + `setActiveProject` 関数を追加。groups ロード後に自動セット（未設定 or 存在しないIDなら groups[0] にフォールバック）
+- `app/stamp-book/layout.tsx`: アクティブプロジェクトのテーマ色を CSS変数としてルート div に注入（`--color-header-from/to`, `--color-accent`, `--color-accent-deep`, `--color-soft`, `--color-track`, `--color-screen-bg`）。ヘッダーにプロジェクト切り替えチップ（▼付き）とボトムシートを追加
+- `app/event/[qr_token]/stamp/page.tsx`: スタンプ取得成功後に `event.project_id` を `setActiveProjectId` で保存
+
+動作フロー:
+1. QRスキャン → スタンプ取得 → そのプロジェクトが自動でアクティブになる
+2. ヘッダーにプロジェクト名チップ（▼）が表示される
+3. タップでプロジェクト切り替えボトムシートが開き、別プロジェクトを選ぶと全UIテーマが切り替わる
+
+管理画面のテーマ選択UIへの追加は `THEMES` 配列を参照しているため自動反映済み（追加操作不要）。
+
+#### H. 来場者画面 ボトムナビ4タブ構成への再設計（前セッション）
 
 旧: `app/stamp-book/page.tsx` 1ページにQR・スタンプ・引換券・ユーザー情報が集約
 新: `layout.tsx` + 3ページ + Context で疎結合な4タブ構成
 
-- `app/stamp-book/StampBookContext.tsx` 新規: データ取得・3秒ポーリング・visibilitychange再フェッチ・QRスキャナー開閉・引換ポップアップを Context に集約
-- `components/BottomNav.tsx` 新規: 固定ボトムバー（ホーム/スタンプ/QR中央円形/チケット）。`usePathname()` でアクティブタブ強調。QRボタンはページ遷移なく `setShowScanner(true)`
-- `app/stamp-book/layout.tsx` 新規: `StampBookProvider` ラップ、QRScannerモーダル・引換ポップアップ・RewardTicketModal・共通グラデーションヘッダー（ログイン時のみ）・BottomNav を一括管理
-- `app/stamp-book/page.tsx` ホームタブに刷新: 未ログイン時=ウェルカム画面、ログイン時=`ProjectOverviewCard` 一覧（バナー・スタンプ数・直近3件の MiniStampRow・進捗バー（タップでスタンプ/特典タブへ）・QRボタン）
-- `app/stamp-book/stamps/page.tsx` 新規: スタンプ一覧タブ（`ProjectSection` + `StampCard` 一覧）
-- `app/stamp-book/rewards/page.tsx` 新規: 引換券一覧タブ（プロジェクト別・引換済みバッジ・タップで RewardTicketModal）
-- コミット: `7ab442c`（4タブ）、`9a33021`（ホームカード拡充）、`ecc7816`（ヘッダーをレイアウトへ移動）
+- `app/stamp-book/StampBookContext.tsx`、`components/BottomNav.tsx`、`app/stamp-book/layout.tsx`（共通グラデーションヘッダー・QRスキャナーモーダル・引換ポップアップ・RewardTicketModal・BottomNav）
+- `app/stamp-book/page.tsx`: ホームタブ（ProjectOverviewCard：バナー・スタンプ数・直近3件のスタンプ・進捗バー・QRボタン）
+- `app/stamp-book/stamps/page.tsx`: スタンプ一覧タブ
+- `app/stamp-book/rewards/page.tsx`: 引換券一覧タブ
 
-#### G2. イベントアイコン表示バグ修正
+#### G. イベントアイコン画像・表示バグ修正（前セッション）
 
-- `components/StampAcquired.tsx`: スタンプ取得完了画面でも `event.icon_url` を円形表示（旧: Music アイコン固定）
-- `app/event/[qr_token]/stamp/page.tsx`: 「取得済み」表示時も `event.icon_url` を表示（旧: チェックマーク固定）
-- `app/api/stamps/route.ts`: events の select に `icon_url` を追加（これが根本原因; スタンプAPIがアイコンURLを返していなかった）
-- コミット: `86c8762`、`0040b2f`
+- アップロードAPI・フォーム対応・スタンプカード表示・取得完了画面・取得済み画面での表示修正
+- スタンプAPI（`/api/stamps`）の events select に `icon_url` を追加（根本原因修正）
 
-### 前セッション（2026-06-29）で実装・完了したもの
+### 計画中・議論中（未実装）
 
-#### F. プロジェクトテーマパック（6色）
+#### 動的QRコード（タイムスロット型）— 方向性合意済み、未実装
 
-- `lib/themes.ts` 新規作成: teal/pink/blue/orange/purple/green の6テーマ定義（ヘッダーグラデーション・アクセント・ソフト・トラック色）
-- 管理画面プロジェクト詳細（`app/admin/projects/[id]/page.tsx`）: オーナーのみ見えるテーマ選択UI（スウォッチボタン）を追加。選択で即時 PUT /api/projects/[id]
-- `app/stamp-book/page.tsx` + `components/StampCard.tsx`: プロジェクトごとにテーマ色をインラインスタイルで適用（複数プロジェクトが同時表示されるため CSS 変数は不使用）
-- DB: `projects.theme_id TEXT DEFAULT 'teal'` を追加済み（Supabase 実施完了）
-- コミット: `d84d6bd`
+路上アーティストライブで時間帯ごとに異なるアーティストのスタンプが取れる仕組み。
+外部サービスではなく**内製スロットシステム**で実装する方針で合意。
 
-#### G. イベントアイコン画像アップロード
-
-- `app/api/events/upload-icon/route.ts` 新規: multipart → Supabase Storage（`event-icons` バケット）→ public URL 返却
-- イベント作成・編集フォームに「画像を選択」ボタン追加（60px円形プレビュー・削除ボタン付き）
-- `app/api/events/route.ts` POST / `app/api/events/[id]/route.ts` PUT: `icon_url` を受け取り保存
-- `components/StampCard.tsx`: `icon_url` があれば円形画像表示、なければ Music アイコン
-- DB: `events.icon_url TEXT` を追加済み（Supabase 実施完了）
-- Supabase Storage: `event-icons` バケット（Public=ON）作成済み
-- コミット: `d84d6bd`
-
-### 前セッション（2026-06-28）で実装・完了したもの
-
-#### E. プロフィールページの刷新（`app/profile/page.tsx`）
-- ニックネーム・性別・年代を1枚カードで表示＆編集可能に（鉛筆ボタンで編集モード）
-- 旧ユーザー（性別・年代未設定）も後から入力可能
-- 「ログアウト」ボタン追加（localStorage クリア → `/stamp-book` へリダイレクト）
-- コミット: `7849d93`
-
-#### A–D. 受取完了ポップアップのレイヤー修正（`app/stamp-book/page.tsx`）
-管理者が特典を引き換えた際、来場者がQRモーダルを開いていると背面にポップアップが出るバグを修正。
-
-- ポーリングで引き換え検出時、`setSelectedReward(current => current?.reward.redeem_code === redeemCode ? null : current)` でモーダルを先に閉じ、その後ポップアップを表示
-- コミット: `7fd801d`
-
-#### B. スタンプ取得のレスポンス高速化（`app/api/stamps/route.ts`、`app/event/[qr_token]/stamp/page.tsx`）
-登録済みユーザーのスタンプ取得フローを 2往復→1往復 に削減。
-
-- `POST /api/stamps` が `qr_token` を受け付け、イベント情報も一緒に返却。クライアントは `GET /api/events` を呼ばなくなった
-- `issueRewards` 内の DB クエリを並列化（スタンプ数・tier一覧・付与済み一覧を `Promise.all`）
-- コミット: `09d12e9`
-
-#### C. QRなしでアカウント作成できるフロー（`app/register/page.tsx`、`app/stamp-book/page.tsx`）
-新規ユーザーがQRスキャンなしでも登録できる `/register` ページを新設。スタンプ帳の空状態に「アカウントを作成する」ボタンを追加。
-
-- コミット: `dd2b9c8`
-
-#### D. ユーザー登録フォームの改修（`components/NicknameForm.tsx`）
-- ニックネーム入力を維持（削除→復元の経緯あり）
-- 年代選択（ドロップダウン: 10代/20代/...）→ **年齢入力（数値: 1〜120）** に変更
-- コミット: `4760faa`
-
-### 以前のセッション（本番反映済み）
-- 管理者引き換え画面の2段階確認（`app/admin/redeem/page.tsx`）
-- 管理者ログイン画面のパスワード表示切り替え（`app/admin/login/page.tsx`）
-- Playwright E2E テスト環境（`playwright.config.ts`、`tests/redeem-flow.spec.ts`）
-- スタンプ帳の3秒ポーリングによる受取完了ポップアップ
-- 来場者の復元コードによる別端末引き継ぎ（BUG-001修正）
+設計概要:
+- `/slot/[slot_token]` エンドポイントを新設
+- 管理画面でアーティストのタイムテーブル（開始時刻・終了時刻・イベントID）を設定
+- スキャン時に現在時刻を確認し、対応するイベントへリダイレクト
+- 必要DBテーブル: `slots`（slot_token, project_id）、`slot_schedules`（slot_id, event_id, start_at, end_at）
+- 印刷済みQRは変えずに済む
 
 ---
 
@@ -119,8 +88,8 @@
 
 > 新規バグ・機能要望は **`BUGS.md`** に追記すること（Claudeも自動参照する）。以下はアーキテクチャ上の注意点。
 
-1. **スタンプ取得ロード時間**: 現状 0.5秒以上かかる場合がある（今後の課題）。1往復化・並列クエリ化は済み。Vercel コールドスタートが主因。
-2. **age_group カラムに数値文字列を格納**: DBの `age_group TEXT` カラムに "25" のような数値文字列が入る。カラム名と実データが乖離しているが、マイグレーションは未実施。将来 `age INTEGER` カラムへの移行を検討。
+1. **スタンプ取得ロード時間**: 現状 0.5秒以上かかる場合がある。Vercel コールドスタートが主因。1往復化・並列クエリ化は済み。
+2. **age_group カラムに数値文字列を格納**: DBの `age_group TEXT` カラムに "25" のような数値文字列が入る。将来 `age INTEGER` カラムへの移行を検討。
 3. **来場者ポップアップの手動確認**: 管理者が引き換え後3秒以内にポップアップが出るかは2画面同時での実機確認が必要。
 4. **Playwright は port 3001 専用**: テスト実行前に `npm run dev -- -p 3001` が必要。
 5. **復元コード未保持の旧端末**: recovery_code 機能より前に登録した端末は `/stamp-book` が表示されない（許容中）。
@@ -128,20 +97,21 @@
 7. **段階の削除はカスケード**: tier 削除で当該 `participant_rewards` も消える。削除時は確認ダイアログあり。
 8. **本格的レート制限なし**: 申請数上限のみ。将来 Vercel KV / Upstash 導入を検討。
 9. **本人確認は復元コード止まり**: 高価値特典では、コード共有/流出で他人引き換えの余地。将来メール/LINE連携で強化想定。
-10. **lint**: `useEffect` 内で後方宣言の関数を呼ぶ等の既存パターン警告が残るがビルドは通る。`tsc --noEmit` はクリーン（ローカル環境。このリモート環境では node_modules の型が未インストールのためエラーが出るが無視してよい）。
+10. **lint**: `useEffect` 内で後方宣言の関数を呼ぶ等の既存パターン警告が残るがビルドは通る。`tsc --noEmit` はクリーン。
 
 ---
 
 ## 4. 次にやること
 
 ### 候補（優先度順）
-1. `age_group` カラムを `age INTEGER` にマイグレーション（現状は数値文字列が入っている）
-2. 本人確認強化（メール/LINE連携）
-3. 本格的レート制限（KV導入）
-4. 体験系: ランキング、SNSシェア、プッシュ通知
-5. 監査ログ（操作履歴）
-6. 引き換え統計ダッシュボード（付与数・引換数・引換率）← 最低優先度
-7. 取得者/スタンプ一覧の検索・フィルタ・ページング ← 最低優先度
+1. **動的QRコード（タイムスロット型）実装** — 方向性合意済み。DBテーブル2枚（`slots`・`slot_schedules`）新設 → Supabase SQL Editor でマイグレーション → API（`/slot/[token]`）+ 管理画面UI（タイムテーブル設定）実装。2週間後のGMO渋谷エンタメ祭（7/11-12）での使用を想定
+2. `age_group` カラムを `age INTEGER` にマイグレーション
+3. 本人確認強化（メール/LINE連携）
+4. 本格的レート制限（KV導入）
+5. 体験系: ランキング、SNSシェア、プッシュ通知
+6. 監査ログ（操作履歴）
+7. 引き換え統計ダッシュボード（付与数・引換数・引換率）← 最低優先度
+8. 取得者/スタンプ一覧の検索・フィルタ・ページング ← 最低優先度
 
 ---
 
@@ -151,16 +121,17 @@
 - **プランモード**: 変更前に必ずプランモードでユーザーに確認してから実装すること（直前セッションでニックネーム削除の手戻りが発生した教訓）。
 - **DB変更を伴う場合の順序**: Supabase SQL Editor でマイグレーション実行 → その後 `main` マージ。逆順だと一時的に壊れる（過去に経験済み）。
 - **port**: dev サーバーは通常 3000。別アプリが 3000 を占有している場合は `npm run dev -- -p 3001`。Playwright は port 3001 設定済み。
-- **Playwright テスト**: `npx playwright install chromium` が初回必要。`TEST_ADMIN_EMAIL`/`TEST_ADMIN_PASSWORD` を `.env.local` に要設定。テストは Supabase にテストデータを自動生成・削除する。
-- **来場者の匿名識別**: `lib/storage.ts`（localStorage）。コード生成は `lib/code.ts`。
+- **Playwright テスト**: `npx playwright install chromium` が初回必要。`TEST_ADMIN_EMAIL`/`TEST_ADMIN_PASSWORD` を `.env.local` に要設定。
+- **来場者の匿名識別**: `lib/storage.ts`（localStorage）。activeProjectId も同じファイルで管理。
 - **権限ヘルパー**: `lib/authMiddleware.ts`（`requireAdmin`/`isSuperAdmin`/`getProjectRole`等）。
 
 ---
 
 ## 6. 主要ファイルの地図
 
-- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/layout.tsx`（共通ヘッダー・モーダル群）、`app/stamp-book/StampBookContext.tsx`（データ共有）、`app/stamp-book/page.tsx`（ホーム）、`app/stamp-book/stamps/page.tsx`（スタンプ一覧）、`app/stamp-book/rewards/page.tsx`（引換券）、`app/profile/page.tsx`、`app/register/page.tsx`、`components/BottomNav.tsx`（新規）、`components/RewardTicketModal.tsx`、`components/NicknameForm.tsx`、`components/StampCard.tsx`（テーマ・アイコン対応）、`components/StampAcquired.tsx`（アイコン対応）
-- 管理: `app/admin/login/page.tsx`、`app/admin/redeem/page.tsx`（2段階確認）、`app/admin/page.tsx`、`app/admin/projects/[id]/page.tsx`（テーマ選択UI）、`app/admin/events/new/page.tsx`（アイコン対応）、`app/admin/events/[id]/page.tsx`（アイコン対応）、`app/admin/super/page.tsx`
-- API: `app/api/projects/**`（theme_id対応）、`app/api/events/**`（icon_url対応）、`app/api/events/upload-icon/route.ts`（新規）、`app/api/stamps/route.ts`、`app/api/stamp-book`（theme_id対応）、`app/api/rewards/redeem`、`app/api/participants/route.ts`（gender/age_group対応）
+- 来場者: `app/event/[qr_token]/stamp/page.tsx`、`app/stamp-book/layout.tsx`（共通ヘッダー・モーダル群・CSS変数注入）、`app/stamp-book/StampBookContext.tsx`（データ共有・activeProjectId管理）、`app/stamp-book/page.tsx`（ホーム）、`app/stamp-book/stamps/page.tsx`（スタンプ一覧）、`app/stamp-book/rewards/page.tsx`（引換券）、`app/profile/page.tsx`、`app/register/page.tsx`、`components/BottomNav.tsx`（CSS変数 `text-accent` 経由でテーマ自動反映）、`components/RewardTicketModal.tsx`、`components/NicknameForm.tsx`、`components/StampCard.tsx`（テーマ・アイコン対応）、`components/StampAcquired.tsx`（アイコン対応）
+- 管理: `app/admin/login/page.tsx`、`app/admin/redeem/page.tsx`（2段階確認）、`app/admin/page.tsx`、`app/admin/projects/[id]/page.tsx`（テーマ選択UI・新テーマ自動反映済み）、`app/admin/events/new/page.tsx`（アイコン対応）、`app/admin/events/[id]/page.tsx`（アイコン対応）、`app/admin/super/page.tsx`
+- API: `app/api/projects/**`（theme_id対応）、`app/api/events/**`（icon_url対応）、`app/api/events/upload-icon/route.ts`、`app/api/stamps/route.ts`、`app/api/stamp-book`、`app/api/rewards/redeem`、`app/api/participants/route.ts`
 - テスト: `playwright.config.ts`、`tests/redeem-flow.spec.ts`
-- 共通: `lib/supabase.ts` / `lib/authMiddleware.ts` / `lib/adminAuth.ts` / `lib/code.ts` / `lib/storage.ts` / `lib/themes.ts`（新規）/ `types/index.ts`
+- 共通: `lib/supabase.ts` / `lib/authMiddleware.ts` / `lib/adminAuth.ts` / `lib/code.ts` / `lib/storage.ts`（activeProjectId管理追加）/ `lib/themes.ts`（shibuya-fes・street-live追加）/ `types/index.ts`
+- スタイル: `app/globals.css`（header-grad・btn-brand がCSS変数対応済み）
