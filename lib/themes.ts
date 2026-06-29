@@ -7,6 +7,7 @@ export interface Theme {
   accentDeep: string;
   soft: string;
   track: string;
+  screenBg?: string;
 }
 
 export const THEMES: Theme[] = [
@@ -69,6 +70,27 @@ export const THEMES: Theme[] = [
     accentDeep: '#2E7D32',
     soft: '#E8F5E9',
     track: '#C8E6C9',
+  },
+  {
+    id: 'shibuya-fes',
+    label: 'シブヤフェス',
+    headerFrom: '#F06EA0',
+    headerTo: '#5BC8D8',
+    accent: '#F06EA0',
+    accentDeep: '#C43E7E',
+    soft: '#FDF0F7',
+    track: '#F4C6D8',
+    screenBg: '#FBF0F5',
+  },
+  {
+    id: 'street-live',
+    label: 'ストリートライブ',
+    headerFrom: '#111111',
+    headerTo: '#2c2c2c',
+    accent: '#E84E68',
+    accentDeep: '#C43050',
+    soft: '#FEE8ED',
+    track: '#FFD0D8',
   },
 ];
 

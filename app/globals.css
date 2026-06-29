@@ -45,8 +45,8 @@
 }
 
 .btn-brand {
-  background: linear-gradient(180deg, #1E9C95 0%, #087A74 100%);
-  box-shadow: 0 2px 6px rgba(7,97,92,.30), 0 7px 18px rgba(7,97,92,.20), inset 0 1px 0 rgba(255,255,255,.28);
+  background: linear-gradient(180deg, var(--color-accent, #1E9C95) 0%, var(--color-accent-deep, #087A74) 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,.20), 0 7px 18px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.28);
   transition: transform 0.1s ease;
 }
 .btn-brand:active {
@@ -69,7 +69,7 @@
 }
 
 .header-grad {
-  background: linear-gradient(160deg, #17A399 0%, #076B63 100%);
+  background: linear-gradient(160deg, var(--color-header-from, #17A399) 0%, var(--color-header-to, #076B63) 100%);
 }
 
 .progress-grad {

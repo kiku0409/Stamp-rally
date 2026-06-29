@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, AlertCircle, KeyRound } from 'lucide-react';
 import { Event } from '@/types';
-import { getLocalParticipant, setLocalParticipant } from '@/lib/storage';
+import { getLocalParticipant, setLocalParticipant, setActiveProjectId } from '@/lib/storage';
 import NicknameForm from '@/components/NicknameForm';
 import StampAcquired from '@/components/StampAcquired';
 
@@ -95,6 +95,8 @@ export default function StampPage({ params }: StampPageProps) {
       } else {
         setStampedAt(data.stamp.stamped_at);
         setNewRewards(Array.isArray(data.newRewards) ? data.newRewards : []);
+        // このプロジェクトをスタンプ帳のアクティブプロジェクトに設定
+        if (data.event?.project_id) setActiveProjectId(data.event.project_id);
         setStep('done');
       }
     } catch {

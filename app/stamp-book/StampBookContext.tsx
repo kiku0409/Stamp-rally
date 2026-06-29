@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { StampBookGroup, StampBookReward, LocalParticipant } from '@/types';
-import { getLocalParticipant } from '@/lib/storage';
+import { getLocalParticipant, getActiveProjectId, setActiveProjectId as persistActiveProjectId } from '@/lib/storage';
 
 interface SelectedReward {
   reward: StampBookReward;
@@ -20,6 +20,8 @@ interface StampBookCtx {
   redeemPopup: { label: string } | null;
   setRedeemPopup: (v: { label: string } | null) => void;
   reload: () => void;
+  activeProjectId: string | null;
+  setActiveProject: (id: string) => void;
 }
 
 const StampBookContext = createContext<StampBookCtx>({
@@ -33,6 +35,8 @@ const StampBookContext = createContext<StampBookCtx>({
   redeemPopup: null,
   setRedeemPopup: () => {},
   reload: () => {},
+  activeProjectId: null,
+  setActiveProject: () => {},
 });
 
 export function useStampBook() {
@@ -46,6 +50,7 @@ export function StampBookProvider({ children }: { children: React.ReactNode }) {
   const [showScanner, setShowScanner] = useState(false);
   const [selectedReward, setSelectedReward] = useState<SelectedReward | null>(null);
   const [redeemPopup, setRedeemPopup] = useState<{ label: string } | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(() => getActiveProjectId());
 
   const prevUnredeemedRef = useRef<Map<string, string>>(new Map());
   const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,7 +85,17 @@ export function StampBookProvider({ children }: { children: React.ReactNode }) {
       }
     }
     prevUnredeemedRef.current = map;
-  }, [groups]);
+
+    // activeProjectId が未設定 or groups に存在しない場合は先頭プロジェクトをセット
+    if (groups.length > 0) {
+      const exists = groups.some(g => g.project.id === activeProjectId);
+      if (!exists) {
+        const firstId = groups[0].project.id;
+        setActiveProjectId(firstId);
+        persistActiveProjectId(firstId);
+      }
+    }
+  }, [groups]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!participant?.recovery_code) return;
@@ -143,6 +158,11 @@ export function StampBookProvider({ children }: { children: React.ReactNode }) {
     if (code) loadData(code);
   }
 
+  function setActiveProject(id: string) {
+    setActiveProjectId(id);
+    persistActiveProjectId(id);
+  }
+
   return (
     <StampBookContext.Provider value={{
       participant,
@@ -155,6 +175,8 @@ export function StampBookProvider({ children }: { children: React.ReactNode }) {
       redeemPopup,
       setRedeemPopup,
       reload,
+      activeProjectId,
+      setActiveProject,
     }}>
       {children}
     </StampBookContext.Provider>

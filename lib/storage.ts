@@ -21,3 +21,15 @@ export function clearLocalParticipant(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(STORAGE_KEY);
 }
+
+const ACTIVE_PROJECT_KEY = 'stamp_rally_active_project';
+
+export function getActiveProjectId(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(ACTIVE_PROJECT_KEY);
+}
+
+export function setActiveProjectId(id: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(ACTIVE_PROJECT_KEY, id);
+}
