@@ -15,6 +15,7 @@ export interface Project {
   theme_id?: string;
   banner_url?: string;
   venue_map_url?: string;
+  timetable_url?: string;
 }
 
 export interface ProjectMember {
@@ -59,8 +60,24 @@ export interface StampBookReward {
   redeemed_at: string | null;
 }
 
+export interface ProjectImage {
+  id: string;
+  project_id: string;
+  image_url: string;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface StampBookGroup {
-  project: { id: string; name: string; theme_id?: string; banner_url?: string; venue_map_url?: string };
+  project: {
+    id: string;
+    name: string;
+    theme_id?: string;
+    banner_url?: string;
+    venue_map_url?: string;
+    timetable_url?: string;
+    images?: ProjectImage[];
+  };
   count: number;
   stamps: EventStamp[];
   tiers: StampBookTier[];

@@ -86,11 +86,12 @@ export const THEMES: Theme[] = [
     id: 'street-live',
     label: 'ストリートライブ',
     headerFrom: '#111111',
-    headerTo: '#2c2c2c',
-    accent: '#E84E68',
-    accentDeep: '#C43050',
-    soft: '#FEE8ED',
-    track: '#FFD0D8',
+    headerTo: '#1a1a1a',
+    accent: '#9BF238',
+    accentDeep: '#E84E68',
+    soft: '#141a0e',
+    track: '#2a2a2a',
+    screenBg: '#0e0e0e',
   },
 ];
 

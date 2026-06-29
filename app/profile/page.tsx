@@ -3,9 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, KeyRound, User, Pencil, Check, X, LogOut } from 'lucide-react';
-import { getLocalParticipant, setLocalParticipant, clearLocalParticipant } from '@/lib/storage';
+import { getLocalParticipant, setLocalParticipant, clearLocalParticipant, getActiveThemeId } from '@/lib/storage';
 import { formatGrouped } from '@/lib/code';
 import { LocalParticipant } from '@/types';
+import { getTheme, headerGradient } from '@/lib/themes';
 
 const GENDERS = ['男性', '女性', 'その他'];
 const AGE_GROUPS = ['10代', '20代', '30代', '40代', '50代以上'];
@@ -17,6 +18,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [participant, setParticipant] = useState<LocalParticipant | null>(null);
   const [ready, setReady] = useState(false);
+  const [theme] = useState(() => getTheme(getActiveThemeId() ?? undefined));
   const [editing, setEditing] = useState(false);
   const [nicknameInput, setNicknameInput] = useState('');
   const [genderInput, setGenderInput] = useState('');
@@ -88,7 +90,7 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-screen-bg">
-      <div className="header-grad sticky top-0 z-10">
+      <div className="sticky top-0 z-10" style={{ background: headerGradient(theme) }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-2">
           <button onClick={() => router.push('/stamp-book')} className="text-white/80 hover:text-white transition-colors">
             <ChevronLeft size={22} strokeWidth={2} />

@@ -7,7 +7,8 @@ import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift, Pencil, Check, 
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
-import { Event, Project, ProjectMember, ProjectRole, ProjectStatus, RewardTier } from '@/types';
+import { Event, Project, ProjectMember, ProjectRole, ProjectStatus, RewardTier, ProjectImage } from '@/types';
+import { Image as ImageIcon, Upload } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { toCsv, downloadCsv } from '@/lib/csv';
 import { THEMES, getTheme, headerGradient } from '@/lib/themes';
@@ -73,6 +74,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [editingName, setEditingName] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [themeId, setThemeId] = useState('teal');
+  const [projectImages, setProjectImages] = useState<ProjectImage[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingMap, setUploadingMap] = useState(false);
+  const [uploadingTimetable, setUploadingTimetable] = useState(false);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -100,6 +105,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       // 特典取得者一覧
       const rr = await fetch(`/api/projects/${id}/rewards`, { headers });
       if (rr.ok) setRecipients(await rr.json());
+
+      // プロジェクト写真
+      const ir = await fetch(`/api/projects/${id}/images`);
+      if (ir.ok) setProjectImages(await ir.json());
     } catch {
       // 失敗してもスピナーは止める
     } finally {
@@ -279,6 +288,112 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     setStampersLoading(false);
   }
 
+  async function handleProjectImageUpload(file: File) {
+    setUploadingImage(true);
+    try {
+      const headers = await authHeaders();
+      const fd = new FormData();
+      fd.append('file', file);
+      const ur = await fetch('/api/projects/upload-image', { method: 'POST', headers, body: fd });
+      if (!ur.ok) { alert('アップロードに失敗しました'); return; }
+      const { url } = await ur.json();
+      const pr = await fetch(`/api/projects/${id}/images`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: url }),
+      });
+      if (pr.ok) { const img = await pr.json(); setProjectImages(prev => [...prev, img]); }
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  async function handleDeleteProjectImage(imageId: string) {
+    if (!confirm('この写真を削除しますか？')) return;
+    const headers = await authHeaders();
+    const res = await fetch(`/api/projects/${id}/images/${imageId}`, { method: 'DELETE', headers });
+    if (res.ok) setProjectImages(prev => prev.filter(i => i.id !== imageId));
+    else alert('削除に失敗しました');
+  }
+
+  async function handleMoveProjectImage(imageId: string, direction: 'up' | 'down') {
+    const idx = projectImages.findIndex(i => i.id === imageId);
+    if (idx < 0) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= projectImages.length) return;
+    const headers = await authHeaders();
+    const a = projectImages[idx];
+    const b = projectImages[swapIdx];
+    await Promise.all([
+      fetch(`/api/projects/${id}/images/${a.id}`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: b.sort_order }) }),
+      fetch(`/api/projects/${id}/images/${b.id}`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: a.sort_order }) }),
+    ]);
+    const updated = [...projectImages];
+    updated[idx] = { ...a, sort_order: b.sort_order };
+    updated[swapIdx] = { ...b, sort_order: a.sort_order };
+    setProjectImages(updated.sort((x, y) => x.sort_order - y.sort_order));
+  }
+
+  async function handleMapUpload(file: File) {
+    setUploadingMap(true);
+    try {
+      const headers = await authHeaders();
+      const fd = new FormData();
+      fd.append('file', file);
+      const ur = await fetch('/api/projects/upload-image', { method: 'POST', headers, body: fd });
+      if (!ur.ok) { alert('アップロードに失敗しました'); return; }
+      const { url } = await ur.json();
+      await fetch(`/api/projects/${id}`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ venue_map_url: url }),
+      });
+      loadData();
+    } finally {
+      setUploadingMap(false);
+    }
+  }
+
+  async function handleTimetableUpload(file: File) {
+    setUploadingTimetable(true);
+    try {
+      const headers = await authHeaders();
+      const fd = new FormData();
+      fd.append('file', file);
+      const ur = await fetch('/api/projects/upload-image', { method: 'POST', headers, body: fd });
+      if (!ur.ok) { alert('アップロードに失敗しました'); return; }
+      const { url } = await ur.json();
+      await fetch(`/api/projects/${id}`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timetable_url: url }),
+      });
+      loadData();
+    } finally {
+      setUploadingTimetable(false);
+    }
+  }
+
+  async function handleRemoveMapUrl() {
+    const headers = await authHeaders();
+    await fetch(`/api/projects/${id}`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ venue_map_url: '' }),
+    });
+    loadData();
+  }
+
+  async function handleRemoveTimetableUrl() {
+    const headers = await authHeaders();
+    await fetch(`/api/projects/${id}`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timetable_url: '' }),
+    });
+    loadData();
+  }
+
   const qrUrl = qrEvent
     ? (typeof window !== 'undefined' ? window.location.origin : '') + `/event/${qrEvent.qr_token}/stamp`
     : '';
@@ -432,6 +547,105 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   );
                 })}
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* Project images / venue map / timetable */}
+        {isApproved && canEdit && (
+          <section className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <ImageIcon size={16} strokeWidth={2} className="text-accent" />
+              <h2 className="text-[15px] font-bold text-ink">プロジェクト写真・マップ</h2>
+            </div>
+
+            {/* Project photos */}
+            <div className="bg-white rounded-2xl p-4 border border-line card-shadow mb-3">
+              <p className="text-[13px] font-bold text-ink mb-1">カルーセル写真</p>
+              <p className="text-[11px] text-muted mb-3">ホーム画面に横スクロールで表示されます。複数枚追加できます。</p>
+              {projectImages.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {projectImages.map((img, idx) => (
+                    <div key={img.id} className="flex items-center gap-2 border border-line rounded-xl p-2">
+                      <img src={img.image_url} alt="" className="w-12 h-12 object-cover rounded-lg shrink-0" />
+                      <span className="flex-1 text-[11px] text-muted truncate">{img.image_url.split('/').pop()}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => handleMoveProjectImage(img.id, 'up')}
+                          disabled={idx === 0}
+                          className="px-2 py-1 rounded text-[11px] border border-line text-muted disabled:opacity-30"
+                        >↑</button>
+                        <button
+                          onClick={() => handleMoveProjectImage(img.id, 'down')}
+                          disabled={idx === projectImages.length - 1}
+                          className="px-2 py-1 rounded text-[11px] border border-line text-muted disabled:opacity-30"
+                        >↓</button>
+                        <button
+                          onClick={() => handleDeleteProjectImage(img.id)}
+                          className="px-2 py-1 rounded text-[11px] border border-danger-border text-danger hover:bg-danger-soft"
+                        >削除</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-teal-border text-accent text-[13px] font-bold hover:bg-soft transition-colors justify-center">
+                <Upload size={14} strokeWidth={2} />
+                {uploadingImage ? 'アップロード中...' : '写真を追加'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingImage}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleProjectImageUpload(f); e.target.value = ''; }}
+                />
+              </label>
+            </div>
+
+            {/* Timetable */}
+            <div className="bg-white rounded-2xl p-4 border border-line card-shadow mb-3">
+              <p className="text-[13px] font-bold text-ink mb-1">タイムテーブル</p>
+              <p className="text-[11px] text-muted mb-3">ホーム画面にタイムテーブルとして表示されます。</p>
+              {project.timetable_url && (
+                <div className="mb-3">
+                  <img src={project.timetable_url} alt="タイムテーブル" className="w-full rounded-xl object-contain max-h-48 border border-line" />
+                  <button onClick={handleRemoveTimetableUrl} className="mt-2 text-[12px] text-danger hover:underline">削除</button>
+                </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-teal-border text-accent text-[13px] font-bold hover:bg-soft transition-colors justify-center">
+                <Upload size={14} strokeWidth={2} />
+                {uploadingTimetable ? 'アップロード中...' : project.timetable_url ? '差し替え' : '画像をアップロード'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingTimetable}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleTimetableUpload(f); e.target.value = ''; }}
+                />
+              </label>
+            </div>
+
+            {/* Venue map */}
+            <div className="bg-white rounded-2xl p-4 border border-line card-shadow">
+              <p className="text-[13px] font-bold text-ink mb-1">会場マップ</p>
+              <p className="text-[11px] text-muted mb-3">ホーム画面に会場マップとして表示されます。</p>
+              {project.venue_map_url && (
+                <div className="mb-3">
+                  <img src={project.venue_map_url} alt="会場マップ" className="w-full rounded-xl object-contain max-h-48 border border-line" />
+                  <button onClick={handleRemoveMapUrl} className="mt-2 text-[12px] text-danger hover:underline">削除</button>
+                </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-teal-border text-accent text-[13px] font-bold hover:bg-soft transition-colors justify-center">
+                <Upload size={14} strokeWidth={2} />
+                {uploadingMap ? 'アップロード中...' : project.venue_map_url ? '差し替え' : '画像をアップロード'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingMap}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleMapUpload(f); e.target.value = ''; }}
+                />
+              </label>
             </div>
           </section>
         )}

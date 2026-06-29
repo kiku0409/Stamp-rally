@@ -89,7 +89,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const { name, description, resubmit, theme_id } = await request.json();
+  const { name, description, resubmit, theme_id, venue_map_url, timetable_url } = await request.json();
 
   const { data: current } = await supabase
     .from('projects')
@@ -102,6 +102,8 @@ export async function PUT(
   if (typeof name === 'string' && name.trim()) update.name = name.trim();
   if (typeof description === 'string') update.description = description;
   if (typeof theme_id === 'string' && theme_id) update.theme_id = theme_id;
+  if (typeof venue_map_url === 'string') update.venue_map_url = venue_map_url || null;
+  if (typeof timetable_url === 'string') update.timetable_url = timetable_url || null;
   if (resubmit && current.status === 'rejected') {
     update.status = 'pending';
     update.approved_by = null;

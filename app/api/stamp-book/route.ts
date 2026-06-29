@@ -24,16 +24,17 @@ export async function GET(request: Request) {
   }
   const participantId = participant.id;
 
-  // スタンプ（イベント＋プロジェクト名・テーマを埋め込み）
+  // スタンプ（イベント＋プロジェクト名・テーマ・画像URLを埋め込み）
   const { data: stamps, error } = await supabase
     .from('event_stamps')
-    .select('*, event:events(*, project:projects(id, name, theme_id))')
+    .select('*, event:events(*, project:projects(id, name, theme_id, venue_map_url, timetable_url))')
     .eq('participant_id', participantId)
     .order('stamped_at', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  type ProjData = { id: string; name: string; theme_id?: string; venue_map_url?: string; timetable_url?: string };
   type StampRow = {
-    event?: { project_id?: string; project?: { id: string; name: string; theme_id?: string } | null } | null;
+    event?: { project_id?: string; project?: ProjData | null } | null;
   };
   const rows = (stamps ?? []) as StampRow[];
 
@@ -43,7 +44,17 @@ export async function GET(request: Request) {
     const proj = s.event?.project;
     if (!proj) continue;
     if (!groups.has(proj.id)) {
-      groups.set(proj.id, { project: { id: proj.id, name: proj.name, theme_id: proj.theme_id }, count: 0, stamps: [], tiers: [], rewards: [] });
+      groups.set(proj.id, {
+        project: {
+          id: proj.id,
+          name: proj.name,
+          theme_id: proj.theme_id,
+          venue_map_url: proj.venue_map_url,
+          timetable_url: proj.timetable_url,
+          images: [],
+        },
+        count: 0, stamps: [], tiers: [], rewards: [],
+      });
     }
     const g = groups.get(proj.id)!;
     g.count += 1;
@@ -53,9 +64,10 @@ export async function GET(request: Request) {
 
   const projectIds = [...groups.keys()];
   if (projectIds.length > 0) {
-    const [{ data: tiers }, { data: rewards }] = await Promise.all([
+    const [{ data: tiers }, { data: rewards }, { data: images }] = await Promise.all([
       supabase.from('project_reward_tiers').select('*').in('project_id', projectIds).order('threshold', { ascending: true }),
       supabase.from('participant_rewards').select('project_id, issued_at, redeem_code, redeemed_at, tier:project_reward_tiers(label)').eq('participant_id', participantId).in('project_id', projectIds),
+      supabase.from('project_images').select('*').in('project_id', projectIds).order('sort_order', { ascending: true }),
     ]);
 
     for (const t of tiers ?? []) {
@@ -66,6 +78,10 @@ export async function GET(request: Request) {
     for (const r of (rewards ?? []) as unknown as RewardRow[]) {
       const g = groups.get(r.project_id);
       if (g) g.rewards.push({ label: r.tier?.label ?? '特典', issued_at: r.issued_at, redeem_code: r.redeem_code, redeemed_at: r.redeemed_at });
+    }
+    for (const img of images ?? []) {
+      const g = groups.get(img.project_id);
+      if (g) g.project.images!.push(img);
     }
   }
 

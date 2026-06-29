@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { StampBookGroup, StampBookReward, LocalParticipant } from '@/types';
-import { getLocalParticipant, getActiveProjectId, setActiveProjectId as persistActiveProjectId } from '@/lib/storage';
+import { getLocalParticipant, getActiveProjectId, setActiveProjectId as persistActiveProjectId, setActiveThemeId } from '@/lib/storage';
 
 interface SelectedReward {
   reward: StampBookReward;
@@ -90,9 +90,10 @@ export function StampBookProvider({ children }: { children: React.ReactNode }) {
     if (groups.length > 0) {
       const exists = groups.some(g => g.project.id === activeProjectId);
       if (!exists) {
-        const firstId = groups[0].project.id;
-        setActiveProjectId(firstId);
-        persistActiveProjectId(firstId);
+        const first = groups[0].project;
+        setActiveProjectId(first.id);
+        persistActiveProjectId(first.id);
+        setActiveThemeId(first.theme_id ?? 'teal');
       }
     }
   }, [groups]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -161,6 +162,8 @@ export function StampBookProvider({ children }: { children: React.ReactNode }) {
   function setActiveProject(id: string) {
     setActiveProjectId(id);
     persistActiveProjectId(id);
+    const themeId = groups.find(g => g.project.id === id)?.project.theme_id ?? 'teal';
+    setActiveThemeId(themeId);
   }
 
   return (

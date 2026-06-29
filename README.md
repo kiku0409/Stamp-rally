@@ -20,14 +20,21 @@ QRをかざすだけで、ライブの思い出が貯まる。
 
 | タブ | 内容 |
 |------|------|
-| ホーム | プロジェクト概要カード（バナー・スタンプ数・進捗・直近スタンプ） |
+| ホーム | 選択中プロジェクトのみ表示（フォトカルーセル・スタンプ進捗・タイムテーブル・会場マップ） |
 | スタンプ | 取得済みスタンプ一覧（イベント名・アイコン・日時） |
 | 引換券 | 獲得した特典チケット一覧（引換用QRコード表示） |
-| ユーザー | ニックネーム・参加者情報・復元コード |
+| ユーザー | ニックネーム・参加者情報・復元コード（アクティブプロジェクトのテーマカラーで表示） |
+
+### ホーム画面
+
+- **選択中プロジェクトのみ** 表示（複数参加の場合はチップで切り替え）
+- **フォトカルーセル** — 運営がアップロードしたプロジェクト写真を横スクロールで閲覧（無制限）
+- **タイムテーブル** — 会場のタイムテーブル画像（設定されている場合に表示）
+- **会場マップ** — 会場マップ画像（設定されている場合に表示）
 
 ### プロジェクトテーマ
 
-スタンプ帳のヘッダー・ボトムナビ・アクセントカラーが、アクティブなプロジェクトのテーマカラーに自動切り替わります。QRスキャンで訪れたプロジェクトが自動でアクティブになります。
+スタンプ帳のヘッダー・ボトムナビ・アクセントカラーがアクティブなプロジェクトのテーマカラーに自動切り替わります。ユーザー情報ページのヘッダーも同様のテーマカラーで表示されます。QRスキャンで訪れたプロジェクトが自動でアクティブになります。
 
 ### 特典チケット
 
@@ -91,7 +98,9 @@ QRをかざすだけで、ライブの思い出が貯まる。
 ### 運営（管理者）
 - プロジェクト承認ワークフロー（申請 → 承認/却下＋却下理由 → 修正再申請）
 - テーマカラー選択（プロジェクト設定でスタンプ帳のUIカラーを変更）
-- バナー画像・会場マップ画像の設定
+- **プロジェクト写真** — カルーセル用写真を無制限アップロード・並び替え・削除
+- **タイムテーブル画像** — ホーム画面のタイムテーブルセクションに表示する画像を設定
+- **会場マップ画像** — ホーム画面の会場マップセクションに表示する画像を設定
 - イベントごとのアイコン画像設定
 - **動的QRコード（スロット型）** — タイムテーブルで時間帯ごとにイベントを割り当て
 - 複数管理者での共同編集（メール招待・参加コード）
@@ -158,18 +167,25 @@ npm run dev
 
 ```
 projects
-├── id            UUID PK
-├── name          TEXT
-├── description   TEXT
-├── status        TEXT              -- pending / approved / rejected
-├── theme_id      TEXT              -- テーマカラーID
-├── banner_url    TEXT              -- バナー画像URL
-├── venue_map_url TEXT              -- 会場マップ画像URL
-├── join_code     TEXT UNIQUE       -- 参加コード
-├── created_by    UUID FK → auth.users.id
-├── approved_by   UUID FK → auth.users.id
-├── approved_at   TIMESTAMPTZ
-└── created_at    TIMESTAMPTZ
+├── id              UUID PK
+├── name            TEXT
+├── description     TEXT
+├── status          TEXT              -- pending / approved / rejected
+├── theme_id        TEXT              -- テーマカラーID
+├── venue_map_url   TEXT              -- 会場マップ画像URL
+├── timetable_url   TEXT              -- タイムテーブル画像URL
+├── join_code       TEXT UNIQUE       -- 参加コード
+├── created_by      UUID FK → auth.users.id
+├── approved_by     UUID FK → auth.users.id
+├── approved_at     TIMESTAMPTZ
+└── created_at      TIMESTAMPTZ
+
+project_images                     -- カルーセル用写真（無制限）
+├── id          UUID PK
+├── project_id  UUID FK → projects.id ON DELETE CASCADE
+├── image_url   TEXT
+├── sort_order  INT
+└── created_at  TIMESTAMPTZ
 
 project_members
 ├── id         UUID PK

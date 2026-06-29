@@ -33,3 +33,15 @@ export function setActiveProjectId(id: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(ACTIVE_PROJECT_KEY, id);
 }
+
+const ACTIVE_THEME_KEY = 'stamp_rally_active_theme';
+
+export function getActiveThemeId(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(ACTIVE_THEME_KEY);
+}
+
+export function setActiveThemeId(themeId: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(ACTIVE_THEME_KEY, themeId);
+}

@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, KeyRound, UserPlus, Check, QrCode } from 'lucide-react';
+import { Music, KeyRound, UserPlus, Check, QrCode, MapPin, Clock } from 'lucide-react';
 import { useStampBook } from './StampBookContext';
 import { setLocalParticipant } from '@/lib/storage';
 import { getTheme, headerGradient, Theme } from '@/lib/themes';
-import { StampBookGroup, EventStamp } from '@/types';
+import { StampBookGroup, EventStamp, ProjectImage } from '@/types';
 
 export default function StampBookHomePage() {
-  const { participant, groups, loading, setShowScanner } = useStampBook();
+  const { participant, groups, loading, setShowScanner, activeProjectId, setActiveProject } = useStampBook();
   const [restoreCode, setRestoreCode] = useState('');
   const [restoreError, setRestoreError] = useState('');
   const [restoring, setRestoring] = useState(false);
@@ -112,47 +112,66 @@ export default function StampBookHomePage() {
   }
 
   // ── ログイン済み ────────────────────────────────────────────
+  const activeGroup = groups.find(g => g.project.id === activeProjectId) ?? groups[0] ?? null;
+
   return (
     <main>
-      {/* Project overview cards */}
-      <div className="max-w-lg mx-auto p-4 space-y-4 pt-4">
-        {groups.length === 0 ? (
-          <div className="text-center py-16 text-muted">
-            <p className="text-[14px]">まだスタンプがありません</p>
-            <p className="text-[12px] text-faint mt-1">QRを読み取ってスタンプを獲得しましょう</p>
-          </div>
-        ) : (
-          groups.map((g) => (
-            <ProjectOverviewCard
-              key={g.project.id}
-              group={g}
-              theme={getTheme(g.project.theme_id)}
-              onScanQR={() => setShowScanner(true)}
-            />
-          ))
-        )}
-      </div>
+      {/* Project switcher (multiple projects only) */}
+      {groups.length > 1 && (
+        <div
+          className="flex gap-2 px-4 py-2 overflow-x-auto"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {groups.map(g => {
+            const t = getTheme(g.project.theme_id);
+            const isActive = g.project.id === activeGroup?.project.id;
+            return (
+              <button
+                key={g.project.id}
+                onClick={() => setActiveProject(g.project.id)}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold border transition-all"
+                style={
+                  isActive
+                    ? { background: headerGradient(t), color: '#fff', borderColor: 'transparent' }
+                    : { borderColor: t.accent, color: t.accent, background: 'transparent' }
+                }
+              >
+                {g.project.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {activeGroup ? (
+        <ProjectView group={activeGroup} onScanQR={() => setShowScanner(true)} />
+      ) : (
+        <div className="text-center py-16 text-muted">
+          <p className="text-[14px]">まだスタンプがありません</p>
+          <p className="text-[12px] text-faint mt-1">QRを読み取ってスタンプを獲得しましょう</p>
+        </div>
+      )}
     </main>
   );
 }
 
-function ProjectOverviewCard({ group, theme, onScanQR }: {
-  group: StampBookGroup;
-  theme: Theme;
-  onScanQR: () => void;
-}) {
+function ProjectView({ group, onScanQR }: { group: StampBookGroup; onScanQR: () => void }) {
   const router = useRouter();
   const { project, count, tiers, stamps } = group;
-  const nextTier = tiers.find((t) => !t.earned);
+  const theme = getTheme(project.theme_id);
+  const images: ProjectImage[] = project.images ?? [];
+  const [carouselIdx, setCarouselIdx] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
   const recentStamps = stamps.slice(0, 3);
   const hasMoreStamps = stamps.length > 3;
+  const nextTier = tiers.find(t => !t.earned);
+  const allEarned = tiers.length > 0 && !nextTier;
 
-  // 進捗バーの計算
   let progressPercent: number;
   let progressLabel: React.ReactNode;
   let progressSub: string;
   let onProgressTap: () => void;
-  const allEarned = tiers.length > 0 && !nextTier;
 
   if (tiers.length > 0) {
     if (nextTier) {
@@ -166,7 +185,6 @@ function ProjectOverviewCard({ group, theme, onScanQR }: {
     }
     onProgressTap = () => router.push('/stamp-book/rewards');
   } else {
-    // 特典なし → 10個単位の汎用バー
     const milestone = (Math.floor(count / 10) + 1) * 10;
     const base = milestone - 10;
     progressPercent = ((count - base) / 10) * 100;
@@ -175,49 +193,51 @@ function ProjectOverviewCard({ group, theme, onScanQR }: {
     onProgressTap = () => router.push('/stamp-book/stamps');
   }
 
-  return (
-    <div className="bg-white rounded-2xl overflow-hidden card-shadow border border-line">
-      <div className="h-1.5" style={{ background: headerGradient(theme) }} />
+  function onCarouselScroll() {
+    if (!carouselRef.current) return;
+    const { scrollLeft, clientWidth } = carouselRef.current;
+    if (clientWidth > 0) setCarouselIdx(Math.round(scrollLeft / clientWidth));
+  }
 
-      {/* バナー画像（将来実装） */}
-      {project.banner_url && (
-        <img src={project.banner_url} alt="" className="w-full h-36 object-cover" />
+  return (
+    <div className="max-w-lg mx-auto pb-6">
+      {/* Photo carousel */}
+      {images.length > 0 && (
+        <div className="relative">
+          <div
+            ref={carouselRef}
+            onScroll={onCarouselScroll}
+            className="flex overflow-x-auto"
+            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' as never, scrollbarWidth: 'none' }}
+          >
+            {images.map(img => (
+              <div key={img.id} style={{ scrollSnapAlign: 'start', flexShrink: 0, width: '100%' }}>
+                <img src={img.image_url} alt="" className="w-full h-52 object-cover" />
+              </div>
+            ))}
+          </div>
+          {images.length > 1 && (
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+              {images.map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full transition-all duration-300"
+                  style={{ background: i === carouselIdx ? '#fff' : 'rgba(255,255,255,0.45)' }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       <div className="p-4 space-y-3">
-        {/* プロジェクト名 + スタンプ数 */}
+        {/* Project name + stamp count */}
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-ink text-[16px] truncate flex-1">{project.name}</h2>
           <span className="text-[13px] font-bold ml-2 shrink-0" style={{ color: theme.accent }}>{count} 個</span>
         </div>
 
-        {/* 会場マップ（将来実装） */}
-        {project.venue_map_url && (
-          <img src={project.venue_map_url} alt="会場マップ" className="w-full rounded-xl object-contain max-h-48" />
-        )}
-
-        {/* 直近スタンプ（最大3件） */}
-        {recentStamps.length > 0 && (
-          <div>
-            <p className="text-[11px] font-medium text-muted mb-1.5">最近のスタンプ</p>
-            <div className="rounded-xl overflow-hidden border border-line divide-y divide-line">
-              {recentStamps.map((s) => (
-                <MiniStampRow key={s.id} stamp={s} theme={theme} />
-              ))}
-            </div>
-            {hasMoreStamps && (
-              <button
-                onClick={() => router.push('/stamp-book/stamps')}
-                className="mt-2 w-full text-center text-[12px] font-bold py-2 rounded-xl transition-colors"
-                style={{ color: theme.accent, background: `${theme.accent}10` }}
-              >
-                詳細はコチラ →
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* 進捗バー（タップで特典/スタンプ一覧へ） */}
+        {/* Progress bar */}
         <button
           onClick={onProgressTap}
           className="w-full rounded-xl p-3 text-left"
@@ -234,14 +254,55 @@ function ProjectOverviewCard({ group, theme, onScanQR }: {
               <div className="h-2 rounded-full overflow-hidden" style={{ background: theme.track }}>
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${progressPercent}%`, background: `linear-gradient(180deg, ${theme.headerFrom}, ${theme.accent})` }}
+                  style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, ${theme.headerFrom}, ${theme.accent})` }}
                 />
               </div>
             </>
           )}
         </button>
 
-        {/* QR読み取りボタン */}
+        {/* Recent stamps */}
+        {recentStamps.length > 0 && (
+          <div>
+            <p className="text-[11px] font-medium text-muted mb-1.5">最近のスタンプ</p>
+            <div className="rounded-xl overflow-hidden border border-line divide-y divide-line">
+              {recentStamps.map(s => <MiniStampRow key={s.id} stamp={s} theme={theme} />)}
+            </div>
+            {hasMoreStamps && (
+              <button
+                onClick={() => router.push('/stamp-book/stamps')}
+                className="mt-2 w-full text-center text-[12px] font-bold py-2 rounded-xl transition-colors"
+                style={{ color: theme.accent, background: `${theme.accent}10` }}
+              >
+                詳細はコチラ →
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Timetable */}
+        {project.timetable_url && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Clock size={14} strokeWidth={2} style={{ color: theme.accent }} />
+              <p className="text-[13px] font-bold text-ink">タイムテーブル</p>
+            </div>
+            <img src={project.timetable_url} alt="タイムテーブル" className="w-full rounded-xl object-contain" />
+          </div>
+        )}
+
+        {/* Venue map */}
+        {project.venue_map_url && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <MapPin size={14} strokeWidth={2} style={{ color: theme.accent }} />
+              <p className="text-[13px] font-bold text-ink">会場マップ</p>
+            </div>
+            <img src={project.venue_map_url} alt="会場マップ" className="w-full rounded-xl object-contain" />
+          </div>
+        )}
+
+        {/* QR scan button */}
         <button
           onClick={onScanQR}
           className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold border transition-colors"
