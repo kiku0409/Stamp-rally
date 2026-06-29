@@ -1,139 +1,123 @@
-# スタンプラリー - ライブ来場デジタルスタンプアプリ
+# スタンプラリー — ライブ来場デジタルスタンプアプリ
 
-**🔗 アプリURL: https://stamp-rally-kappa.vercel.app**
-（管理画面: https://stamp-rally-kappa.vercel.app/admin/login ／ 新規登録: `/admin/signup`）
+**本番URL: https://stamp-rally-kappa.vercel.app**  
+管理画面: `/admin/login` ／ 新規登録: `/admin/signup`
 
 QRをかざすだけで、ライブの思い出が貯まる。  
-来場者は会場のQRを読み取るだけでスタンプを獲得。ログイン不要、ニックネームだけで参加できます。運営はプロジェクト（フェスや連続ライブ）単位でイベントとQRをノーコードで管理し、来場データや特典付与状況を取得できます。
+来場者はアプリDL・ログイン不要。運営はプロジェクト（フェス・連続ライブ）単位でイベントとQRをブラウザだけで管理できます。
 
 ---
 
-## ユーザーガイド
+## 来場者の使い方
 
-### 来場者の使い方
+### スタンプ獲得は 3 ステップ
 
-#### スタンプ獲得は、3ステップ
+1. **QRをスキャン** — 会場に掲示されたQRをスマホで読み取る
+2. **スタンプ獲得** — 初回だけニックネームを登録。以降は即取得
+3. **スタンプ帳で確認** — プロジェクト（フェス）ごとに一覧表示。スタンプ数・進捗・引換券がまとまって見える
 
-**1. 会場のQRを読み取る**  
-スマホのカメラでQRを読むだけ。アプリDLも不要。
+### スタンプ帳の 4 タブ
 
-**2. その場でスタンプ獲得**  
-初回はニックネームを登録。あとは押すだけで完了。
+| タブ | 内容 |
+|------|------|
+| ホーム | プロジェクト概要カード（バナー・スタンプ数・進捗・直近スタンプ） |
+| スタンプ | 取得済みスタンプ一覧（イベント名・アイコン・日時） |
+| 引換券 | 獲得した特典チケット一覧（引換用QRコード表示） |
+| ユーザー | ニックネーム・参加者情報・復元コード |
 
-**3. スタンプ帳で確認**  
-スタンプ帳は**プロジェクト（フェス／連続ライブ）ごと**にまとまって表示。同じライブは1回のみ。
+### プロジェクトテーマ
 
-#### 集めるほど、特典がもらえる
+スタンプ帳のヘッダー・ボトムナビ・アクセントカラーが、アクティブなプロジェクトのテーマカラーに自動切り替わります。QRスキャンで訪れたプロジェクトが自動でアクティブになります。
 
-**特典チケット**  
-プロジェクトごとに「◯個で特典」を**複数段階**設定可能。スタンプが規定数に達すると特典チケットを自動付与。「あと◯個で〜」の進捗も一目で。
+### 特典チケット
 
-**ログイン不要のまま**  
-データは端末に紐づくので、面倒な会員登録なしで続けられます。
+スタンプが規定数に達すると特典チケットを自動付与。タップで引換用QRが表示され、スタッフにスキャンしてもらうと引き換え完了（一回限り）。プロジェクトごとに複数段階を設定可能。
 
-**復元コードで引き継ぎ**  
-発行される**復元コード**を控えておけば、機種変更や情報リセット後も別端末でスタンプ帳を復元できます（左上のニックネームをタップ→ユーザー情報で確認）。
+### 復元コードで端末引き継ぎ
 
----
-
-### 運営の使い方
-
-#### プロジェクト単位で運用、承認制
-
-1. **セルフ登録** — メールアドレスとパスワードでアカウント作成
-2. **プロジェクトを申請** — フェスや連続ライブなどの単位で申請
-3. **スーパー管理者が承認** — 承認されるとそのプロジェクト内でイベントを自由に作成できる
-4. **複数人で共同編集** — プロジェクトのオーナーが他の管理者を招待できる
-
-> スーパー管理者は全プロジェクト・全イベントを閲覧でき、プロジェクト申請の承認/却下を行います（他人のイベントの編集はしません）。
-
-#### QRを発行して、貼るだけ
-
-**専用QRを自動発行**  
-イベントごとにQRコードを生成。ダウンロードして会場に掲示するだけ。
-
-**いつでも編集**  
-名称・日付・会場・説明をあとから変更。情報の差し替えも簡単。
-
-**取得数をその場で把握**  
-イベントごとのスタンプ取得数を確認。リピート来場のデータが残ります。
-
-#### 特典を設定し、取得者を把握
-
-**特典段階を設定**  
-プロジェクトごとに「◯個で特典」を複数段階で設定。達成者には自動で特典チケットが付与されます。
-
-**取得者一覧**  
-どの参加者がどの特典を獲得したか（ニックネーム・段階・日時）を管理画面で確認できます。
+発行される**復元コード**を控えておけば、機種変更後も別端末でスタンプ帳を復元できます（ユーザー情報タブ → 復元コードで確認）。
 
 ---
 
-### まとめ — かざす、貯まる、もらえる
+## 運営の使い方
 
-| 来場者 | 運営 | ルール |
-|--------|------|--------|
-| QRをかざすだけ。ログイン不要でスタンプと特典が貯まる。復元コードで端末間引き継ぎ。 | プロジェクト単位でイベント・QR・特典をノーコード管理し、来場/特典データが見える。 | 同じライブのスタンプは1回のみ。特典はプロジェクト単位の規定数で付与。 |
+### アカウント・プロジェクト
+
+1. **セルフ登録** — `/admin/signup` でメールアドレス＋パスワードでアカウント作成
+2. **プロジェクト申請** — フェスや連続ライブなどの単位で申請（名称・説明・テーマカラーを設定）
+3. **スーパー管理者が承認** — 承認されるとイベントの作成・QR発行が可能になる
+4. **共同編集** — オーナーがメール招待または**参加コード**共有で他の管理者を追加できる
+
+> スーパー管理者は全プロジェクト・全イベントを閲覧し、申請の承認/却下のみ行います（他プロジェクトの編集は不可）。
+
+### イベントとQRコード
+
+- イベントごとに**QRコードを自動発行**。ダウンロードして会場に掲示するだけ
+- イベントに**アイコン画像**を設定可能（スタンプ帳・取得完了画面に表示）
+- 名称・日付・会場・説明はあとから編集可
+- イベントごとのスタンプ取得数をリアルタイムで確認
+
+### 動的QRコード（スロット型）
+
+路上ライブなど「1枚のQRで時間帯ごとに異なるアーティストのスタンプを押したい」場合に使うタイムスロット機能です。
+
+1. **スロットを作成**（例: "ステージA"）— 物理的に印刷するQR 1枚に対応
+2. **タイムテーブルを設定** — 時間帯ごとにアーティスト（イベント）を割り当て
+3. **QRを印刷して掲示** — スキャン時刻に応じて自動的に対応イベントのスタンプページへリダイレクト
+
+時間外のスキャンには「受付時間外」エラーと次回開始時刻を表示します。
+
+管理画面: プロジェクト詳細 → 「スロット管理（動的QR）」
+
+### 特典管理と引き換え
+
+- プロジェクトごとに「◯個で特典」を**複数段階**で設定（ラベル・個数を後から編集可）
+- 達成者一覧（ニックネーム・段階・日時・引き換え状態）を管理画面で確認
+- スタッフは `/admin/redeem` で来場者の特典QRをスキャン → 名前と特典を確認 → 「お渡し完了」で使用済み化
+- CSV書き出し（特典取得者・スタンプ取得者）
 
 ---
 
-## 機能
+## 機能一覧
 
 ### 来場者
-- QRコード読み取りによるスタンプ獲得（ログイン不要・ニックネームのみ）
-- スタンプ帳を**プロジェクト単位**で表示（達成進捗「あと◯個で〜」付き）
-- **特典チケット**: 規定数のスタンプで自動付与。タップで**引き換え用QR**を表示
-- **復元コード**による別端末からのスタンプ帳引き継ぎ
-- ユーザー情報画面（ニックネーム・復元コード・参加者情報のリセット）
+- QRスキャンによるスタンプ獲得（ログイン不要・ニックネームのみ）
+- スタンプ帳 4タブ構成（ホーム・スタンプ・引換券・ユーザー）
+- プロジェクト別テーマカラー（ヘッダー・ボトムナビが自動切り替え）
+- 特典チケット自動付与・引換用QR表示
+- 復元コードによる別端末引き継ぎ
 - 同一ライブの重複スタンプ防止
 
 ### 運営（管理者）
-- プロジェクト承認ワークフロー（セルフ登録 → 申請 → スーパー管理者の承認/却下＋却下理由 → 却下後の修正再申請）
-- 複数管理者での共同編集（メール招待・**参加コード**での参加）
-- イベント作成・QRコード生成、プロジェクト削除（オーナー）
-- **特典段階**の設定（「◯個で特典」を複数段階・ラベル/個数の編集可）
-- **特典の引き換え（QR方式）**: スタッフが `/admin/redeem` で来場者のQRをスキャン → 名前と特典内容を表示 → 「お渡し完了」で使用済み化（一回限り・二重防止）
-- **取得者一覧**（引き換え状態つき）と **CSV書き出し**（特典取得者・スタンプ取得者）
-- スーパー管理者は全プロジェクト/全イベントを閲覧（編集はせず承認/却下のみ）
-
-### 認証・データ
-- 管理者は Supabase Auth（email + password）。来場者は匿名（端末ローカル＋復元コード）
-- 来場者のスタンプ帳読み取りは復元コードを鍵に保護
+- プロジェクト承認ワークフロー（申請 → 承認/却下＋却下理由 → 修正再申請）
+- テーマカラー選択（プロジェクト設定でスタンプ帳のUIカラーを変更）
+- バナー画像・会場マップ画像の設定
+- イベントごとのアイコン画像設定
+- **動的QRコード（スロット型）** — タイムテーブルで時間帯ごとにイベントを割り当て
+- 複数管理者での共同編集（メール招待・参加コード）
+- QRコード発行・ダウンロード
+- 特典段階の設定・編集
+- 特典引き換え（スキャン方式、二重防止）
+- 取得者一覧・CSV書き出し
+- スーパー管理者による全プロジェクト閲覧・承認管理
 
 ---
 
-## Supabaseセットアップ手順
+## セットアップ
 
 ### 1. Supabaseプロジェクト作成
 
-1. [Supabase](https://supabase.com) にアクセスしてアカウント作成
-2. 「New project」でプロジェクトを作成
-3. プロジェクト名・データベースパスワードを設定
+1. [Supabase](https://supabase.com) でプロジェクトを作成
+2. SQL Editor で `supabase/schema.sql` の内容を実行してDBを作成
+3. **Authentication → Email → Confirm email を OFF** に設定（管理者がセルフ登録後すぐ利用できるようにするため）
 
-### 2. データベース作成
+### 2. 環境変数
 
-Supabase ダッシュボードの **SQL Editor** を開き、`supabase/schema.sql` の内容をすべて貼り付けて実行してください。
-
-### 3. APIキーの取得
-
-Supabase ダッシュボードの **Settings → API** から以下を取得：
-
-| キー | 説明 |
-|------|------|
-| Project URL | `NEXT_PUBLIC_SUPABASE_URL` |
-| anon / public key | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
-| service_role key | `SUPABASE_SERVICE_ROLE_KEY` |
-
----
-
-## 環境変数設定
-
-`.env.local.example` をコピーして `.env.local` を作成します。
+`.env.local.example` をコピーして設定:
 
 ```bash
 cp .env.local.example .env.local
 ```
-
-`.env.local` を編集：
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -141,14 +125,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-> 管理者認証は Supabase Auth（email + password）を使用します。`ADMIN_PASSWORD` は不要です。
+### 3. スーパー管理者の設定
 
----
-
-## 管理者・プロジェクトの仕組み
-
-- **セルフ登録**: 管理者は `/admin/signup` でアカウントを作成できます（Authentication → Email の「Confirm email」を OFF にしておくと登録後すぐ利用できます）。
-- **スーパー管理者**: 最初の管理者を Authentication → Users で作成し、その UID に対して以下を実行してスーパー管理者にします。
+`/admin/signup` でアカウントを作成した後、Supabase SQL Editor で以下を実行:
 
 ```sql
 UPDATE auth.users
@@ -156,56 +135,22 @@ SET raw_app_meta_data = raw_app_meta_data || '{"role": "super_admin"}'::jsonb
 WHERE id = '<UID>';
 ```
 
-- **プロジェクト**: 管理者は `/admin/projects/new` でプロジェクトを申請。スーパー管理者が `/admin/super` で承認すると、そのプロジェクト内でイベントを作成できます。
-- **共同編集**: プロジェクトのオーナーは詳細画面から、登録済みの管理者を**メールアドレスで招待**できます。また各プロジェクトの**参加コード**を共有すれば、相手が `/admin` の「参加コードで参加」から自分で参加できます。
-- **特典段階**: オーナーはプロジェクト詳細で「◯個で特典」を複数設定（ラベル/個数は削除せず編集可。取得者記録を保全）。達成者一覧（取得者・引き換え状態）も確認できます。
-- **特典の引き換え**: ヘッダーの「引き換え」または各プロジェクトの「引き換えスキャン」から `/admin/redeem` を開き、来場者の特典QRをスキャン → 名前と特典内容を確認 → 「お渡し完了」で使用済み化（一回限り）。プロジェクトのメンバー/スーパー管理者のみ実行可。
-- **却下と再申請**: スーパー管理者は却下時に理由を残せます。オーナーは理由を見て内容を修正し再申請できます。
-- **CSV書き出し**: 取得者一覧・スタンプ取得者をCSVでダウンロードできます。
-- **プロジェクト削除**: オーナーは詳細画面からプロジェクトを削除できます（スーパー管理者の承認は不要。配下のイベント・スタンプも削除）。
-
----
-
-## ローカル起動方法
+### 4. ローカル起動
 
 ```bash
-# 依存関係インストール
 npm install
-
-# 開発サーバー起動
 npm run dev
 ```
 
-ブラウザで [http://localhost:3000](http://localhost:3000) を開いてください。
-
-### 管理画面
-
-`/admin/login` にアクセスし、Supabase Auth に登録した管理者のメールアドレスとパスワードでログインします。各管理者は自分が所属する承認済みプロジェクトのイベントのみ閲覧・編集・削除できます。スーパー管理者は `/admin/super` で承認・全体閲覧を行います。
+[http://localhost:3000](http://localhost:3000) を開き、`/admin/login` から管理画面へ。
 
 ---
 
-## Vercelデプロイ方法
+## Vercelデプロイ
 
-### 1. Vercelアカウント作成・プロジェクト接続
-
-1. [Vercel](https://vercel.com) にアクセスしてGitHubアカウントでログイン
-2. 「New Project」からこのリポジトリをインポート
-
-### 2. 環境変数設定
-
-Vercel の **Settings → Environment Variables** に以下を追加：
-
-```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-```
-
-### 3. デプロイ
-
-「Deploy」ボタンをクリック。自動的にビルド・デプロイが実行されます。
-
-以降、`main` ブランチへのプッシュで自動デプロイされます。
+1. Vercel でリポジトリをインポート
+2. Environment Variables に `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` を追加
+3. デプロイ実行。以降は `main` への push で自動デプロイ
 
 ---
 
@@ -213,20 +158,24 @@ SUPABASE_SERVICE_ROLE_KEY
 
 ```
 projects
-├── id          UUID PK
-├── name        TEXT
-├── description TEXT
-├── status      TEXT             -- pending / approved / rejected
-├── created_by  UUID FK → auth.users.id  -- 申請者
-├── approved_by UUID FK → auth.users.id
-├── approved_at TIMESTAMPTZ
-└── created_at  TIMESTAMPTZ
+├── id            UUID PK
+├── name          TEXT
+├── description   TEXT
+├── status        TEXT              -- pending / approved / rejected
+├── theme_id      TEXT              -- テーマカラーID
+├── banner_url    TEXT              -- バナー画像URL
+├── venue_map_url TEXT              -- 会場マップ画像URL
+├── join_code     TEXT UNIQUE       -- 参加コード
+├── created_by    UUID FK → auth.users.id
+├── approved_by   UUID FK → auth.users.id
+├── approved_at   TIMESTAMPTZ
+└── created_at    TIMESTAMPTZ
 
 project_members
-├── id          UUID PK
-├── project_id  UUID FK → projects.id
-├── user_id     UUID FK → auth.users.id
-├── role        TEXT             -- owner / member
+├── id         UUID PK
+├── project_id UUID FK → projects.id
+├── user_id    UUID FK → auth.users.id
+├── role       TEXT               -- owner / member
 └── UNIQUE(project_id, user_id)
 
 events
@@ -235,14 +184,32 @@ events
 ├── event_date  DATE
 ├── venue       TEXT
 ├── description TEXT
-├── qr_token    UUID UNIQUE      -- QRコードに埋め込むトークン
-├── project_id  UUID FK → projects.id  -- 所属プロジェクト
+├── qr_token    UUID UNIQUE        -- QRコードに埋め込むトークン
+├── icon_url    TEXT               -- アイコン画像URL
+├── project_id  UUID FK → projects.id
 └── created_at  TIMESTAMPTZ
+
+slots                              -- 動的QR: 物理QR 1枚に対応
+├── id          UUID PK
+├── project_id  UUID FK → projects.id
+├── name        TEXT               -- 管理用名称（例: ステージA）
+├── slot_token  TEXT UNIQUE        -- QRに埋め込むトークン
+└── created_at  TIMESTAMPTZ
+
+slot_schedules                     -- 動的QR: 時間帯ごとのイベント割り当て
+├── id         UUID PK
+├── slot_id    UUID FK → slots.id
+├── event_id   UUID FK → events.id
+├── start_at   TIMESTAMPTZ
+├── end_at     TIMESTAMPTZ
+└── created_at TIMESTAMPTZ
 
 participants
 ├── id            UUID PK
 ├── nickname      TEXT
 ├── recovery_code TEXT UNIQUE      -- 別端末からの復元コード
+├── gender        TEXT
+├── age_group     TEXT
 └── created_at    TIMESTAMPTZ
 
 event_stamps
@@ -250,20 +217,23 @@ event_stamps
 ├── participant_id UUID FK → participants.id
 ├── event_id       UUID FK → events.id
 ├── stamped_at     TIMESTAMPTZ
-└── UNIQUE(participant_id, event_id)  -- 重複防止
+└── UNIQUE(participant_id, event_id)   -- 重複防止
 
-project_reward_tiers              -- プロジェクトごとの特典段階（複数）
+project_reward_tiers               -- プロジェクトごとの特典段階
 ├── id          UUID PK
 ├── project_id  UUID FK → projects.id
-├── threshold   INT              -- 付与に必要なスタンプ数
-├── label       TEXT             -- 特典名
+├── threshold   INT                -- 付与に必要なスタンプ数
+├── label       TEXT               -- 特典名
 └── UNIQUE(project_id, threshold)
 
-participant_rewards               -- 誰がどの段階を獲得したか
+participant_rewards                -- 誰がどの段階を獲得したか
 ├── id             UUID PK
 ├── participant_id UUID FK → participants.id
 ├── tier_id        UUID FK → project_reward_tiers.id
 ├── project_id     UUID FK → projects.id
+├── redeem_code    TEXT UNIQUE     -- 引換用QRに埋め込むコード
+├── redeemed_at    TIMESTAMPTZ
+├── redeemed_by    UUID FK → auth.users.id
 ├── issued_at      TIMESTAMPTZ
 └── UNIQUE(participant_id, tier_id)
 ```
@@ -272,41 +242,46 @@ participant_rewards               -- 誰がどの段階を獲得したか
 
 ## ユーザーフロー
 
+### 通常QR（静的）
+
 ```
-会場のQRコードを読み取る
-        ↓
-/event/[qr_token]/stamp にアクセス
-        ↓
-localStorage に participant_id があるか？
+会場のQRをスキャン
+    ↓
+/event/[qr_token]/stamp
+    ↓
+localStorage に participant_id あり？
   No → ニックネーム登録 → 参加者作成 → localStorage保存
   Yes → そのまま続行
-        ↓
-event_stamps に (participant_id, event_id) が存在するか？
-  Yes → 「取得済みです」表示
-  No  → スタンプ作成 → 「スタンプ獲得！」表示
+    ↓
+event_stamps に (participant_id, event_id) あり？
+  Yes → 「取得済みです」
+  No  → スタンプ作成 → 「スタンプ獲得！」→ 特典チェック → 新特典があれば通知
+```
+
+### 動的QR（スロット型）
+
+```
+スロットQRをスキャン
+    ↓
+/slot/[slot_token]（Server Component）
+    ↓
+現在時刻で slot_schedules を検索
+    ↓
+一致あり → redirect("/event/[qr_token]/stamp") → 通常スタンプフロー
+一致なし → 「受付時間外」エラー + 次回開始時刻を表示
 ```
 
 ---
 
-## 将来的な拡張（残りうる発展候補）
+## 技術スタック
 
-実装済みのため、ここからは「今後の候補」を記録しておく。
-
-### 引き換え運用の強化
-- **自動使用済み＋取り消し**: スキャンした瞬間に使用済みにするモード（混雑時の高速化）と、誤操作の取り消し導線。現状は「スキャン→表示→お渡し完了の1タップ」方式。
-- **引き換え統計**: 特典ごとの付与数/引き換え数・引き換え率の集計表示。
-
-### 本人確認・アカウント
-- **来場者の本人確認強化**: 高価値特典向けに、復元コードへ任意の**メール/LINE連携**を加算（端末間の堅牢な引き継ぎ＋なりすまし防止）。現状は復元コードがベースライン。
-- 来場者プロフィールの拡張（表示名変更など）。
-
-### 体験・拡散
-- スタンプ**ランキング**（プロジェクト内）
-- **SNSシェア**（獲得スタンプ/特典の共有画像）
-- **プッシュ通知**（新イベント・特典達成のお知らせ）
-
-### 運用・基盤
-- **本格的なレート制限**（連打/ボット対策）— Vercel KV / Upstash 等の外部ストアが前提。現状は「同一ユーザーの承認待ち申請数の上限」止まり。
-- 取得者一覧の**検索/フィルタ/ページング**（大規模イベント向け）。
-- スーパー管理者の**全プロジェクト検索**。
-- 監査ログ（承認/却下・引き換えの操作履歴）。
+| 項目 | 内容 |
+|------|------|
+| フレームワーク | Next.js 16.2.9（App Router / Turbopack） |
+| スタイル | Tailwind CSS v4 |
+| 言語 | TypeScript |
+| DB / Auth | Supabase（PostgreSQL + Supabase Auth） |
+| デプロイ | Vercel（`main` push で自動デプロイ） |
+| QRスキャン | `@zxing/browser` |
+| QR生成 | `qrcode` |
+| フォント | Zen Kaku Gothic New + Roboto Mono |
