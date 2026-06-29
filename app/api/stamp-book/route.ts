@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   // スタンプ（イベント＋プロジェクト名・テーマ・画像URLを埋め込み）
   const { data: stamps, error } = await supabase
     .from('event_stamps')
-    .select('*, event:events(*, project:projects(id, name, theme_id, venue_map_url, timetable_url))')
+    .select('*, event:events(*, project:projects(*))')
     .eq('participant_id', participantId)
     .order('stamped_at', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
