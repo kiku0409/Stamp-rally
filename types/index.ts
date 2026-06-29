@@ -117,3 +117,21 @@ export interface AdminStats {
   participantCount: number;
   stampCount: number;
 }
+
+export interface Slot {
+  id: string;
+  project_id: string;
+  name: string;
+  slot_token: string;
+  created_at: string;
+}
+
+export interface SlotSchedule {
+  id: string;
+  slot_id: string;
+  event_id: string;
+  start_at: string;
+  end_at: string;
+  created_at: string;
+  event?: Event;
+}

@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift, Pencil, Check } from 'lucide-react';
+import { ChevronLeft, Plus, X, UserPlus, Trash2, KeyRound, Gift, Pencil, Check, QrCode } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
@@ -495,6 +495,29 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {/* Slots (動的QR) */}
+        {isApproved && canEdit && (
+          <section className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <QrCode size={16} strokeWidth={2} className="text-accent" />
+                <h2 className="text-[15px] font-bold text-ink">スロット管理（動的QR）</h2>
+              </div>
+              <Link
+                href={`/admin/projects/${id}/slots`}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-[9px] border border-teal-border text-accent text-[12px] font-bold hover:bg-soft transition-colors"
+              >
+                スロット一覧・設定
+              </Link>
+            </div>
+            <div className="bg-white rounded-2xl px-5 py-4 border border-line card-shadow">
+              <p className="text-[13px] text-muted">
+                印刷済みQR1枚で時間帯ごとに異なるスタンプが押せます。スロット設定でタイムテーブルを管理してください。
+              </p>
+            </div>
           </section>
         )}
 
