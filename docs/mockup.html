@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ホーム画面モックアップ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #e8e8e8; font-family: 'Hiragino Sans', sans-serif; display: flex; gap: 24px; padding: 24px; justify-content: center; flex-wrap: wrap; }
+
+  .phone { width: 375px; background: #F1F8F7; border-radius: 40px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2); border: 8px solid #222; }
+  .phone-label { text-align: center; font-size: 13px; color: #666; margin-bottom: 8px; font-weight: bold; }
+
+  /* Header */
+  .header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .header-teal { background: linear-gradient(160deg, #17A399 0%, #076B63 100%); }
+  .header-street { background: linear-gradient(160deg, #111111 0%, #1a1a1a 100%); }
+  .header-fes { background: linear-gradient(160deg, #F06EA0 0%, #5BC8D8 100%); }
+  .header h2 { color: white; font-size: 15px; font-weight: bold; }
+  .header-chip { background: rgba(255,255,255,0.2); color: white; font-size: 12px; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+
+  /* Carousel */
+  .carousel-wrap { position: relative; }
+  .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .carousel::-webkit-scrollbar { display: none; }
+  .carousel-item { flex: 0 0 100%; scroll-snap-align: start; }
+  .carousel-item img, .carousel-item .img-placeholder { width: 100%; height: 180px; object-fit: cover; display: block; }
+  .img-placeholder { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; font-size: 13px; color: #aaa; }
+  .logo-card { background: #fff; display: flex; align-items: center; justify-content: center; height: 180px; flex-direction: column; gap: 8px; }
+  .logo-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #17A399, #076B63); display: flex; align-items: center; justify-content: center; font-size: 32px; color: white; font-weight: bold; }
+  .logo-name { font-size: 13px; color: #888; }
+  .dots { display: flex; justify-content: center; gap: 6px; padding: 8px 0; background: white; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; }
+  .dot.active { background: #0A938C; }
+
+  /* Info card */
+  .card { background: white; margin: 8px 12px; border-radius: 16px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .project-name { font-size: 16px; font-weight: bold; color: #17302E; margin-bottom: 10px; }
+  .stamp-count { font-size: 13px; color: #666; margin-bottom: 6px; }
+  .stamp-count span { font-size: 22px; font-weight: bold; color: #0A938C; }
+  .progress-wrap { background: #D8EEED; border-radius: 8px; height: 10px; margin-bottom: 6px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, #17A399, #076B63); }
+  .progress-label { font-size: 12px; color: #888; }
+
+  /* Street-live progress */
+  .progress-bar-street { background: linear-gradient(90deg, #9BF238, #E84E68); }
+  .progress-wrap-street { background: #2a2a2a; }
+  .stamp-count-street span { color: #9BF238; }
+  .project-name-street { color: #ffffff; }
+  .card-dark { background: #1a1a1a; }
+  .stamp-count-street { color: #888; }
+
+  /* Stamps list */
+  .stamp-list { padding: 2px 0; }
+  .stamp-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .stamp-row:last-child { border-bottom: none; }
+  .stamp-icon { width: 36px; height: 36px; border-radius: 50%; background: #EAF6F5; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .stamp-info { flex: 1; }
+  .stamp-title { font-size: 13px; font-weight: bold; color: #17302E; }
+  .stamp-date { font-size: 11px; color: #aaa; }
+
+  /* Map section */
+  .map-section { margin: 8px 12px; }
+  .section-label { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 6px; letter-spacing: 0.05em; }
+  .map-img { width: 100%; height: 140px; border-radius: 16px; object-fit: cover; background: linear-gradient(135deg, #c8d6e5, #a8b9cc); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #778; }
+
+  /* QR button */
+  .qr-btn { margin: 8px 12px 16px; background: linear-gradient(135deg, #17A399, #076B63); color: white; border: none; border-radius: 14px; padding: 14px; width: calc(100% - 24px); font-size: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .qr-btn-street { background: linear-gradient(135deg, #9BF238, #E84E68); }
+
+  /* Bottom nav */
+  .bottom-nav { background: white; display: flex; border-top: 1px solid #eee; }
+  .nav-item { flex: 1; padding: 10px 4px 12px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #aaa; }
+  .nav-item.active { color: #0A938C; }
+  .nav-icon { font-size: 20px; }
+  .nav-qr { background: #0A938C; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-top: -16px; box-shadow: 0 4px 12px rgba(10,147,140,0.4); }
+
+  /* Street theme nav */
+  .nav-item-street.active { color: #9BF238; }
+  .nav-qr-street { background: linear-gradient(135deg, #9BF238, #E84E68); }
+
+  /* Profile page */
+  .section-title { font-size: 11px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; margin-top: 14px; }
+  .input-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+  .input-label { font-size: 13px; color: #888; width: 80px; flex-shrink: 0; }
+  .input-val { font-size: 14px; color: #17302E; flex: 1; }
+  .input-edit { font-size: 12px; color: #0A938C; }
+</style>
+</head>
+<body>
+
+<!-- 1. 現在のホーム画面（複数プロジェクト） -->
+<div>
+  <div class="phone-label">現在（複数プロジェクト表示）</div>
+  <div class="phone">
+    <div class="header header-teal">
+      <div>
+        <div style="width:6px;height:6px;border-radius:50%;background:white;display:inline-block;margin-right:6px;"></div>
+        <span style="color:white;font-weight:bold;font-size:14px;">スタンプ帳</span>
+      </div>
+    </div>
+    <!-- Project 1 -->
+    <div class="card" style="margin-top:10px;">
+      <div class="project-name">GMO渋谷エンタメ祭</div>
+      <div style="background:#D8EEED;border-radius:8px;height:8px;margin-bottom:6px;"><div style="width:62%;height:100%;background:linear-gradient(90deg,#17A399,#076B63);border-radius:8px;"></div></div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">スタンプ 5個 · あと3個でフォトカード</div>
+      <div class="stamp-row"><div class="stamp-icon">🎵</div><div class="stamp-info"><div class="stamp-title">アーティストA</div><div class="stamp-date">6/29</div></div></div>
+    </div>
+    <!-- Project 2 -->
+    <div class="card">
+      <div class="project-name">Shibuya Street Live</div>
+      <div style="background:#D8EEED;border-radius:8px;height:8px;margin-bottom:6px;"><div style="width:30%;height:100%;background:linear-gradient(90deg,#17A399,#076B63);border-radius:8px;"></div></div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">スタンプ 2個 · あと8個で缶バッジ</div>
+      <div class="stamp-row"><div class="stamp-icon">🎸</div><div class="stamp-info"><div class="stamp-title">ストリートアーティストX</div><div class="stamp-date">6/28</div></div></div>
+    </div>
+    <div style="height:10px;"></div>
+    <div class="bottom-nav">
+      <div class="nav-item active"><div class="nav-icon">🏠</div>ホーム</div>
+      <div class="nav-item"><div class="nav-icon">📋</div>スタンプ</div>
+      <div class="nav-item"><div class="nav-qr">📷</div></div>
+      <div class="nav-item"><div class="nav-icon">🎫</div>引換券</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 新ホーム画面（選択中プロジェクトのみ） -->
+<div>
+  <div class="phone-label">変更後（選択中プロジェクトのみ）</div>
+  <div class="phone">
+    <div class="header header-teal">
+      <div>
+        <div style="width:6px;height:6px;border-radius:50%;background:white;display:inline-block;margin-right:6px;"></div>
+        <span style="color:white;font-weight:bold;font-size:14px;">スタンプ帳</span>
+      </div>
+      <div class="header-chip">GMO渋谷エンタメ祭 ▾</div>
+    </div>
+
+    <!-- 写真カルーセル -->
+    <div class="carousel-wrap">
+      <div class="carousel">
+        <!-- Card 1: バナー写真 -->
+        <div class="carousel-item">
+          <div class="img-placeholder" style="background:linear-gradient(135deg,#1a6b5e,#0a4a41);color:#5BBCB0;">
+            <span style="font-size:32px;">🌆</span>
+            <span>banner_url（テーマ写真）</span>
+            <span style="font-size:11px;">横長の雰囲気写真</span>
+          </div>
+        </div>
+        <!-- Card 2: ロゴ -->
+        <div class="carousel-item">
+          <div class="logo-card">
+            <div class="logo-icon">G</div>
+            <div class="logo-name">logo_url（ロゴ画像）</div>
+            <div style="font-size:11px;color:#bbb;">アイコン・シンボルマーク</div>
+          </div>
+        </div>
+      </div>
+      <div class="dots">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <!-- スタンプ進捗 -->
+    <div class="card">
+      <div class="project-name">GMO渋谷エンタメ祭</div>
+      <div class="stamp-count"><span>5</span> 個のスタンプ</div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:62%;"></div></div>
+      <div class="progress-label">あと3個で「フォトカード」🎁</div>
+    </div>
+
+    <!-- 直近スタンプ -->
+    <div class="card">
+      <div style="font-size:12px;font-weight:bold;color:#888;margin-bottom:8px;">直近のスタンプ</div>
+      <div class="stamp-list">
+        <div class="stamp-row"><div class="stamp-icon">🎵</div><div class="stamp-info"><div class="stamp-title">アーティストA</div><div class="stamp-date">6/29 14:30</div></div></div>
+        <div class="stamp-row"><div class="stamp-icon">🎸</div><div class="stamp-info"><div class="stamp-title">アーティストB</div><div class="stamp-date">6/28 19:00</div></div></div>
+      </div>
+    </div>
+
+    <!-- 会場マップ -->
+    <div class="map-section">
+      <div class="section-label">会場マップ</div>
+      <div class="map-img">🗺️ venue_map_url（地図画像）</div>
+    </div>
+
+    <button class="qr-btn">📷 QRをスキャンしてスタンプをゲット</button>
+
+    <div class="bottom-nav">
+      <div class="nav-item active"><div class="nav-icon">🏠</div>ホーム</div>
+      <div class="nav-item"><div class="nav-icon">📋</div>スタンプ</div>
+      <div class="nav-item"><div class="nav-qr">📷</div></div>
+      <div class="nav-item"><div class="nav-icon">🎫</div>引換券</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. street-live テーマ -->
+<div>
+  <div class="phone-label">street-live テーマ（修正後）</div>
+  <div class="phone" style="background:#0e0e0e;">
+    <div class="header header-street">
+      <div>
+        <div style="width:6px;height:6px;border-radius:50%;background:#9BF238;display:inline-block;margin-right:6px;"></div>
+        <span style="color:white;font-weight:bold;font-size:14px;">スタンプ帳</span>
+      </div>
+      <div class="header-chip" style="background:rgba(155,242,56,0.15);color:#9BF238;">Street Live ▾</div>
+    </div>
+
+    <!-- 写真カルーセル -->
+    <div class="carousel-wrap">
+      <div class="carousel">
+        <div class="carousel-item">
+          <div class="img-placeholder" style="background:linear-gradient(135deg,#111,#1a1a1a);color:#9BF238;">
+            <span style="font-size:32px;">🎸</span>
+            <span>バナー写真</span>
+          </div>
+        </div>
+      </div>
+      <div class="dots" style="background:#1a1a1a;">
+        <div class="dot active" style="background:#9BF238;"></div>
+      </div>
+    </div>
+
+    <!-- スタンプ進捗 -->
+    <div class="card card-dark">
+      <div class="project-name project-name-street">Shibuya Street Live</div>
+      <div class="stamp-count stamp-count-street"><span style="color:#9BF238;font-size:22px;font-weight:bold;">5</span> 個のスタンプ</div>
+      <div class="progress-wrap progress-wrap-street"><div class="progress-bar progress-bar-street" style="width:50%;"></div></div>
+      <div class="progress-label" style="color:#666;">あと5個で缶バッジ</div>
+    </div>
+
+    <!-- スタンプ一覧 -->
+    <div class="card card-dark">
+      <div style="font-size:12px;font-weight:bold;color:#9BF238;margin-bottom:8px;">直近のスタンプ</div>
+      <div class="stamp-row" style="border-color:#2a2a2a;">
+        <div class="stamp-icon" style="background:#1a2210;">🎸</div>
+        <div class="stamp-info"><div class="stamp-title" style="color:#eee;">ストリートアーティストX</div><div class="stamp-date">6/29 18:30</div></div>
+      </div>
+      <div class="stamp-row" style="border-color:#2a2a2a;">
+        <div class="stamp-icon" style="background:#1a2210;">🎤</div>
+        <div class="stamp-info"><div class="stamp-title" style="color:#eee;">ストリートアーティストY</div><div class="stamp-date">6/28 17:00</div></div>
+      </div>
+    </div>
+
+    <button class="qr-btn qr-btn-street" style="color:#111;">📷 QRをスキャンしてスタンプをゲット</button>
+
+    <div class="bottom-nav" style="background:#1a1a1a;border-color:#2a2a2a;">
+      <div class="nav-item nav-item-street active" style="color:#9BF238;"><div class="nav-icon">🏠</div>ホーム</div>
+      <div class="nav-item" style="color:#666;"><div class="nav-icon">📋</div>スタンプ</div>
+      <div class="nav-item"><div class="nav-qr nav-qr-street" style="color:#111;">📷</div></div>
+      <div class="nav-item" style="color:#666;"><div class="nav-icon">🎫</div>引換券</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. プロフィール画面（テーマカラー適用） -->
+<div>
+  <div class="phone-label">ユーザー情報画面（テーマカラー適用後）</div>
+  <div class="phone">
+    <div class="header header-teal">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="color:white;font-size:18px;">←</span>
+        <span style="color:white;font-weight:bold;font-size:15px;">ユーザー情報</span>
+      </div>
+    </div>
+    <div style="padding:16px;">
+      <div style="text-align:center;padding:20px 0;">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#17A399,#076B63);display:flex;align-items:center;justify-content:center;font-size:24px;color:white;font-weight:bold;margin:0 auto 10px;">K</div>
+        <div style="font-size:18px;font-weight:bold;color:#17302E;">Kiku</div>
+        <div style="font-size:12px;color:#888;margin-top:4px;">GMO渋谷エンタメ祭に参加中</div>
+      </div>
+      <div class="card" style="margin:0;">
+        <div class="section-title">プロフィール</div>
+        <div class="input-row"><div class="input-label">ニックネーム</div><div class="input-val">Kiku</div><div class="input-edit">編集</div></div>
+        <div class="input-row"><div class="input-label">性別</div><div class="input-val">未設定</div><div class="input-edit">編集</div></div>
+        <div class="input-row" style="border:none;"><div class="input-label">年齢</div><div class="input-val">25</div><div class="input-edit">編集</div></div>
+        <div class="section-title">復元コード</div>
+        <div style="background:#EAF6F5;border-radius:10px;padding:12px;font-family:monospace;font-size:13px;color:#0A938C;letter-spacing:0.1em;">ABCD-EFGH-1234</div>
+        <div style="font-size:11px;color:#aaa;margin-top:6px;">機種変更時に使用します。大切に保管してください。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
