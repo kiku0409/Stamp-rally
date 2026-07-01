@@ -163,7 +163,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const res = await fetch(`/api/projects/${id}/stamps`, { headers });
     if (!res.ok) { alert('取得に失敗しました'); return; }
     const data: { event_title: string; nickname: string; gender: string; age_group: string; stamped_at: string }[] = await res.json();
-    const rows = data.map((d) => [d.event_title, d.nickname, d.gender, d.age_group, new Date(d.stamped_at).toLocaleString('ja-JP')]);
+    const rows = data.map((d) => [d.event_title, d.nickname, d.gender || '未設定', d.age_group || '未設定', new Date(d.stamped_at).toLocaleString('ja-JP')]);
     const csv = toCsv(['イベント', 'ニックネーム', '性別', '年齢', '取得日時'], rows);
     downloadCsv(`スタンプ取得者_${project?.name ?? ''}.csv`, csv);
   }
