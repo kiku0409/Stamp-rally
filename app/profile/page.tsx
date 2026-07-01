@@ -9,7 +9,6 @@ import { LocalParticipant } from '@/types';
 import { getTheme, headerGradient } from '@/lib/themes';
 
 const GENDERS = ['男性', '女性', 'その他'];
-const AGE_GROUPS = ['10代', '20代', '30代', '40代', '50代以上'];
 
 const selectClass =
   'w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white appearance-none';
@@ -25,6 +24,9 @@ export default function ProfilePage() {
   const [ageGroupInput, setAgeGroupInput] = useState('');
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const ageNum = parseInt(ageGroupInput, 10);
+  const ageValid = ageGroupInput === '' || (!isNaN(ageNum) && ageNum >= 1 && ageNum <= 120);
 
   useEffect(() => {
     const local = getLocalParticipant();
@@ -129,17 +131,22 @@ export default function ProfilePage() {
                       </select>
                     </div>
                     <div>
-                      <p className="text-[11px] text-muted mb-1">年代</p>
-                      <select value={ageGroupInput} onChange={e => setAgeGroupInput(e.target.value)} className={selectClass}>
-                        <option value="">未設定</option>
-                        {AGE_GROUPS.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
+                      <p className="text-[11px] text-muted mb-1">年齢</p>
+                      <input
+                        type="number"
+                        value={ageGroupInput}
+                        onChange={e => setAgeGroupInput(e.target.value)}
+                        placeholder="例: 25"
+                        min={1}
+                        max={120}
+                        className={selectClass}
+                      />
                     </div>
                   </div>
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={saveProfile}
-                      disabled={saving || !nicknameInput.trim()}
+                      disabled={saving || !nicknameInput.trim() || !ageValid}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-brand text-white text-[13px] font-bold disabled:opacity-40 disabled:shadow-none"
                     >
                       <Check size={14} strokeWidth={2.5} />
@@ -168,9 +175,11 @@ export default function ProfilePage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] text-muted mb-0.5">年代</p>
+                      <p className="text-[11px] text-muted mb-0.5">年齢</p>
                       <p className={`text-[14px] font-medium ${participant.age_group ? 'text-ink' : 'text-faint'}`}>
-                        {participant.age_group ?? '未設定'}
+                        {participant.age_group
+                          ? /^\d+$/.test(participant.age_group) ? `${participant.age_group}歳` : participant.age_group
+                          : '未設定'}
                       </p>
                     </div>
                   </div>
