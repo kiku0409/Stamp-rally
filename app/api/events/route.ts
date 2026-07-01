@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   const { user } = auth;
 
   const body = await request.json();
-  const { project_id, title, event_date, venue, description, icon_url } = body;
+  const { project_id, title, event_date, venue, description, icon_url, map_x, map_y, map_label, map_color } = body;
 
   if (!project_id || !title || !event_date || !venue) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -59,6 +59,10 @@ export async function POST(request: Request) {
   const qr_token = crypto.randomUUID();
   const row: Record<string, unknown> = { title, event_date, venue, description, qr_token, project_id };
   if (icon_url) row.icon_url = icon_url;
+  if (map_x != null) row.map_x = map_x;
+  if (map_y != null) row.map_y = map_y;
+  if (map_label) row.map_label = map_label;
+  if (map_color) row.map_color = map_color;
   const { data, error } = await supabase
     .from('events')
     .insert(row)

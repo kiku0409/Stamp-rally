@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Music, KeyRound, UserPlus, Check, QrCode, MapPin, Clock } from 'lucide-react';
+import { Music, KeyRound, UserPlus, Check, QrCode, MapPin, Clock, X } from 'lucide-react';
 import { useStampBook } from './StampBookContext';
 import { setLocalParticipant } from '@/lib/storage';
 import { getTheme, Theme } from '@/lib/themes';
@@ -130,9 +130,10 @@ export default function StampBookHomePage() {
 
 function ProjectView({ group, onScanQR }: { group: StampBookGroup; onScanQR: () => void }) {
   const router = useRouter();
-  const { project, count, tiers, stamps } = group;
+  const { project, count, tiers, stamps, events: allEvents } = group;
   const theme = getTheme(project.theme_id);
   const images: ProjectImage[] = project.images ?? [];
+  const [selectedEvent, setSelectedEvent] = useState<import('@/types').Event | null>(null);
   const [carouselIdx, setCarouselIdx] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
 
@@ -264,14 +265,95 @@ function ProjectView({ group, onScanQR }: { group: StampBookGroup; onScanQR: () 
           </div>
         )}
 
-        {/* Venue map */}
+        {/* Venue map with pins */}
         {project.venue_map_url && (
           <div>
             <div className="flex items-center gap-1.5 mb-2">
               <MapPin size={14} strokeWidth={2} style={{ color: theme.accent }} />
               <p className="text-[13px] font-bold text-ink">会場マップ</p>
             </div>
-            <img src={project.venue_map_url} alt="会場マップ" className="w-full rounded-xl object-contain" />
+            <div className="relative rounded-xl overflow-hidden">
+              <img src={project.venue_map_url} alt="会場マップ" className="w-full object-contain block" />
+              {(allEvents ?? []).filter(ev => ev.map_x != null && ev.map_y != null).map(ev => {
+                const stampedIds = new Set(stamps.map(s => s.event_id));
+                const collected = stampedIds.has(ev.id);
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => setSelectedEvent(ev)}
+                    className="absolute flex items-center justify-center rounded-full font-bold text-[13px] transition-transform hover:scale-110 active:scale-95"
+                    style={{
+                      left: `${ev.map_x}%`,
+                      top: `${ev.map_y}%`,
+                      transform: 'translate(-50%, -50%)',
+                      width: 36,
+                      height: 36,
+                      background: collected ? theme.accent : '#3B82F6',
+                      color: '#fff',
+                      boxShadow: collected
+                        ? `0 0 0 3px white, 0 0 0 5px ${theme.accent}`
+                        : '0 2px 6px rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    {collected ? <Check size={16} strokeWidth={3} /> : (ev.map_label ?? '?')}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ピンタップ時の詳細カード */}
+            {selectedEvent && (
+              <div
+                className="fixed inset-0 z-50 flex items-end justify-center"
+                onClick={() => setSelectedEvent(null)}
+              >
+                <div
+                  className="w-full max-w-lg bg-white rounded-t-2xl p-5 border-t border-line card-shadow"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {(() => {
+                          const collected = new Set(stamps.map(s => s.event_id)).has(selectedEvent.id);
+                          return (
+                            <span
+                              className="flex items-center justify-center w-7 h-7 rounded-full text-white text-[12px] font-bold shrink-0"
+                              style={{ background: collected ? theme.accent : '#3B82F6' }}
+                            >
+                              {collected ? <Check size={13} strokeWidth={3} /> : (selectedEvent.map_label ?? '?')}
+                            </span>
+                          );
+                        })()}
+                        <p className="text-[15px] font-bold text-ink truncate">{selectedEvent.title}</p>
+                      </div>
+                      <p className="text-[12px] text-muted">{selectedEvent.venue}</p>
+                    </div>
+                    <button onClick={() => setSelectedEvent(null)} className="text-muted ml-3 shrink-0">
+                      <X size={18} strokeWidth={2} />
+                    </button>
+                  </div>
+                  {new Set(stamps.map(s => s.event_id)).has(selectedEvent.id) ? (
+                    <div
+                      className="rounded-xl px-4 py-3 text-center text-[13px] font-bold"
+                      style={{ background: theme.soft, color: theme.accentDeep }}
+                    >
+                      獲得済み ✓
+                    </div>
+                  ) : (
+                    <button
+                      onClick={onScanQR}
+                      className="w-full py-3 rounded-xl text-white font-bold text-[14px] flex items-center justify-center gap-2"
+                      style={{ background: `linear-gradient(135deg, ${theme.headerFrom}, ${theme.headerTo})` }}
+                    >
+                      <QrCode size={16} strokeWidth={2} />
+                      QRを読み取ってスタンプを獲得
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

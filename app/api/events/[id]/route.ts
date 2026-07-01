@@ -44,10 +44,14 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { title, event_date, venue, description, icon_url } = body;
+  const { title, event_date, venue, description, icon_url, map_x, map_y, map_label, map_color } = body;
 
   const update: Record<string, unknown> = { title, event_date, venue, description };
   if (typeof icon_url === 'string') update.icon_url = icon_url || null;
+  if ('map_x' in body) update.map_x = map_x ?? null;
+  if ('map_y' in body) update.map_y = map_y ?? null;
+  if ('map_label' in body) update.map_label = map_label ?? null;
+  if ('map_color' in body) update.map_color = map_color ?? null;
 
   const { data, error } = await supabase
     .from('events')

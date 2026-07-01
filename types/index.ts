@@ -82,6 +82,7 @@ export interface StampBookGroup {
   stamps: EventStamp[];
   tiers: StampBookTier[];
   rewards: StampBookReward[];
+  events?: Event[];
 }
 
 export interface Event {
@@ -94,6 +95,10 @@ export interface Event {
   icon_url?: string;
   created_at: string;
   project_id?: string;
+  map_x?: number | null;
+  map_y?: number | null;
+  map_label?: string | null;
+  map_color?: string | null;
 }
 
 export interface Participant {

@@ -614,7 +614,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               )}
               <label className="flex items-center gap-2 cursor-pointer w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-teal-border text-accent text-[13px] font-bold hover:bg-soft transition-colors justify-center">
                 <Upload size={14} strokeWidth={2} />
-                {uploadingTimetable ? 'アップロード中...' : project.timetable_url ? '差し替え' : '画像をアップロード'}
+                {uploadingTimetable ? 'アップロード中...' : project.timetable_url ? '差し替え' : '写真を追加'}
                 <input
                   type="file"
                   accept="image/*"
@@ -637,7 +637,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               )}
               <label className="flex items-center gap-2 cursor-pointer w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-teal-border text-accent text-[13px] font-bold hover:bg-soft transition-colors justify-center">
                 <Upload size={14} strokeWidth={2} />
-                {uploadingMap ? 'アップロード中...' : project.venue_map_url ? '差し替え' : '画像をアップロード'}
+                {uploadingMap ? 'アップロード中...' : project.venue_map_url ? '差し替え' : '写真を追加'}
                 <input
                   type="file"
                   accept="image/*"

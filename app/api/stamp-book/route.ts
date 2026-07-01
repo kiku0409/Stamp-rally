@@ -64,10 +64,11 @@ export async function GET(request: Request) {
 
   const projectIds = [...groups.keys()];
   if (projectIds.length > 0) {
-    const [{ data: tiers }, { data: rewards }, { data: images }] = await Promise.all([
+    const [{ data: tiers }, { data: rewards }, { data: images }, { data: allEvents }] = await Promise.all([
       supabase.from('project_reward_tiers').select('*').in('project_id', projectIds).order('threshold', { ascending: true }),
       supabase.from('participant_rewards').select('project_id, issued_at, redeem_code, redeemed_at, tier:project_reward_tiers(label)').eq('participant_id', participantId).in('project_id', projectIds),
       supabase.from('project_images').select('*').in('project_id', projectIds).order('sort_order', { ascending: true }),
+      supabase.from('events').select('*').in('project_id', projectIds).order('event_date', { ascending: true }),
     ]);
 
     for (const t of tiers ?? []) {
@@ -82,6 +83,13 @@ export async function GET(request: Request) {
     for (const img of images ?? []) {
       const g = groups.get(img.project_id);
       if (g) g.project.images!.push(img);
+    }
+    for (const ev of allEvents ?? []) {
+      const g = groups.get(ev.project_id);
+      if (g) {
+        if (!g.events) g.events = [];
+        g.events.push(ev);
+      }
     }
   }
 
