@@ -1,8 +1,8 @@
 # 引き継ぎメモ（HANDOFF）
 
-- 更新日時: 2026-06-29 JST
+- 更新日時: 2026-07-01 JST
 - ブランチ: `main`（全変更コミット済み・本番デプロイ済み）
-- 最新コミット: `c84ade4 feat: ダークテーマ対応カード + スタンプ/特典タブをアクティブPJのみ表示`
+- 最新コミット: `4ec8b21 feat: 会場マップ上にスタンプスポットピンを表示する機能を実装`
 
 次のセッションがこれだけ読めば再開できるようにまとめた運用・状態メモ。
 
@@ -29,83 +29,80 @@
 
 ## 2. 現在の実装状況（全て `main` にコミット済み・本番反映済み）
 
-### 直近セッション（2026-06-29）で実装・完了したもの
+### 直近セッション（2026-07-01）で実装・完了したもの
 
-#### A. ホーム画面UI刷新（コミット: `b2084a1`）
+#### A. バグ修正：ボタン文言統一（コミット: `07796e2` に含む）
 
-- **フォトカルーセル**: `project_images` テーブルから画像を取得し横スクロール表示（CSS scroll-snap、ドットインジケーター付き、無制限）
-- **タイムテーブルセクション**: `projects.timetable_url` がある場合のみ表示（Clockアイコン付き）
-- **会場マップセクション**: `projects.venue_map_url` がある場合のみ表示（MapPinアイコン付き）
-- **プロジェクト1件のみ表示**: `activeProjectId` に一致するグループだけ `ProjectView` で描画
-- **プロフィールページのテーマカラー**: `getActiveThemeId()` → `getTheme()` でヘッダーをアクティブプロジェクトのテーマで表示（StampBookProvider 外なので localStorage 経由）
+`app/admin/projects/[id]/page.tsx` のタイムテーブル・会場マップセクションのアップロードボタン文言を統一:
+- 「画像をアップロード」→「写真を追加」（カルーセル写真と統一）
+- 「差し替え」はそのまま維持
 
-#### B. 管理画面に画像管理UI追加（コミット: `b2084a1`）
+#### B. マップピン機能（コミット: `4ec8b21`）
 
-`app/admin/projects/[id]/page.tsx` に3つの画像セクション追加:
-- カルーセル写真: アップロード・削除・並び替え（↑↓ボタン）
-- タイムテーブル画像: アップロード・差し替え・削除
-- 会場マップ画像: アップロード・差し替え・削除
+**概要**: 会場マップ画像の上にスタンプスポットのピンを表示し、取得状況を可視化する機能。
 
-新設API:
-- `app/api/projects/upload-image/route.ts`: multipart → Supabase Storage（`event-icons` バケット）
-- `app/api/projects/[id]/images/route.ts`: GET（一覧）/ POST（追加）
-- `app/api/projects/[id]/images/[imageId]/route.ts`: DELETE / PUT（sort_order更新）
-- `app/api/projects/[id]/route.ts` PUT: `venue_map_url` / `timetable_url` を受け付けるよう拡張
-
-#### C. 致命的バグ修正（コミット: `7754984`）
-
-`app/api/stamp-book/route.ts` の SELECT を:
+**DBマイグレーション**: `supabase/migrations/2026-07-01_map_pins.sql`（本番適用済み）
+```sql
+ALTER TABLE events
+  ADD COLUMN IF NOT EXISTS map_x     NUMERIC,  -- マップ上X座標（0〜100%）
+  ADD COLUMN IF NOT EXISTS map_y     NUMERIC,  -- マップ上Y座標（0〜100%）
+  ADD COLUMN IF NOT EXISTS map_label TEXT,     -- ピンラベル（A/B/C等）
+  ADD COLUMN IF NOT EXISTS map_color TEXT;     -- 将来の色分け用（現在未使用）
 ```
-// 修正前（timetable_urlカラムがない環境でHTTP 500）
-.select('*, event:events(*, project:projects(id, name, theme_id, venue_map_url, timetable_url))')
-// 修正後（カラム追加に依存しない）
-.select('*, event:events(*, project:projects(*))')
-```
-これにより、本番でスタンプが全消えに見える症状を解消。
 
-#### D. ダークテーマ対応カード（コミット: `c84ade4`）
+**来場者ホーム画面** (`app/stamp-book/page.tsx`):
+- マップ画像の上に絶対配置でピンボタンを重ねて表示
+- 未獲得スポット: 青丸 + A/B/C ラベル
+- 獲得済みスポット: テーマカラー丸 + チェックマーク + 白リング
+- ピンをタップ → 下から詳細カードが出現（未獲得はQRスキャンボタン付き）
+- `map_x` / `map_y` が未設定のイベントはピン非表示
 
-`lib/themes.ts` の `Theme` インターフェースに `cardBg?`, `ink?`, `muted?`, `line?` を追加。
-`street-live` テーマ: `cardBg: '#1c1c1c'`, `ink: '#e8e8e8'`, `muted: '#9a9a9a'`, `line: '#2f2f2f'`
+**オーナー管理画面** (`app/admin/events/[id]/page.tsx`, `app/admin/events/new/page.tsx`):
+- プロジェクトの `venue_map_url` を表示（編集画面は project_id 経由で取得）
+- マップ画像をクリック → X%/Y% 座標を自動計算して入力欄に反映
+- ピンのリアルタイムプレビュー（マップ上に青丸）
+- ラベル入力欄（1〜3文字）
+- ピン位置のクリアボタン
 
-`app/stamp-book/layout.tsx` がこれらを `--color-card-bg/ink/muted/line` としてCSSカスタムプロパティで注入 → 全子要素の `text-ink`, `text-muted`, `border-line` が自動でテーマ対応。
+**API更新**:
+- `/api/stamp-book` (GET): 参加プロジェクトの全イベントを `events: Event[]` として返す（スタンプ未取得のスポットも含む）
+- `/api/events` (POST): `map_x`, `map_y`, `map_label`, `map_color` を受け付けるよう拡張
+- `/api/events/[id]` (PUT): 同上
 
-カード背景は `style={{ background: 'var(--color-card-bg, white)' }}` で指定（light テーマはwhiteフォールバック）。対象: `MiniStampRow`・stamps `ProjectSection`・rewards セクション。
-
-#### E. スタンプ/特典タブのアクティブPJのみ表示（コミット: `c84ade4`）
-
-- `app/stamp-book/stamps/page.tsx`: `activeProjectId` で group をフィルタして1件のみ描画
-- `app/stamp-book/rewards/page.tsx`: 同様にアクティブグループのみ表示
-- `app/stamp-book/page.tsx`: ホームのプロジェクト切り替えチップ削除（ヘッダーのチップと重複）
+**型定義更新** (`types/index.ts`):
+- `Event` に `map_x`, `map_y`, `map_label`, `map_color` を追加
+- `StampBookGroup` に `events?: Event[]` を追加
 
 ### 以前のセッションで実装済みの主要機能
 
 - 来場者スタンプ帳4タブ（ホーム・スタンプ・引換券・プロフィール）
-- プロジェクト別テーマカラー全体切り替え（ヘッダー・ボトムナビ・アクセント）
+- プロジェクト別テーマカラー全体切り替え（street-live ダークテーマ含む）
 - QRスキャン後に当該プロジェクトが自動でアクティブ化
 - ヘッダーにプロジェクト切り替えチップ（▼）＋ボトムシート
-- 動的QRコード（タイムスロット型）: `slots` / `slot_schedules` テーブル、`/slot/[token]` → 時刻でイベントへリダイレクト
+- フォトカルーセル・タイムテーブル・会場マップ（管理画面でアップロード）
+- 動的QRコード（タイムスロット型）: `slots` / `slot_schedules` テーブル
 - 特典（`project_reward_tiers`）、引換フロー（2段階確認）、CSV書き出し
 - 復元コードによる別端末引き継ぎ
-- イベントアイコン画像（アップロード・スタンプカード表示・取得完了画面）
+- イベントアイコン画像
 - 管理者招待（メール招待・参加コード）
+- プロジェクト承認ワークフロー（セルフ登録→承認待ち→承認）
 
 ---
 
 ## 3. 未解決の問題
 
-1. **`docs/mockup.html` が未コミット**: ユーザーがIDEで開いたモックアップHTML。作業中のファイルか確認し、コミットするか決める。
-2. **スタンプ取得ロード時間**: 0.5秒以上かかる場合あり。Vercelコールドスタートが主因。
-3. **age_group カラムに数値文字列**: DBの `age_group TEXT` に "25" のような値が入る。将来 `age INTEGER` へ移行検討。
-4. **本格的レート制限なし**: 将来 Vercel KV / Upstash 導入を検討。
-5. **lint**: `useEffect` 内の後方宣言警告が残るがビルド・型チェックはクリーン。
+1. **マップピン機能の動作未確認**: 実装・デプロイ済みだが、実際にオーナーがピンを設定して来場者画面で確認するテストをまだ行っていない。次セッション冒頭で動作確認を推奨。
+2. **全機能のブラウザ検証が未完**: バグ確認のためブラウザ自動化テストを試みたが、拡張機能が正しいChromeに接続できず中断。コードレビューエージェントもセッション上限で未完了。
+3. **スタンプ取得ロード時間**: 0.5秒以上かかる場合あり。Vercelコールドスタートが主因。
+4. **age_group カラムに数値文字列**: DBの `age_group TEXT` に "25" のような値が入る。将来 `age INTEGER` へ移行検討。
+5. **本格的レート制限なし**: 将来 Vercel KV / Upstash 導入を検討。
 
 ---
 
 ## 4. 次にやること（優先順）
 
-1. **`docs/mockup.html` の扱いを確認** — ユーザーがIDEで開いていた。コミットするか不要か確認する。
-2. **プロジェクト承認ワークフロー**（`memory/pending-project-approval-workflow.md` に保存済み）— 「開発一段落したら着手」と合意した大型機能。内容は memory を参照。
+1. **マップピン機能の動作確認** — オーナー画面でイベントを編集し会場マップをクリックしてピン位置を設定 → 来場者画面で確認
+2. **全機能のブラウザ検証** — kikiki.4673@gmail.com のChromeで拡張機能を接続して実施（前回は別アカウントのChromeに繋いでしまった）
 3. `age_group` → `age INTEGER` マイグレーション
 4. 本格的レート制限（KV導入）
 5. ランキング、SNSシェア等の体験系機能
@@ -121,6 +118,7 @@
 - **DB変更順序**: Supabase SQL Editor でマイグレーション実行 → その後 `main` マージ（逆順だと一時的に壊れる）。
 - **来場者匿名識別**: `lib/storage.ts`（localStorage）。`activeProjectId` / `activeThemeId` も同ファイル。
 - **権限ヘルパー**: `lib/authMiddleware.ts`（`requireAdmin`/`isSuperAdmin`/`getProjectRole` 等）。
+- **ブラウザ検証**: kikiki.4673@gmail.com のChromeに Claude 拡張機能をインストール・ログインして接続する必要あり。
 
 ---
 
@@ -129,7 +127,7 @@
 **来場者**
 - `app/stamp-book/layout.tsx` — 共通ヘッダー・QRスキャナー・モーダル群・CSSテーマ変数注入
 - `app/stamp-book/StampBookContext.tsx` — データ共有・activeProjectId管理・themeId localStorage連携
-- `app/stamp-book/page.tsx` — ホーム（カルーセル・進捗・タイムテーブル・マップ）
+- `app/stamp-book/page.tsx` — ホーム（カルーセル・進捗・タイムテーブル・マップ＋ピン）
 - `app/stamp-book/stamps/page.tsx` — スタンプ一覧（アクティブPJのみ）
 - `app/stamp-book/rewards/page.tsx` — 引換券一覧（アクティブPJのみ）
 - `app/profile/page.tsx` — テーマカラー対応ヘッダー
@@ -138,11 +136,15 @@
 
 **管理**
 - `app/admin/projects/[id]/page.tsx` — テーマ選択・画像管理（カルーセル写真・タイムテーブル・マップ）
+- `app/admin/events/[id]/page.tsx` — イベント編集（マップピン設定・クリック座標取得含む）
+- `app/admin/events/new/page.tsx` — イベント新規作成（同上）
 - `app/admin/redeem/page.tsx` — 特典引き換え（2段階確認）
 - `app/admin/super/page.tsx` — 全プロジェクト承認管理
 
 **API**
-- `app/api/stamp-book/route.ts` — スタンプ帳データ一括取得（`project:projects(*)` で堅牢化）
+- `app/api/stamp-book/route.ts` — スタンプ帳データ一括取得（全イベントも events[] で返す）
+- `app/api/events/route.ts` — イベント作成（map_* 対応済み）
+- `app/api/events/[id]/route.ts` — イベント編集・削除（map_* 対応済み）
 - `app/api/projects/[id]/images/` — カルーセル写真 CRUD
 - `app/api/projects/upload-image/route.ts` — Storage アップロード
 - `app/api/slots/` / `app/slot/[token]/` — 動的QRコード
@@ -150,4 +152,4 @@
 **共通ライブラリ**
 - `lib/themes.ts` — Theme インターフェース（cardBg/ink/muted/line 追加済み）・全テーマ定義
 - `lib/storage.ts` — localStorage ヘルパー（activeProjectId・activeThemeId）
-- `types/index.ts` — `ProjectImage`, `StampBookGroup`, `Project`（timetable_url/images）
+- `types/index.ts` — `Event`（map_* 追加済み）・`StampBookGroup`（events[] 追加済み）
