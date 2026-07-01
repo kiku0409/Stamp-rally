@@ -162,9 +162,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const headers = await authHeaders();
     const res = await fetch(`/api/projects/${id}/stamps`, { headers });
     if (!res.ok) { alert('取得に失敗しました'); return; }
-    const data: { event_title: string; nickname: string; stamped_at: string }[] = await res.json();
-    const rows = data.map((d) => [d.event_title, d.nickname, new Date(d.stamped_at).toLocaleString('ja-JP')]);
-    const csv = toCsv(['イベント', 'ニックネーム', '取得日時'], rows);
+    const data: { event_title: string; nickname: string; gender: string; age_group: string; stamped_at: string }[] = await res.json();
+    const rows = data.map((d) => [d.event_title, d.nickname, d.gender, d.age_group, new Date(d.stamped_at).toLocaleString('ja-JP')]);
+    const csv = toCsv(['イベント', 'ニックネーム', '性別', '年齢', '取得日時'], rows);
     downloadCsv(`スタンプ取得者_${project?.name ?? ''}.csv`, csv);
   }
 
@@ -343,11 +343,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       const ur = await fetch('/api/projects/upload-image', { method: 'POST', headers, body: fd });
       if (!ur.ok) { alert('アップロードに失敗しました'); return; }
       const { url } = await ur.json();
-      await fetch(`/api/projects/${id}`, {
+      const pr = await fetch(`/api/projects/${id}`, {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ venue_map_url: url }),
       });
+      if (!pr.ok) { const d = await pr.json(); alert(d.error || '保存に失敗しました'); return; }
       loadData();
     } finally {
       setUploadingMap(false);
@@ -363,11 +364,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       const ur = await fetch('/api/projects/upload-image', { method: 'POST', headers, body: fd });
       if (!ur.ok) { alert('アップロードに失敗しました'); return; }
       const { url } = await ur.json();
-      await fetch(`/api/projects/${id}`, {
+      const pr = await fetch(`/api/projects/${id}`, {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ timetable_url: url }),
       });
+      if (!pr.ok) { const d = await pr.json(); alert(d.error || '保存に失敗しました'); return; }
       loadData();
     } finally {
       setUploadingTimetable(false);

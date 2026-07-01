@@ -23,18 +23,24 @@ export async function GET(
 
   const { data, error } = await supabase
     .from('event_stamps')
-    .select('stamped_at, event:events(title), participant:participants(nickname)')
+    .select('stamped_at, event:events(title), participant:participants(nickname, gender, age_group)')
     .in('event_id', eventIds)
     .order('stamped_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  type Row = { stamped_at: string; event?: { title: string } | null; participant?: { nickname: string } | null };
+  type Row = {
+    stamped_at: string;
+    event?: { title: string } | null;
+    participant?: { nickname: string; gender: string | null; age_group: string | null } | null;
+  };
   const rows = (data ?? []) as unknown as Row[];
   return NextResponse.json(
     rows.map((r) => ({
       event_title: r.event?.title ?? '',
       nickname: r.participant?.nickname ?? '',
+      gender: r.participant?.gender ?? '',
+      age_group: r.participant?.age_group ?? '',
       stamped_at: r.stamped_at,
     }))
   );
