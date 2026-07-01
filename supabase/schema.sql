@@ -16,11 +16,24 @@ CREATE TABLE IF NOT EXISTS projects (
   status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
   join_code     TEXT NOT NULL UNIQUE,  -- 共同編集者がコードで参加するためのシリアルコード
   reject_reason TEXT,                  -- 却下理由（オーナーが再申請時に参照）
+  theme_id      TEXT,                  -- テーマカラーID（lib/themes.ts参照）
+  venue_map_url TEXT,                  -- 会場マップ画像URL
+  timetable_url TEXT,                  -- タイムテーブル画像URL
   created_by    UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
   approved_by UUID REFERENCES auth.users(id),
   approved_at TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Project images: カルーセル用写真（無制限・並び替え可）
+CREATE TABLE IF NOT EXISTS project_images (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  image_url   TEXT NOT NULL,
+  sort_order  INT NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_project_images_project ON project_images(project_id);
 
 -- Project members table
 CREATE TABLE IF NOT EXISTS project_members (
@@ -41,9 +54,35 @@ CREATE TABLE IF NOT EXISTS events (
   venue       TEXT NOT NULL,
   description TEXT,
   qr_token    UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+  icon_url    TEXT,                  -- アイコン画像URL
+  map_x       NUMERIC,               -- 会場マップ上のX座標（0〜100%）
+  map_y       NUMERIC,               -- 会場マップ上のY座標（0〜100%）
+  map_label   TEXT,                  -- ピンラベル（A/B/C等）
+  map_color   TEXT,                  -- 将来の色分け用（現在未使用）
   project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Slots: 動的QR（タイムスロット型）。物理QR 1枚に対応
+CREATE TABLE IF NOT EXISTS slots (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name       TEXT NOT NULL,
+  slot_token TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Slot schedules: 時間帯ごとのイベント割り当て
+CREATE TABLE IF NOT EXISTS slot_schedules (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slot_id    UUID NOT NULL REFERENCES slots(id) ON DELETE CASCADE,
+  event_id   UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  start_at   TIMESTAMPTZ NOT NULL,
+  end_at     TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_slots_project ON slots(project_id);
+CREATE INDEX IF NOT EXISTS idx_slot_schedules_slot ON slot_schedules(slot_id);
 
 -- Participants table (no auth required)
 CREATE TABLE IF NOT EXISTS participants (
@@ -51,7 +90,7 @@ CREATE TABLE IF NOT EXISTS participants (
   nickname      TEXT NOT NULL,
   recovery_code TEXT NOT NULL UNIQUE,  -- 別端末からスタンプ帳を復元するためのコード
   gender        TEXT,                  -- '男性' | '女性' | 'その他'
-  age_group     TEXT,                  -- '10代' | '20代' | '30代' | '40代' | '50代以上'
+  age_group     TEXT,                  -- 実年齢を文字列で格納（例: "25"）
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -104,16 +143,24 @@ CREATE INDEX IF NOT EXISTS idx_participant_rewards_project     ON participant_re
 -- =====================================================
 
 ALTER TABLE projects             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_images       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_members      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slots                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slot_schedules       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE participants         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_stamps         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_reward_tiers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE participant_rewards  ENABLE ROW LEVEL SECURITY;
 
--- Projects / members: service role only
+-- Projects / members / images: service role only
 CREATE POLICY "projects_all_service"        ON projects        FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "project_images_all_service"  ON project_images  FOR ALL USING (auth.role() = 'service_role');
 CREATE POLICY "project_members_all_service" ON project_members FOR ALL USING (auth.role() = 'service_role');
+
+-- Slots / slot schedules: service role only
+CREATE POLICY "slots_all_service"          ON slots          FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "slot_schedules_all_service" ON slot_schedules FOR ALL USING (auth.role() = 'service_role');
 
 -- Reward tiers / participant rewards: service role only
 CREATE POLICY "reward_tiers_all_service"        ON project_reward_tiers FOR ALL USING (auth.role() = 'service_role');
