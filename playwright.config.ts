@@ -6,8 +6,11 @@ dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 60_000,
+  timeout: 90_000,
   retries: 0,
+  // WSL2 のファイルシステムが遅く、単一 dev サーバを共有するため直列実行で安定させる
+  fullyParallel: false,
+  workers: 1,
   reporter: 'line',
   use: {
     baseURL: 'http://localhost:3001',
@@ -22,6 +25,7 @@ export default defineConfig({
     command: 'npm run dev -- -p 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: true,
-    timeout: 60_000,
+    // 初回コンパイル＋WSL の遅い FS を考慮して長めに
+    timeout: 180_000,
   },
 });

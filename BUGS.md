@@ -40,3 +40,9 @@
 - 段階（tier）削除はカスケード → `participant_rewards` ごと消える。削除 UI に確認ダイアログあり。
 - 段階の閾値編集は非遡及 → 既存の付与/取消は再評価しない（label 編集は安全）。
 - 本格的レート制限なし（申請数上限のみ）。将来 Vercel KV / Upstash 導入を検討。
+
+### SCHEMA-001: `projects.theme_id` が本番DBでは NOT NULL（schema.sql と乖離）
+- **発見日**: 2026-07-03（E2Eテスト整備中に service role で直接 INSERT して発覚）
+- **内容**: 本番DBの `projects.theme_id` は `NOT NULL`（`theme_id=null` で INSERT すると `null value in column "theme_id" ... violates not-null constraint`）。一方 `supabase/schema.sql:19` は `theme_id TEXT`（nullable）と記載しており乖離している。
+- **影響**: fresh セットアップ（schema.sql から構築）した DB と本番で挙動が変わる。テスト側はプロジェクト作成時に `theme_id` を明示指定して回避済み（`tests/helpers.ts` の `createProject`、既定 `'teal'`）。
+- **対応（TODO）**: `schema.sql` を実DBに合わせて `theme_id TEXT NOT NULL DEFAULT 'teal'`（等）に修正し、対応するマイグレーションファイルを残す。HANDOFF § 3-5「schema.sql と実DBの乖離」の一例。
