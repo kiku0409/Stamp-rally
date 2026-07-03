@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS projects (
   status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
   join_code     TEXT NOT NULL UNIQUE,  -- 共同編集者がコードで参加するためのシリアルコード
   reject_reason TEXT,                  -- 却下理由（オーナーが再申請時に参照）
-  theme_id      TEXT,                  -- テーマカラーID（lib/themes.ts参照）
+  theme_id      TEXT NOT NULL DEFAULT 'teal',  -- テーマカラーID（lib/themes.ts参照）
   venue_map_url TEXT,                  -- 会場マップ画像URL
   timetable_url TEXT,                  -- タイムテーブル画像URL
   created_by    UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
