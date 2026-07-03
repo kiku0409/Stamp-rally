@@ -1,10 +1,20 @@
 # 引き継ぎメモ（HANDOFF）
 
-- 更新日時: 2026-07-01 JST
+- 更新日時: 2026-07-03 JST
 - ブランチ: `main`（全変更コミット済み・本番デプロイ済み）
-- 最新コミット: `cceb79f docs: マップピン機能・性別年齢CSVをREADME/オーナー向け資料に反映`
 
 次のセッションがこれだけ読めば再開できるようにまとめた運用・状態メモ。
+
+---
+
+## 0. 直近セッション（2026-07-03・自宅ローカルPC）の完了事項
+
+- **全機能E2Eテスト整備 完了**（HANDOFF旧優先度1）: Playwright 15テスト全緑。管理者認証／スタンプ取得／来場者タブ・PJ切替／マップピン／プロフィール／承認／スタンプCSV／引換10サイクル。共通部品は `tests/helpers.ts`（service roleシード・afterAllクリーンアップ・`__playwright_test__` タグ）。実行は自宅WSL2 PC（`.env.local` に TEST_ADMIN_EMAIL/PASSWORD 必須、`npx playwright test`）
+- **GitHub Actions CI 追加**: `.github/workflows/e2e.yml`。main への push / PR 毎に実DB+実ブラウザで全E2E実行。**GitHub Secrets 5つ（SUPABASE 3키 + TEST_ADMIN 2つ）の設定が必要**（未設定だとCIは失敗する）
+- **age_group → age INTEGER 移行 完了**: `participants.age INTEGER` 追加（本番SQL適用済み・数値文字列18行backfill済み）。書き込みは age/age_group 二重書き込み、読み取りは age 優先・レガシー（「20代」等）フォールバック。CSVのJSONフィールド名は `age_group` のまま維持（互換）。`age_group` カラムは後日削除予定
+- **SCHEMA-001 修正**: `projects.theme_id` は本番で NOT NULL だが schema.sql が nullable 記載だった乖離を修正（`2026-07-03_theme_id_not_null.sql`）
+- **README・docs/slide-content.md 最新化**＋**オーナー向けPDF刷新**（`docs/オーナー向け使い方ガイド.pdf`、編集用ソース `docs/owner-guide-source.html`。HTML編集→Chromiumで `page.pdf()` 再生成）
+- **資料齟齬の修正**: 引き換えボタンは「お渡し完了」ではなく「引き換えする」→「確定（引き換える）」の2段階（README/slide-content/PDF全て修正済み）
 
 ---
 
@@ -15,9 +25,10 @@
 | 本番URL | https://stamp-rally-kappa.vercel.app |
 | 管理画面 | `/admin/login`（新規登録 `/admin/signup`） |
 | リポジトリ | github.com/kiku0409/Stamp-rally（`main`） |
-| 作業ディレクトリ | /Users/kiku/dev/projects/Stamp-rally |
+| 作業ディレクトリ | /home/kiku2/stamp_rally（自宅WSL2 PC。旧: /Users/kiku/dev/projects/Stamp-rally） |
 | デプロイ | Vercel（`main` への push で自動デプロイ） |
 | スーパー管理者 | `kikiki.4673@gmail.com`（UID: `dee565bd-ba21-44a3-bd54-7aa1745b0600`） |
+| E2Eテスト | `npx playwright test`（15本・実DB。要 .env.local の TEST_ADMIN_*） |
 
 ### 技術スタック
 - Next.js 16.2.9（App Router / Turbopack）、Tailwind CSS v4、TypeScript
@@ -121,12 +132,14 @@ ALTER TABLE events
 
 ## 4. 次にやること（優先順）
 
-1. **全機能のブラウザ検証** — kikiki.4673@gmail.com のChromeで拡張機能を接続して実施
-2. `age_group` → `age INTEGER` マイグレーション
-3. 本格的レート制限（KV導入）
-4. ランキング、SNSシェア等の体験系機能
-5. 引き換え統計ダッシュボード ← 最低優先度
-6. 取得者/スタンプ一覧のフィルタ・ページング ← 最低優先度
+1. ~~全機能のブラウザ検証~~ → **完了**（Playwright E2E 15本・CI化済み。2026-07-03）
+2. ~~`age_group` → `age INTEGER` マイグレーション~~ → **完了**（2026-07-03。`age_group` カラムの削除だけ将来のクリーンアップとして残る）
+3. **GitHub Secrets の設定**（ユーザー作業）: リポジトリ Settings → Secrets and variables → Actions に `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `TEST_ADMIN_EMAIL` / `TEST_ADMIN_PASSWORD` の5つ。設定しないとCIは失敗し続ける
+4. 本格的レート制限（KV導入）
+5. ランキング、SNSシェア等の体験系機能
+6. 引き換え統計ダッシュボード ← 最低優先度
+7. 取得者/スタンプ一覧のフィルタ・ページング ← 最低優先度
+8. `participants.age_group` カラム削除（レガシー「20代」形式データの扱いを決めてから）
 
 > **運用ルール**: 新機能を追加した際は、README.md と docs/slide-content.md を実装内容に合わせて必ず更新すること。
 
