@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('participants')
-    .select('id, nickname, recovery_code')
+    .select('id, nickname, recovery_code, gender, age, age_group')
     .eq('recovery_code', normalized)
     .maybeSingle();
 

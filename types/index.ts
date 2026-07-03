@@ -106,7 +106,8 @@ export interface Participant {
   nickname: string;
   recovery_code?: string;
   gender?: string;
-  age_group?: string;
+  age?: number | null;      // 実年齢（整数）。新形式
+  age_group?: string;       // [DEPRECATED] 旧形式の年齢文字列（例: "25", "20代"）。表示フォールバック用
   created_at: string;
 }
 
@@ -123,7 +124,8 @@ export interface LocalParticipant {
   nickname: string;
   recovery_code?: string;
   gender?: string;
-  age_group?: string;
+  age?: number | null;      // 実年齢（整数）。新形式
+  age_group?: string;       // [DEPRECATED] 旧形式の年齢文字列。表示フォールバック用
 }
 
 export interface StampResult {
