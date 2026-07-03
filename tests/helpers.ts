@@ -166,25 +166,30 @@ export interface SeededParticipant {
   nickname: string;
   recovery_code: string;
   gender?: string;
-  age_group?: string;
+  age?: number;        // 実年齢（整数）。新形式
+  age_group?: string;  // [DEPRECATED] 旧形式の年齢文字列。表示フォールバック用
 }
 
-/** 来場者（匿名参加者）を1件作成。 */
+/** 来場者（匿名参加者）を1件作成。age_group が数値文字列なら age(INTEGER) にも同じ値を入れる。 */
 export async function createParticipant(
   sb: SupabaseClient,
-  opts: { nickname?: string; gender?: string | null; age_group?: string | null } = {},
+  opts: { nickname?: string; gender?: string | null; age?: number | null; age_group?: string | null } = {},
 ): Promise<SeededParticipant> {
   const nickname = opts.nickname ?? `${TEST_TAG}_user_${genCode(4)}`;
   const recovery_code = genCode();
+  // age 未指定でも age_group が数値文字列なら age に反映（本番の書き込みパスと同じ二重書き込み）
+  const age =
+    opts.age ?? (opts.age_group && /^\d+$/.test(opts.age_group) ? parseInt(opts.age_group, 10) : null);
   const { data, error } = await sb
     .from('participants')
     .insert({
       nickname,
       recovery_code,
       gender: opts.gender ?? null,
-      age_group: opts.age_group ?? null,
+      age,
+      age_group: opts.age_group ?? (age != null ? String(age) : null),
     })
-    .select('id, nickname, recovery_code, gender, age_group')
+    .select('id, nickname, recovery_code, gender, age, age_group')
     .single();
   if (error || !data) throw new Error(`createParticipant failed: ${error?.message}`);
   return {
@@ -192,6 +197,7 @@ export async function createParticipant(
     nickname: data.nickname as string,
     recovery_code: data.recovery_code as string,
     gender: data.gender ?? undefined,
+    age: data.age ?? undefined,
     age_group: data.age_group ?? undefined,
   };
 }
@@ -254,6 +260,7 @@ export async function injectParticipant(
     nickname: participant.nickname,
     recovery_code: participant.recovery_code,
     gender: participant.gender,
+    age: participant.age,
     age_group: participant.age_group,
   };
   await page.addInitScript(

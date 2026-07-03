@@ -90,7 +90,8 @@ CREATE TABLE IF NOT EXISTS participants (
   nickname      TEXT NOT NULL,
   recovery_code TEXT NOT NULL UNIQUE,  -- 別端末からスタンプ帳を復元するためのコード
   gender        TEXT,                  -- '男性' | '女性' | 'その他'
-  age_group     TEXT,                  -- 実年齢を文字列で格納（例: "25"）
+  age           INTEGER,               -- 実年齢（整数）
+  age_group     TEXT,                  -- [DEPRECATED] 旧形式の年齢文字列（例: "25", "20代"）。表示フォールバック用に残置。移行完了後に削除予定
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

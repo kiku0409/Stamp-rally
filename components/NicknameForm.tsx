@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { User } from 'lucide-react';
 
 interface NicknameFormProps {
-  onSubmit: (nickname: string, gender: string, ageGroup: string) => void;
+  /** age は数値文字列（例: "25"）。呼び出し側で Number() に変換して API の `age` に渡す */
+  onSubmit: (nickname: string, gender: string, age: string) => void;
   loading?: boolean;
 }
 

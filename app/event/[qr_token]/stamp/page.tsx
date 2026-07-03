@@ -121,7 +121,15 @@ export default function StampPage({ params }: StampPageProps) {
         setRestoring(false);
         return;
       }
-      setLocalParticipant({ participant_id: data.id, nickname: data.nickname, recovery_code: data.recovery_code });
+      // 復元時はプロフィール（性別・年齢）も引き継ぐ（age 優先、レガシー行は age_group のみ）
+      setLocalParticipant({
+        participant_id: data.id,
+        nickname: data.nickname,
+        recovery_code: data.recovery_code,
+        gender: data.gender ?? undefined,
+        age: data.age ?? undefined,
+        age_group: data.age_group ?? undefined,
+      });
       setNickname(data.nickname);
       await acquireStamp(data.id);
     } catch {
@@ -130,17 +138,19 @@ export default function StampPage({ params }: StampPageProps) {
     }
   }
 
-  async function handleNicknameSubmit(nick: string, gender: string, ageGroup: string) {
+  async function handleNicknameSubmit(nick: string, gender: string, age: string) {
     setStep('stamping');
+    const ageNum = /^\d+$/.test(age) ? parseInt(age, 10) : undefined;
     try {
       const res = await fetch('/api/participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nick, gender, age_group: ageGroup }),
+        body: JSON.stringify({ nickname: nick, gender, age: ageNum }),
       });
       if (!res.ok) throw new Error('参加者登録に失敗しました');
       const participant = await res.json();
-      setLocalParticipant({ participant_id: participant.id, nickname: nick, recovery_code: participant.recovery_code, gender, age_group: ageGroup });
+      // 移行期間中は age_group（文字列形）も併記して旧リーダーとの互換を保つ
+      setLocalParticipant({ participant_id: participant.id, nickname: nick, recovery_code: participant.recovery_code, gender, age: ageNum, age_group: ageNum !== undefined ? String(ageNum) : undefined });
       setNickname(nick);
       await acquireStamp(participant.id);
     } catch (e) {

@@ -10,13 +10,14 @@ export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState('');
 
-  async function handleSubmit(nick: string, gender: string, ageGroup: string) {
+  async function handleSubmit(nick: string, gender: string, age: string) {
     setError('');
+    const ageNum = /^\d+$/.test(age) ? parseInt(age, 10) : undefined;
     try {
       const res = await fetch('/api/participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nick, gender, age_group: ageGroup }),
+        body: JSON.stringify({ nickname: nick, gender, age: ageNum }),
       });
       if (!res.ok) throw new Error('登録に失敗しました');
       const participant = await res.json();
@@ -25,7 +26,9 @@ export default function RegisterPage() {
         nickname: nick,
         recovery_code: participant.recovery_code,
         gender,
-        age_group: ageGroup,
+        age: ageNum,
+        // 移行期間中は age_group（文字列形）も併記して旧リーダーとの互換を保つ
+        age_group: ageNum !== undefined ? String(ageNum) : undefined,
       });
       router.push('/stamp-book');
     } catch (e) {

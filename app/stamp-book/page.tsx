@@ -31,7 +31,15 @@ export default function StampBookHomePage() {
         setRestoring(false);
         return;
       }
-      setLocalParticipant({ participant_id: data.id, nickname: data.nickname, recovery_code: data.recovery_code });
+      // 復元時はプロフィール（性別・年齢）も引き継ぐ（age 優先、レガシー行は age_group のみ）
+      setLocalParticipant({
+        participant_id: data.id,
+        nickname: data.nickname,
+        recovery_code: data.recovery_code,
+        gender: data.gender ?? undefined,
+        age: data.age ?? undefined,
+        age_group: data.age_group ?? undefined,
+      });
       window.location.reload();
     } catch {
       setRestoreError('通信エラーが発生しました');

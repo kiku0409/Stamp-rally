@@ -21,12 +21,12 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [nicknameInput, setNicknameInput] = useState('');
   const [genderInput, setGenderInput] = useState('');
-  const [ageGroupInput, setAgeGroupInput] = useState('');
+  const [ageInput, setAgeInput] = useState('');
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const ageNum = parseInt(ageGroupInput, 10);
-  const ageValid = ageGroupInput === '' || (!isNaN(ageNum) && ageNum >= 1 && ageNum <= 120);
+  const ageNum = parseInt(ageInput, 10);
+  const ageValid = ageInput === '' || (!isNaN(ageNum) && ageNum >= 1 && ageNum <= 120);
 
   useEffect(() => {
     const local = getLocalParticipant();
@@ -46,7 +46,14 @@ export default function ProfilePage() {
     if (!participant) return;
     setNicknameInput(participant.nickname);
     setGenderInput(participant.gender ?? '');
-    setAgeGroupInput(participant.age_group ?? '');
+    // 新形式 age を優先。レガシー行は数値文字列の age_group のみフォールバック（「20代」等は数値入力に入れない）
+    setAgeInput(
+      participant.age != null
+        ? String(participant.age)
+        : participant.age_group && /^\d+$/.test(participant.age_group)
+          ? participant.age_group
+          : ''
+    );
     setEditing(true);
   }
 
@@ -57,6 +64,7 @@ export default function ProfilePage() {
   async function saveProfile() {
     if (!participant || !nicknameInput.trim()) return;
     setSaving(true);
+    const ageValue = ageInput !== '' && !isNaN(ageNum) ? ageNum : undefined;
     try {
       await fetch('/api/participants', {
         method: 'PATCH',
@@ -65,14 +73,16 @@ export default function ProfilePage() {
           participant_id: participant.participant_id,
           nickname: nicknameInput.trim(),
           gender: genderInput || undefined,
-          age_group: ageGroupInput || undefined,
+          age: ageValue,
         }),
       });
       const updated: LocalParticipant = {
         ...participant,
         nickname: nicknameInput.trim(),
         gender: genderInput || undefined,
-        age_group: ageGroupInput || undefined,
+        age: ageValue ?? participant.age,
+        // 移行期間中は age_group（文字列形）も併記して旧リーダーとの互換を保つ
+        age_group: ageValue !== undefined ? String(ageValue) : participant.age_group,
       };
       setLocalParticipant(updated);
       setParticipant(updated);
@@ -134,8 +144,8 @@ export default function ProfilePage() {
                       <p className="text-[11px] text-muted mb-1">年齢</p>
                       <input
                         type="number"
-                        value={ageGroupInput}
-                        onChange={e => setAgeGroupInput(e.target.value)}
+                        value={ageInput}
+                        onChange={e => setAgeInput(e.target.value)}
                         placeholder="例: 25"
                         min={1}
                         max={120}
@@ -176,10 +186,12 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <p className="text-[11px] text-muted mb-0.5">年齢</p>
-                      <p className={`text-[14px] font-medium ${participant.age_group ? 'text-ink' : 'text-faint'}`}>
-                        {participant.age_group
-                          ? /^\d+$/.test(participant.age_group) ? `${participant.age_group}歳` : participant.age_group
-                          : '未設定'}
+                      <p className={`text-[14px] font-medium ${participant.age != null || participant.age_group ? 'text-ink' : 'text-faint'}`}>
+                        {participant.age != null
+                          ? `${participant.age}歳`
+                          : participant.age_group
+                            ? /^\d+$/.test(participant.age_group) ? `${participant.age_group}歳` : participant.age_group
+                            : '未設定'}
                       </p>
                     </div>
                   </div>
