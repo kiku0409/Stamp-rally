@@ -25,7 +25,7 @@ export default defineConfig({
     command: 'npm run dev -- -p 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: true,
-    // 初回コンパイル＋WSL の遅い FS を考慮して長めに
+    // CIのコールドコンパイル＋ローカルWSLの遅いFSの両方を考慮して長めに
     timeout: 180_000,
   },
 });
