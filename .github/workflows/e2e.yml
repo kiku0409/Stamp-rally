@@ -1,0 +1,72 @@
+# E2E (Playwright) workflow
+#
+# WARNING: These tests hit the PRODUCTION Supabase project. They create and
+# clean up rows tagged with `__playwright_test__`, but they still run against
+# live data — be careful when modifying test fixtures or cleanup logic.
+#
+# This workflow CANNOT pass until the following 5 repository secrets are
+# configured via GitHub: Settings -> Secrets and variables -> Actions:
+#
+#   1. NEXT_PUBLIC_SUPABASE_URL       - Supabase project URL
+#   2. NEXT_PUBLIC_SUPABASE_ANON_KEY  - Supabase anon (public) API key
+#   3. SUPABASE_SERVICE_ROLE_KEY      - Supabase service-role key (admin; used
+#                                       by tests for setup/cleanup)
+#   4. TEST_ADMIN_EMAIL               - Email of the test admin account
+#   5. TEST_ADMIN_PASSWORD            - Password of the test admin account
+#
+# The secrets are written into .env.local before running Playwright:
+# playwright.config.ts loads .env.local via dotenv, and the Next.js dev
+# server (started by Playwright's webServer) also reads it.
+
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Write .env.local
+        run: |
+          cat > .env.local <<EOF
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_ADMIN_EMAIL=${{ secrets.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD=${{ secrets.TEST_ADMIN_PASSWORD }}
+          EOF
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

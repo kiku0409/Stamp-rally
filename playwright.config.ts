@@ -22,6 +22,7 @@ export default defineConfig({
     command: 'npm run dev -- -p 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: true,
-    timeout: 60_000,
+    // CI runners compile cold and are slower; allow more startup time there only.
+    timeout: process.env.CI ? 180_000 : 60_000,
   },
 });
