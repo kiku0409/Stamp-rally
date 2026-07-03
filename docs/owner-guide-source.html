@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>スタンプラリーアプリ 使い方ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #0A938C;
+    --brand-deep: #076B66;
+    --brand-soft: #E6F4F3;
+    --ink: #17302E;
+    --muted: #5A6E6C;
+    --faint: #8FA3A1;
+    --line: #DCE7E6;
+    --bg: #F5F8F7;
+    --white: #FFFFFF;
+    --blue: #3B82F6;
+    --danger: #C2504A;
+    --danger-soft: #FBEFEE;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { font-family: 'Zen Kaku Gothic New', sans-serif; color: var(--ink); }
+  .slide {
+    width: 1280px; height: 720px;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    padding: 56px 72px;
+    display: flex; flex-direction: column;
+  }
+  .slide:last-child { page-break-after: auto; }
+
+  /* ── common parts ── */
+  .kicker {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.18em;
+    color: var(--brand); text-transform: uppercase; margin-bottom: 10px;
+  }
+  h2.title { font-size: 36px; font-weight: 900; line-height: 1.25; margin-bottom: 28px; }
+  h2.title .accent { color: var(--brand); }
+  .pageno {
+    position: absolute; bottom: 28px; right: 40px;
+    font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--faint);
+  }
+  .footer-brand {
+    position: absolute; bottom: 28px; left: 72px;
+    font-size: 11px; color: var(--faint); letter-spacing: 0.05em;
+  }
+  .card {
+    background: var(--white); border: 1px solid var(--line); border-radius: 16px;
+    padding: 22px 26px;
+  }
+  .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 9px; }
+  .card p, .card li { font-size: 13.5px; color: var(--muted); line-height: 1.75; }
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 26px; border-radius: 999px;
+    background: var(--brand); color: #fff; font-weight: 700; font-size: 13px;
+    padding: 0 8px;
+  }
+  .badge.blue { background: var(--blue); }
+  .badge.outline { background: var(--brand-soft); color: var(--brand-deep); }
+  ul.clean { list-style: none; }
+  ul.clean li { padding-left: 20px; position: relative; margin-bottom: 6px; }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 2px; top: 9px;
+    width: 7px; height: 7px; border-radius: 999px; background: var(--brand);
+  }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .mono { font-family: 'Roboto Mono', monospace; font-weight: 500; }
+  .url-chip {
+    display: inline-block; background: var(--brand-soft); color: var(--brand-deep);
+    border: 1px solid var(--line); border-radius: 8px; padding: 3px 10px;
+    font-family: 'Roboto Mono', monospace; font-size: 12.5px; font-weight: 500;
+  }
+  .note {
+    background: var(--brand-soft); border-left: 4px solid var(--brand);
+    border-radius: 0 10px 10px 0; padding: 12px 18px; font-size: 13px; color: var(--brand-deep);
+    line-height: 1.7;
+  }
+  .warn {
+    background: var(--danger-soft); border-left: 4px solid var(--danger);
+    border-radius: 0 10px 10px 0; padding: 12px 18px; font-size: 13px; color: #8C3A35;
+    line-height: 1.7;
+  }
+
+  /* ── cover ── */
+  .cover { background: linear-gradient(135deg, #0A938C 0%, #076B66 60%, #17302E 100%); color: #fff; justify-content: center; }
+  .cover .stamp-mark {
+    width: 120px; height: 120px; border-radius: 999px; border: 4px solid rgba(255,255,255,0.85);
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(-6deg); margin-bottom: 42px;
+    font-size: 52px;
+  }
+  .cover h1 { font-size: 54px; font-weight: 900; line-height: 1.3; letter-spacing: 0.01em; }
+  .cover .sub { font-size: 20px; margin-top: 18px; color: rgba(255,255,255,0.85); font-weight: 500; }
+  .cover .url {
+    margin-top: 46px; font-family: 'Roboto Mono', monospace; font-size: 16px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3);
+    padding: 10px 22px; border-radius: 12px; display: inline-block;
+  }
+  .cover .date { position: absolute; bottom: 34px; left: 72px; font-size: 13px; color: rgba(255,255,255,0.55); font-family: 'Roboto Mono', monospace; }
+
+  /* ── flow arrows ── */
+  .flow-h { display: flex; align-items: stretch; gap: 0; }
+  .flow-h .step { flex: 1; }
+  .flow-h .arr {
+    display: flex; align-items: center; padding: 0 10px;
+    color: var(--brand); font-size: 22px; font-weight: 900;
+  }
+  .steps-v { display: flex; flex-direction: column; gap: 0; }
+  .steps-v .row { display: flex; gap: 16px; align-items: flex-start; }
+  .steps-v .num {
+    width: 34px; height: 34px; border-radius: 999px; background: var(--brand); color: #fff;
+    font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .steps-v .body { flex: 1; padding-bottom: 14px; }
+  .steps-v .row:not(:last-child) .conn { width: 2px; background: var(--line); flex: 1; margin: 4px 0 0 0; }
+  .steps-v .railcol { display: flex; flex-direction: column; align-items: center; align-self: stretch; }
+  .steps-v .body b { font-size: 15px; }
+  .steps-v .body .desc { font-size: 12.5px; color: var(--muted); line-height: 1.65; margin-top: 2px; }
+
+  table.feat { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+  table.feat th { background: var(--ink); color: #fff; font-size: 13px; padding: 9px 16px; text-align: left; font-weight: 700; }
+  table.feat td { font-size: 12.5px; padding: 8px 16px; border-top: 1px solid var(--line); color: var(--muted); line-height: 1.55; }
+  table.feat td:first-child { font-weight: 700; color: var(--ink); white-space: nowrap; }
+
+  .qa .q { font-size: 14.5px; font-weight: 700; display: flex; gap: 10px; align-items: baseline; }
+  .qa .q::before { content: "Q"; font-family: 'Roboto Mono', monospace; color: var(--brand); font-weight: 700; }
+  .qa .a { font-size: 12.5px; color: var(--muted); line-height: 1.65; margin: 4px 0 14px 24px; }
+
+  .pin-demo { display: flex; gap: 14px; align-items: center; }
+  .pin { width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .pin.blue { background: var(--blue); box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+  .pin.got { background: var(--brand); box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--brand); }
+</style>
+</head>
+<body>
+
+<!-- 1. 表紙 -->
+<section class="slide cover">
+  <div class="stamp-mark">✓</div>
+  <h1>スタンプラリーアプリ<br>使い方ガイド</h1>
+  <p class="sub">オーナー・運営スタッフ向け</p>
+  <div><span class="url">https://stamp-rally-kappa.vercel.app</span></div>
+  <p class="date">2026.07 EDITION</p>
+</section>
+
+<!-- 2. アプリ概要 -->
+<section class="slide">
+  <p class="kicker">OVERVIEW</p>
+  <h2 class="title">このアプリで<span class="accent">できること</span></h2>
+  <div class="grid2" style="flex:1;">
+    <div class="card">
+      <h3><span class="badge outline">📱</span>来場者はQRをかざすだけ</h3>
+      <p>アプリのダウンロード不要・ログイン不要。ニックネームだけで参加できます。</p>
+    </div>
+    <div class="card">
+      <h3><span class="badge outline">🖥</span>運営はブラウザだけで管理</h3>
+      <p>QRコードの発行から特典管理まで、すべてノーコードで完結します。</p>
+    </div>
+    <div class="card">
+      <h3><span class="badge outline">🗂</span>「プロジェクト」単位で運用</h3>
+      <p>フェス・連続ライブなど複数イベントを1つのプロジェクトにまとめて管理できます。</p>
+    </div>
+    <div class="card">
+      <h3><span class="badge outline">🎁</span>特典チケットを自動付与</h3>
+      <p>スタンプが規定数に達すると引換券を自動発行。当日の引き換え対応もアプリ上で完結。</p>
+    </div>
+  </div>
+  <div style="margin-top:20px;" class="note">
+    <b>全体の流れ</b>：来場者 → QRスキャン → スタンプ獲得 → 特典ゲット ／ 運営 → 管理画面 → QR発行 → 特典引き換え
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">02</p>
+</section>
+
+<!-- 3. 来場者体験フロー -->
+<section class="slide">
+  <p class="kicker">VISITOR FLOW</p>
+  <h2 class="title">来場者の使い方（<span class="accent">3ステップ</span>）</h2>
+  <div class="flow-h" style="margin-bottom:20px;">
+    <div class="card step">
+      <h3><span class="badge">1</span>QRをスキャン</h3>
+      <p>会場に掲示されたQRコードをスマホのカメラで読み取るだけ。登録・DLは一切不要。</p>
+    </div>
+    <div class="arr">→</div>
+    <div class="card step">
+      <h3><span class="badge">2</span>ニックネーム登録</h3>
+      <p>初回のみニックネーム・性別・年齢を入力（統計用）。2回目以降は即スタンプ取得。</p>
+    </div>
+    <div class="arr">→</div>
+    <div class="card step">
+      <h3><span class="badge">3</span>スタンプ帳で確認</h3>
+      <p>「ホーム・スタンプ・チケット」＋中央のQRボタンで管理。規定数に達すると引換券を自動付与。</p>
+    </div>
+  </div>
+  <div class="card" style="flex:1;">
+    <h3>🏠 ホーム画面に表示されるもの</h3>
+    <div class="grid2" style="margin-top:6px;">
+      <ul class="clean">
+        <li>プロジェクトの写真カルーセル（横スクロール）</li>
+        <li>スタンプ取得数と進捗バー</li>
+        <li>タイムテーブル画像（設定時）</li>
+      </ul>
+      <ul class="clean">
+        <li>会場マップ＋スタンプスポットのピン（設定時）</li>
+        <li>直近のスタンプ一覧</li>
+        <li>ユーザー情報はヘッダーのニックネームをタップ</li>
+      </ul>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">03</p>
+</section>
+
+<!-- 4. 準備フロー -->
+<section class="slide">
+  <p class="kicker">PREPARATION</p>
+  <h2 class="title">開催前の<span class="accent">準備ステップ</span></h2>
+  <div class="grid2" style="flex:1; gap:24px;">
+    <div class="steps-v">
+      <div class="row"><div class="railcol"><div class="num">1</div><div class="conn"></div></div><div class="body"><b>アカウント作成</b><p class="desc"><span class="mono">/admin/signup</span> からメールアドレスとパスワードで登録</p></div></div>
+      <div class="row"><div class="railcol"><div class="num">2</div><div class="conn"></div></div><div class="body"><b>プロジェクト申請</b><p class="desc">名称・説明を入力して申請</p></div></div>
+      <div class="row"><div class="railcol"><div class="num">3</div><div class="conn"></div></div><div class="body"><b>スーパー管理者の承認</b><p class="desc">承認後にイベント作成・テーマ設定が可能に</p></div></div>
+      <div class="row"><div class="railcol"><div class="num">4</div></div><div class="body"><b>テーマカラー＋画像設定</b><p class="desc">写真・タイムテーブル・会場マップをアップロード</p></div></div>
+    </div>
+    <div class="steps-v">
+      <div class="row"><div class="railcol"><div class="num">5</div><div class="conn"></div></div><div class="body"><b>イベント作成 → QR発行・印刷</b><p class="desc">会場マップ登録済みならピン位置も設定</p></div></div>
+      <div class="row"><div class="railcol"><div class="num">6</div><div class="conn"></div></div><div class="body"><b>特典段階を設定</b><p class="desc">「◯個で何がもらえるか」を複数段階OK</p></div></div>
+      <div class="row"><div class="railcol"><div class="num">7</div><div class="conn"></div></div><div class="body"><b>スタッフ追加（必要に応じて）</b><p class="desc">登録済みメール指定 or 参加コード共有</p></div></div>
+      <div class="row"><div class="railcol"><div class="num">8</div></div><div class="body"><b>当日：QR掲示＋引き換え準備</b><p class="desc">引き換えスタッフは <span class="mono">/admin/redeem</span> を開いておく</p></div></div>
+    </div>
+  </div>
+  <div class="warn" style="margin-top:8px;">承認はスーパー管理者の対応タイミングに依存します。<b>プロジェクト申請はお早めに。</b></div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">04</p>
+</section>
+
+<!-- 5. 管理(1) アカウント・プロジェクト -->
+<section class="slide">
+  <p class="kicker">ADMIN 1/6</p>
+  <h2 class="title">アカウント作成と<span class="accent">プロジェクト申請</span></h2>
+  <div class="grid2" style="flex:1;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="card">
+        <h3>👤 アカウント作成</h3>
+        <p><span class="url-chip">/admin/signup</span>　メールアドレスとパスワードを入力するだけ（確認メール不要）。</p>
+      </div>
+      <div class="card" style="flex:1;">
+        <h3>📋 プロジェクト申請</h3>
+        <ul class="clean">
+          <li>「新規プロジェクト作成」から名称・説明を入力して申請</li>
+          <li><b>承認されるまでイベントは作成できません</b></li>
+          <li>テーマカラーは承認後にプロジェクト詳細で選択（全8色、うち2色はダークテーマ）。来場者のスタンプ帳の配色に反映</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <h3>👥 スタッフの追加（2通り）</h3>
+      <div style="margin-top:10px;">
+        <p style="font-weight:700; color:var(--ink); font-size:14px;">① メールアドレス指定</p>
+        <p>プロジェクト詳細画面から相手のメールアドレスを入力して追加。<br><b>相手が先に /admin/signup でアカウント作成済み</b>である必要があります（招待メールは送られません）。</p>
+        <p style="font-weight:700; color:var(--ink); font-size:14px; margin-top:16px;">② 参加コード</p>
+        <p>プロジェクト詳細に表示される参加コードを共有 → 相手が <span class="mono">/admin</span> の「参加コードで参加」から入力。</p>
+      </div>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">05</p>
+</section>
+
+<!-- 6. 管理(2) 写真・マップ・タイムテーブル -->
+<section class="slide">
+  <p class="kicker">ADMIN 2/6</p>
+  <h2 class="title">写真・マップ・タイムテーブルを<span class="accent">ホーム画面へ</span></h2>
+  <p style="font-size:13.5px; color:var(--muted); margin:-16px 0 18px;">操作場所：プロジェクト詳細画面 →「プロジェクト写真・マップ」セクション</p>
+  <div class="grid3" style="flex:1;">
+    <div class="card">
+      <h3>🖼 カルーセル写真</h3>
+      <ul class="clean">
+        <li>来場者ホームに横スクロール表示</li>
+        <li>「写真を追加」からアップロード（枚数無制限）</li>
+        <li>↑↓ボタンで表示順の変更、削除も可能</li>
+        <li>例：アーティスト写真・会場ビジュアル・フライヤー</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🕐 タイムテーブル</h3>
+      <ul class="clean">
+        <li>画像をアップロードするとホームの「タイムテーブル」に表示</li>
+        <li>「差し替え」で上書き更新できる</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🗺 会場マップ</h3>
+      <ul class="clean">
+        <li>案内図をアップロードするとホームの「会場マップ」に表示</li>
+        <li><b>スタンプスポットのピン表示と連動</b>（次ページ参照）</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note" style="margin-top:18px;">いずれも<b>設定しなければホーム画面に表示されません</b>（すべて任意設定）。</div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">06</p>
+</section>
+
+<!-- 7. 管理(3) イベント・QR・ピン -->
+<section class="slide">
+  <p class="kicker">ADMIN 3/6</p>
+  <h2 class="title">イベント作成と<span class="accent">QRコード発行</span></h2>
+  <div class="grid2" style="flex:1;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="card">
+        <h3>🎫 イベント作成</h3>
+        <p>プロジェクト詳細 →「新規作成」。イベント名・開催日・会場名・アイコン画像（任意）・説明（任意）。作成後も編集可能。</p>
+      </div>
+      <div class="card">
+        <h3>🔳 QRコード発行</h3>
+        <p>イベント一覧の「QR」ボタン → 「QRコードをダウンロード」でPNG保存 → 印刷して会場に掲示するだけ。</p>
+      </div>
+      <div class="card">
+        <h3>📊 確認できる情報</h3>
+        <p>イベントごとの取得数をリアルタイム確認。取得者一覧（名前・性別・年齢・取得日時）は<b>CSVダウンロード</b>可能。</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📍 マップピン設定（任意）</h3>
+      <div class="pin-demo" style="margin:12px 0 14px;">
+        <div class="pin blue">A</div><p style="font-size:12.5px; color:var(--muted);">未獲得スポット：青い丸＋ラベル</p>
+      </div>
+      <div class="pin-demo" style="margin-bottom:16px;">
+        <div class="pin got">✓</div><p style="font-size:12.5px; color:var(--muted);">獲得済みスポット：テーマカラー＋チェック</p>
+      </div>
+      <ul class="clean">
+        <li>イベント編集画面の「マップ上のピン位置」セクション</li>
+        <li>会場マップ登録済みなら<b>マップをタップするだけ</b>で位置を自動設定</li>
+        <li>ラベル欄に A / B / C などを入力して保存</li>
+        <li>来場者がピンをタップするとスポット詳細と獲得案内を表示</li>
+        <li>取得済みスポットは自動でチェックマークに変化</li>
+      </ul>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">07</p>
+</section>
+
+<!-- 8. 管理(4) 動的QR -->
+<section class="slide">
+  <p class="kicker">ADMIN 4/6</p>
+  <h2 class="title">動的QR ― <span class="accent">1枚のQRで時間帯切り替え</span></h2>
+  <div class="grid2" style="flex:1;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="card" style="flex:1;">
+        <h3>💡 こんな場面で使う</h3>
+        <p>路上ライブなどで、同じスポットに複数のアーティストが時間交代で出演するとき。QRコードは1枚のまま、<b>スキャンした時刻によって対応アーティストのスタンプが自動で押されます</b>。</p>
+      </div>
+      <div class="card" style="flex:1;">
+        <h3>📲 スキャン時の動作</h3>
+        <ul class="clean">
+          <li>時間帯内 → 対応アーティストのスタンプページへ自動リダイレクト</li>
+          <li>時間外 → 「受付時間外です」と次回開始時刻を表示</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <h3>⚙️ 設定手順</h3>
+      <div class="steps-v" style="margin-top:12px;">
+        <div class="row"><div class="railcol"><div class="num">1</div><div class="conn"></div></div><div class="body"><b>スロット管理を開く</b><p class="desc">プロジェクト詳細 →「スロット管理（動的QR）」</p></div></div>
+        <div class="row"><div class="railcol"><div class="num">2</div><div class="conn"></div></div><div class="body"><b>スロット名を作成</b><p class="desc">例：ステージA</p></div></div>
+        <div class="row"><div class="railcol"><div class="num">3</div><div class="conn"></div></div><div class="body"><b>タイムテーブルを設定</b><p class="desc">開始・終了時刻とイベントを選んで追加（日本時間）</p></div></div>
+        <div class="row"><div class="railcol"><div class="num">4</div></div><div class="body"><b>QRをダウンロードして掲示</b></div></div>
+      </div>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">08</p>
+</section>
+
+<!-- 9. 管理(5) 特典段階 -->
+<section class="slide">
+  <p class="kicker">ADMIN 5/6</p>
+  <h2 class="title">特典段階 ― <span class="accent">貯めたらもらえる</span>を設定する</h2>
+  <div class="grid2" style="flex:1;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="card">
+        <h3>🎯 特典段階とは</h3>
+        <p>「スタンプ◯個で〇〇プレゼント」を複数段階設定できる仕組み。</p>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <span class="badge outline">3個 → ステッカー</span>
+          <span class="badge outline">5個 → フォトカード</span>
+          <span class="badge outline">10個 → サイン会</span>
+        </div>
+      </div>
+      <div class="card" style="flex:1;">
+        <h3>🛠 設定方法</h3>
+        <p>プロジェクト詳細 →「特典段階」セクション → 個数・特典名を入力 → 追加。</p>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="card" style="flex:1;">
+        <h3>⚡ 自動付与の仕組み</h3>
+        <p>来場者がスタンプを取得するたびに自動チェック。達成していれば<b>即座に特典チケットを発行</b>し、スタンプ帳の「チケット」タブ（引換券一覧）に表示されます。</p>
+      </div>
+      <div class="card" style="flex:1;">
+        <h3>📋 達成者の確認</h3>
+        <p>プロジェクト詳細で取得者一覧（名前・段階・日時・引換状態）を確認できます。CSVダウンロードにも対応。</p>
+      </div>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">09</p>
+</section>
+
+<!-- 10. 管理(6) 引き換え -->
+<section class="slide">
+  <p class="kicker">ADMIN 6/6</p>
+  <h2 class="title">特典引き換え ― <span class="accent">当日スタッフの操作</span></h2>
+  <div class="grid2" style="flex:1;">
+    <div class="card">
+      <h3>🔄 引き換え手順</h3>
+      <div class="steps-v" style="margin-top:12px;">
+        <div class="row"><div class="railcol"><div class="num">1</div><div class="conn"></div></div><div class="body"><b>スタッフが引き換え画面を開く</b><p class="desc">管理画面ヘッダー「引き換え」または <span class="mono">/admin/redeem</span>（メンバーなら誰でも操作可）</p></div></div>
+        <div class="row"><div class="railcol"><div class="num">2</div><div class="conn"></div></div><div class="body"><b>来場者の引換券QRをスキャン</b><p class="desc">来場者はスタンプ帳「チケット」タブに引換券QRを表示</p></div></div>
+        <div class="row"><div class="railcol"><div class="num">3</div><div class="conn"></div></div><div class="body"><b>内容を確認して「引き換えする」</b><p class="desc">画面に来場者名と特典内容が表示される</p></div></div>
+        <div class="row"><div class="railcol"><div class="num">4</div></div><div class="body"><b>確認画面で「確定（引き換える）」</b><p class="desc">2段階確認。確定すると使用済みに（取り消し不可）</p></div></div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="card" style="flex:1;">
+        <h3>🛡 二重引き換え防止</h3>
+        <p>一度確定した引換券は再利用できません。同じQRを再度スキャンすると<b>「引き換え済み」</b>と表示されます。別スタッフとの処理の重複も防げます。</p>
+      </div>
+      <div class="warn">「確定（引き換える）」は<b>押した後に取り消せません</b>。来場者名と特典内容を必ず確認してからタップしてください。</div>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">10</p>
+</section>
+
+<!-- 11. 機能一覧 -->
+<section class="slide">
+  <p class="kicker">FEATURES</p>
+  <h2 class="title">機能<span class="accent">まとめ</span></h2>
+  <div class="grid2" style="flex:1; align-items:start;">
+    <div>
+      <p style="font-weight:900; font-size:15px; margin-bottom:8px;">🎟 来場者向け</p>
+      <table class="feat">
+        <tr><th>機能</th><th>内容</th></tr>
+        <tr><td>QRスキャン</td><td>カメラで読み取るだけ。アプリ不要</td></tr>
+        <tr><td>ホーム画面</td><td>カルーセル・タイムテーブル・マップ＋ピン・進捗バー</td></tr>
+        <tr><td>スタンプ帳</td><td>プロジェクト別管理。ホーム/スタンプ/チケット＋QRボタン</td></tr>
+        <tr><td>特典チケット</td><td>達成で自動付与・QR表示・引き換えは自動通知</td></tr>
+        <tr><td>復元コード</td><td>機種変更後も別端末で引き継ぎ</td></tr>
+        <tr><td>テーマ表示</td><td>プロジェクトごとにUIカラー自動切り替え</td></tr>
+      </table>
+    </div>
+    <div>
+      <p style="font-weight:900; font-size:15px; margin-bottom:8px;">🧑‍💼 運営向け</p>
+      <table class="feat">
+        <tr><th>機能</th><th>内容</th></tr>
+        <tr><td>プロジェクト管理</td><td>承認ワークフロー・テーマ設定・複数管理者</td></tr>
+        <tr><td>画像管理</td><td>カルーセル写真（無制限）・タイムテーブル・会場マップ</td></tr>
+        <tr><td>マップピン</td><td>マップをタップしてピン設定。取得状況を可視化</td></tr>
+        <tr><td>イベント管理</td><td>QR発行・アイコン・ピン設定・取得数確認</td></tr>
+        <tr><td>動的QR</td><td>時間帯別アーティスト切り替え（スロット型）</td></tr>
+        <tr><td>特典段階</td><td>複数段階設定・達成者一覧</td></tr>
+        <tr><td>引き換え</td><td>QRスキャン方式・2段階確認・二重防止</td></tr>
+        <tr><td>CSV出力</td><td>特典取得者・スタンプ取得者（性別・年齢含む）</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">11</p>
+</section>
+
+<!-- 12. 注意(1) 来場者データ -->
+<section class="slide">
+  <p class="kicker">NOTES 1/2</p>
+  <h2 class="title">使用上の注意 ― <span class="accent">来場者データについて</span></h2>
+  <div class="grid2" style="flex:1;">
+    <div class="card">
+      <h3>🚫 シークレットモードはNG</h3>
+      <p>来場者データはブラウザの「ローカルストレージ」に保存されます。シークレット（プライベート）モードで開くと別管理になり、スタンプ帳が空に見えたり、閉じると消えたりします。</p>
+      <div class="note" style="margin-top:10px;">来場者への案内：<b>通常モード・同じブラウザで開いてください</b></div>
+    </div>
+    <div class="card">
+      <h3>🔑 復元コードの保存を案内する</h3>
+      <p>機種変更やブラウザのデータクリアでデータが消えることがあります。ヘッダーのニックネーム →「ユーザー情報」に表示される<b>復元コード</b>で別端末から復元できます。</p>
+      <div class="note" style="margin-top:10px;">来場者への案内：<b>復元コードはスクリーンショットで保存を</b></div>
+    </div>
+    <div class="card">
+      <h3>1️⃣ 同じイベントのスタンプは1回のみ</h3>
+      <p>同じQRを何度読み取っても2回目以降は「取得済み」と表示され、スタンプは増えません（1ライブ1スタンプの仕様どおりの動作です）。</p>
+    </div>
+    <div class="card">
+      <h3>🚪 ログアウトは端末のデータを消すだけ</h3>
+      <p>「ログアウト」はこの端末のローカル保存を消去するのみで、サーバー側のスタンプ・特典は残ります。復元コードがあれば同じスタンプ帳に戻れます。※サーバー側から完全削除する機能は現状ありません。</p>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">12</p>
+</section>
+
+<!-- 13. 注意(2) 運営操作 -->
+<section class="slide">
+  <p class="kicker">NOTES 2/2</p>
+  <h2 class="title">使用上の注意 ― <span class="accent">運営操作について</span></h2>
+  <div class="grid2" style="flex:1; gap:14px;">
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="card" style="padding:16px 22px;">
+        <h3 style="font-size:15px;">① 承認前はイベントを作れない</h3>
+        <p>承認タイミングに左右されるため、プロジェクト申請は早めに。</p>
+      </div>
+      <div class="card" style="padding:16px 22px;">
+        <h3 style="font-size:15px;">② 特典段階の個数変更は過去に影響しない</h3>
+        <p>3個→5個に変えても付与済みはそのまま。ラベル変更は安全。<b style="color:var(--danger);">段階を削除すると付与済み特典も消えます（要注意）</b>。</p>
+      </div>
+      <div class="card" style="padding:16px 22px;">
+        <h3 style="font-size:15px;">③ 動的QRの時刻は日本時間（JST）</h3>
+        <p>スケジュールの時刻入力は日本時間基準。入力どおりに切り替わります。</p>
+      </div>
+      <div class="card" style="padding:16px 22px;">
+        <h3 style="font-size:15px;">④ スケジュール重複時は早い方が優先</h3>
+        <p>開始時刻が重複した場合は早い方を採用。重複しない設定を推奨。</p>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="card" style="padding:16px 22px;">
+        <h3 style="font-size:15px;">⑤ 「確定（引き換える）」は取り消せない</h3>
+        <p>使用済みに変更した後、元に戻す機能はありません。確定前に必ず確認を。</p>
+      </div>
+      <div class="card" style="padding:16px 22px;">
+        <h3 style="font-size:15px;">⑥ プロジェクト削除は元に戻せない</h3>
+        <p>イベント・スタンプ・特典データがすべて削除されます。<b>削除前にCSVでバックアップ</b>を。</p>
+      </div>
+      <div class="card" style="padding:16px 22px; flex:1;">
+        <h3 style="font-size:15px;">⑦ インターネット接続が必要</h3>
+        <p>スキャン・取得・引き換えはすべてサーバー通信が必要です。会場のWi-Fi / 4G / 5G環境を事前に確認してください。</p>
+      </div>
+    </div>
+  </div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">13</p>
+</section>
+
+<!-- 14. FAQ -->
+<section class="slide">
+  <p class="kicker">FAQ</p>
+  <h2 class="title">よくある質問・<span class="accent">トラブル対応</span></h2>
+  <div class="grid2" style="flex:1; gap:24px;">
+    <div class="qa">
+      <p class="q">スタンプが消えてしまった</p>
+      <p class="a">シークレットモードや別ブラウザで開いた可能性があります。復元コードがあれば復元できます。</p>
+      <p class="q">QRを読み取っても反応しない</p>
+      <p class="a">① URLが正しいか（スロット型は受付時間外だとエラー表示）② インターネット接続 ③ カメラのアクセス許可、の順に確認してください。</p>
+      <p class="q">特典チケットが表示されない</p>
+      <p class="a">スタンプ帳の「チケット」タブが選択されているか、スタンプ数が段階の個数に達しているかを確認してください。</p>
+    </div>
+    <div class="qa">
+      <p class="q">「引き換え済みです」と出た</p>
+      <p class="a">すでに別のスタッフが引き換え処理を完了しています。二重引き換えを防ぐ正常な動作です。</p>
+      <p class="q">スタッフを管理画面に追加したい</p>
+      <p class="a">プロジェクト詳細から ① 登録済みメールアドレスの指定、または ② 参加コードの共有で追加できます（①は相手が事前にセルフ登録済みであることが必要）。</p>
+      <p class="q">イベントのQRコードを紛失した</p>
+      <p class="a">プロジェクト詳細 → イベント一覧の「QR」ボタンから再表示・再ダウンロードできます。QRコード自体は変わりません。</p>
+    </div>
+  </div>
+  <div class="note">お困りの際は運営管理者までご連絡ください　｜　<span class="mono">https://stamp-rally-kappa.vercel.app</span></div>
+  <p class="footer-brand">スタンプラリーアプリ 使い方ガイド</p><p class="pageno">14</p>
+</section>
+
+</body>
+</html>
