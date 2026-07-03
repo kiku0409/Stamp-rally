@@ -1,6 +1,6 @@
 /**
  * 来場者スタンプ帳ナビゲーション E2E:
- *   - ボトムナビ（ホーム / スタンプ / QR / チケット）
+ *   - ボトムナビ（ホーム / スタンプ / QR / 引換券）
  *   - アクティブプロジェクト切り替え（複数プロジェクト参加時）
  *   - ヘッダーのユーザー名 → /profile
  *
@@ -41,15 +41,15 @@ test('ボトムナビ4スロットでタブ遷移できる', async ({ page }) =>
   // ナビ要素が存在
   await expect(page.getByRole('link', { name: 'ホーム' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'スタンプ' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'チケット' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '引換券' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'QRを読み取る' })).toBeVisible();
 
   // スタンプタブ
   await page.getByRole('link', { name: 'スタンプ' }).click();
   await expect(page).toHaveURL(/\/stamp-book\/stamps$/);
 
-  // チケットタブ（ラベルはチケットだが見出しは引換券）
-  await page.getByRole('link', { name: 'チケット' }).click();
+  // 引換券タブ
+  await page.getByRole('link', { name: '引換券' }).click();
   await expect(page).toHaveURL(/\/stamp-book\/rewards$/);
   await expect(page.getByRole('heading', { name: '引換券' })).toBeVisible();
 

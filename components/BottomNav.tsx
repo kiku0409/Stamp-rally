@@ -43,10 +43,10 @@ export default function BottomNav() {
           <span className="text-[10px] font-medium text-faint mt-1">QR</span>
         </div>
 
-        {/* チケット */}
+        {/* 引換券 */}
         <Link href="/stamp-book/rewards" className="flex flex-col items-center gap-0.5 px-4 py-2">
           <Ticket size={22} strokeWidth={2} className={rewardsActive ? 'text-accent' : 'text-faint'} />
-          <span className={`text-[10px] font-medium ${rewardsActive ? 'text-accent' : 'text-faint'}`}>チケット</span>
+          <span className={`text-[10px] font-medium ${rewardsActive ? 'text-accent' : 'text-faint'}`}>引換券</span>
         </Link>
       </div>
     </nav>
