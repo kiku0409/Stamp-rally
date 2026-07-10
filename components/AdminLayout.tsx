@@ -18,10 +18,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.replace('/admin/login');
         return;
       }
-      getCurrentUser().then((user) => {
-        setCurrentUser(user);
-        setChecking(false);
-      });
+      setChecking(false);
+      getCurrentUser().then((user) => setCurrentUser(user));
     });
   }, [router]);
 

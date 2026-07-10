@@ -15,6 +15,7 @@ export async function signUp(email: string, password: string) {
 
 export async function signOut() {
   await supabase.auth.signOut();
+  currentUserPromise = null;
 }
 
 export async function getSession() {
@@ -27,9 +28,15 @@ export async function getAccessToken(): Promise<string> {
   return session?.access_token ?? '';
 }
 
-export async function getCurrentUser(): Promise<User | null> {
-  const { data } = await supabase.auth.getUser();
-  return data.user;
+let currentUserPromise: Promise<User | null> | null = null;
+
+export function getCurrentUser(): Promise<User | null> {
+  if (!currentUserPromise) {
+    currentUserPromise = supabase.auth.getUser()
+      .then(({ data }) => data.user)
+      .catch((err) => { currentUserPromise = null; throw err; });
+  }
+  return currentUserPromise;
 }
 
 export function isSuperAdmin(user: User | null): boolean {
