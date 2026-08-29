@@ -2,7 +2,7 @@
 
 - 更新日時: 2026-08-29 JST
 - ブランチ: `main`
-- 直近作業: LINEログイン連携の実チャネル設定・ローカルE2E完了・本番反映（残: 実機E2E）
+- 直近作業: LINEログイン連携 **完了**（実チャネル設定・ローカル/本番実機E2E・チャネル公開・本番反映まで全て済み）
 - ⚠️ 注意: 2026-08-13/29 のLINE作業は Mac（/Users/kiku/dev/projects/Stamp-rally）で、2026-07-03 の作業は自宅WSL2 PC で行われ、**Mac側が origin を pull しないまま進めていた**。08-29 に rebase で統合済み（age INTEGER 移行にLINE登録APIも追従）。**作業開始時は必ず `git pull` すること**
 
 次のセッションがこれだけ読めば再開できるようにまとめた運用・状態メモ。
@@ -66,12 +66,16 @@
 - **ローカルE2E 5シナリオ全て成功**: 既存参加者「きく」に紐付け(linked) / 別端末復元(restored、シークレットウィンドウ) / キャンセル・state不一致(curlでコールバックに直接送信 → `?line_error=cancelled` / `failed` へリダイレクト) / 新規登録(new→registered、表示名がニックネーム初期値に入る) / 競合(conflict UI「別のスタンプ帳と連携済みです」表示)
 - `.env.local.example` に平文で入っていた `TEST_ADMIN_PASSWORD` をダミー値に置換
 
-**残作業**:
-1. **本番での実機E2E**（スマホ・LINEアプリ内ブラウザ）: 本番URLをLINEトークに貼ってタップ → 未登録状態で「LINEでログイン」→ 連携/復元できるか。あわせてPC本番でプロフィールから連携→シークレットウィンドウで復元
-2. **テストデータ片付け**: 参加者「テスト太郎」（ローカルE2Eで作成、ユーザーのLINEに紐付き）を SQL Editor で削除 → `DELETE FROM participants WHERE nickname = 'テスト太郎';`（削除済みか要確認: `SELECT nickname FROM participants WHERE line_user_id IS NOT NULL;`）
-3. **イベント前にチャネルを「公開」にする**: LINE Developers > スタンプラリー > チャネル上部の「開発中」→「公開」。開発中のままだと**チャネル管理者以外はログインできない**
-4. 先方に「LINEログインで取れるのは表示名のみ。年齢・性別はLINEから取得できず登録時に本人入力」を伝えておく（先方が年齢取得を期待していた可能性あり）
-5. 既知の表示仕様: `line_linked` は localStorage のフラグで、SQLで `line_user_id` を消しても画面は「連携済み」のまま（ログアウト→復元コードで再取得すると更新）。通常運用では連携が外れることはないので対応不要
+**本番反映・仕上げ（2026-08-29 同日に完了）**:
+- コミット `ee74dcd` を push → Vercel デプロイ → 本番 `/api/auth/line/login` が新チャネルIDでLINEへリダイレクトすることを確認。GitHub Actions E2E 15本も success
+- ~~本番での実機E2E~~ → **完了**（スマホ・LINEアプリ内ブラウザから「LINEでログイン」→ 連携/復元OK。DB上は「きく」のみ line_user_id 保持）
+- ~~テストデータ片付け~~ → **完了**（「テスト太郎」削除済み）
+- ~~チャネルを「公開」にする~~ → **完了**（LINE Developers 上で「開発中」→「公開」済み。誰でもログイン可能）
+
+**残っている軽いTODO**:
+1. 先方に「LINEログインで取れるのは表示名のみ。年齢・性別はLINEから取得できず登録時に本人入力」を伝えておく（先方が年齢取得を期待していた可能性あり。返信文面は 08-29 セッションで作成済み）
+2. 先方希望の「公式LINE（目撃録）→スタンプラリー誘導」用に、プロジェクトURLとQRを渡す（開発不要）
+3. 既知の表示仕様: `line_linked` は localStorage のフラグで、SQLで `line_user_id` を消しても画面は「連携済み」のまま（ログアウト→復元コードで再取得すると更新）。通常運用では連携が外れることはないので対応不要
 
 ### 過去セッション（2026-07-01 その2）で実施したこと
 
@@ -165,7 +169,7 @@ ALTER TABLE events
 
 ## 4. 次にやること（優先順）
 
-0. **LINEログイン連携の残作業**（§2の「残作業」参照: 本番実機E2E・テスト太郎削除・イベント前にチャネル「公開」）。LINEログインのE2Eテスト（Playwright）は未作成 — LINE側の認可画面を自動化できないため、`/api/auth/line/complete` を署名cookie直叩きでテストする形なら追加可能
+0. ~~LINEログイン連携の残作業~~ → **完了**（本番実機E2E・テスト太郎削除・チャネル公開まで 2026-08-29 に完了）。残: 先方への「年齢は取れない」説明と、目撃録に貼るURL/QRの提供（§2参照）。LINEログインのE2Eテスト（Playwright）は未作成 — LINE側の認可画面を自動化できないため、`/api/auth/line/complete` を署名cookie直叩きでテストする形なら追加可能
 1. ~~全機能のブラウザ検証~~ → **完了**（Playwright E2E 15本・CI化済み。2026-07-03）
 2. ~~`age_group` → `age INTEGER` マイグレーション~~ → **完了**（2026-07-03。`age_group` カラムの削除だけ将来のクリーンアップとして残る。LINE登録APIも `lib/participantAge.ts` 経由で二重書き込みに追従済み 2026-08-29）
 3. **GitHub Secrets の設定**（ユーザー作業）: リポジトリ Settings → Secrets and variables → Actions に `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `TEST_ADMIN_EMAIL` / `TEST_ADMIN_PASSWORD` の5つ。設定しないとCIは失敗し続ける
