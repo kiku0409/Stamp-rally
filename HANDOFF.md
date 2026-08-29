@@ -72,6 +72,14 @@
 - ~~テストデータ片付け~~ → **完了**（「テスト太郎」削除済み）
 - ~~チャネルを「公開」にする~~ → **完了**（LINE Developers 上で「開発中」→「公開」済み。誰でもログイン可能）
 
+**追加機能（2026-08-29 同日・先方要望）: スタンプCSVに「LINE連携」「LINE表示名」列**
+- 先方から「LINEのユーザーネームを管理者側がCSVで見れるか」と相談 → LINE ID（@xxx）は取得不可、**表示名**なら可能と回答して実装
+- DB: `participants.line_display_name TEXT` 追加（`2026-08-29_participant_line_display_name.sql`、本番適用済み）。LINE連携・新規登録・復元(restored/conflict)のたびに id_token の name で上書き（本人が表示名を変えても追従）
+- `/api/projects/[id]/stamps` が `line_linked: boolean` / `line_display_name` を返し、管理画面の「スタンプCSV」が `イベント,ニックネーム,性別,年齢,LINE連携(済/未),LINE表示名,取得日時` を出力。**`line_user_id` はCSVに出さない**
+- `tests/csv-export.spec.ts` を新ヘッダに更新（ローカルで通過）。README / docs/slide-content.md 更新済み
+- 注意: すでに連携済みの参加者（例: マツザキトモヤ）は**次回LINEログインまで表示名が空**（連携＝済・表示名＝空 で出る）
+- ローカルE2E実行時の注意: `/admin` 初回コンパイルが遅く adminLogin の `waitForURL` 20秒を超えて落ちることがある。**先に `npm run dev -- -p 3001` を起動して `/admin/login` `/admin` を一度開いて温めてから** `npx playwright test` すると安定（`reuseExistingServer: true`）
+
 **残っている軽いTODO**:
 1. 先方に「LINEログインで取れるのは表示名のみ。年齢・性別はLINEから取得できず登録時に本人入力」を伝えておく（先方が年齢取得を期待していた可能性あり。返信文面は 08-29 セッションで作成済み）
 2. 先方希望の「公式LINE（目撃録）→スタンプラリー誘導」用に、プロジェクトURLとQRを渡す（開発不要）

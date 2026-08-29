@@ -23,7 +23,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from('event_stamps')
-    .select('stamped_at, event:events(title), participant:participants(nickname, gender, age, age_group)')
+    .select('stamped_at, event:events(title), participant:participants(nickname, gender, age, age_group, line_user_id, line_display_name)')
     .in('event_id', eventIds)
     .order('stamped_at', { ascending: false });
 
@@ -32,7 +32,14 @@ export async function GET(
   type Row = {
     stamped_at: string;
     event?: { title: string } | null;
-    participant?: { nickname: string; gender: string | null; age: number | null; age_group: string | null } | null;
+    participant?: {
+      nickname: string;
+      gender: string | null;
+      age: number | null;
+      age_group: string | null;
+      line_user_id: string | null;
+      line_display_name: string | null;
+    } | null;
   };
   const rows = (data ?? []) as unknown as Row[];
   return NextResponse.json(
@@ -43,6 +50,9 @@ export async function GET(
       // 年齢: 新形式 age(INTEGER) を優先し、レガシー行は age_group（数値文字列 or 「20代」等）にフォールバック。
       // JSONフィールド名は互換のため age_group のまま（クライアント app/admin/projects/[id]/page.tsx が参照）。
       age_group: r.participant?.age != null ? String(r.participant.age) : (r.participant?.age_group ?? ''),
+      // LINE: 生の line_user_id は出さず、連携有無と表示名のみ（表示名は本人が変更可能・本名とは限らない）
+      line_linked: !!r.participant?.line_user_id,
+      line_display_name: r.participant?.line_display_name ?? '',
       stamped_at: r.stamped_at,
     }))
   );

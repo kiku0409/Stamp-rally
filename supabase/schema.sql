@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS participants (
   age           INTEGER,               -- 実年齢（整数）
   age_group     TEXT,                  -- [DEPRECATED] 旧形式の年齢文字列（例: "25", "20代"）。表示フォールバック用に残置。移行完了後に削除予定
   line_user_id  TEXT,                  -- LINEログインのuserId(sub)。連携済みなら非NULL
+  line_display_name TEXT,              -- LINE表示名（連携/復元のたびに更新）。管理者CSV表示用。本名とは限らない
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 -- 1 LINEアカウント = 1 participant

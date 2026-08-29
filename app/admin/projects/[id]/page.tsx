@@ -162,9 +162,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const headers = await authHeaders();
     const res = await fetch(`/api/projects/${id}/stamps`, { headers });
     if (!res.ok) { alert('取得に失敗しました'); return; }
-    const data: { event_title: string; nickname: string; gender: string; age_group: string; stamped_at: string }[] = await res.json();
-    const rows = data.map((d) => [d.event_title, d.nickname, d.gender || '未設定', d.age_group || '未設定', new Date(d.stamped_at).toLocaleString('ja-JP')]);
-    const csv = toCsv(['イベント', 'ニックネーム', '性別', '年齢', '取得日時'], rows);
+    const data: {
+      event_title: string; nickname: string; gender: string; age_group: string;
+      line_linked: boolean; line_display_name: string; stamped_at: string;
+    }[] = await res.json();
+    const rows = data.map((d) => [
+      d.event_title,
+      d.nickname,
+      d.gender || '未設定',
+      d.age_group || '未設定',
+      d.line_linked ? '済' : '未',
+      d.line_display_name || '',
+      new Date(d.stamped_at).toLocaleString('ja-JP'),
+    ]);
+    const csv = toCsv(['イベント', 'ニックネーム', '性別', '年齢', 'LINE連携', 'LINE表示名', '取得日時'], rows);
     downloadCsv(`スタンプ取得者_${project?.name ?? ''}.csv`, csv);
   }
 

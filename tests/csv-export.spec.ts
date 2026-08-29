@@ -1,7 +1,8 @@
 /**
  * スタンプ取得者 CSV 書き出し E2E: /admin/projects/[id] の「スタンプCSV」ボタン
- *   - ヘッダ: イベント,ニックネーム,性別,年齢,取得日時
+ *   - ヘッダ: イベント,ニックネーム,性別,年齢,LINE連携,LINE表示名,取得日時
  *   - 性別/年齢が未入力の参加者は「未設定」で出力される
+ *   - LINE未連携の参加者は LINE連携=未・LINE表示名=空 で出力される
  *   - UTF-8 BOM 付き
  *
  * CSV 整形はクライアント側（app/admin/projects/[id]/page.tsx）で行われるため、
@@ -62,11 +63,11 @@ test('スタンプCSVをダウンロードでき、性別/年齢と未設定フ�
   expect(text.charCodeAt(0)).toBe(0xfeff);
 
   // ヘッダ
-  expect(text).toContain('イベント,ニックネーム,性別,年齢,取得日時');
+  expect(text).toContain('イベント,ニックネーム,性別,年齢,LINE連携,LINE表示名,取得日時');
 
-  // 性別・年齢ありの行
-  expect(text).toContain(`,${withInfo.nickname},男性,25,`);
+  // 性別・年齢ありの行（LINE未連携 → 未）
+  expect(text).toContain(`,${withInfo.nickname},男性,25,未,`);
 
   // 未入力 → 未設定,未設定
-  expect(text).toContain(`,${noInfo.nickname},未設定,未設定,`);
+  expect(text).toContain(`,${noInfo.nickname},未設定,未設定,未,`);
 });

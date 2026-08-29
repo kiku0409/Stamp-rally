@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
   if (findError) return NextResponse.json({ error: findError.message }, { status: 500 });
 
   if (linked) {
+    // 表示名は本人がLINE上で変更できるので、ログインのたびに最新値で上書き（失敗しても復元は続行）
+    if (auth.name) {
+      await supabase.from('participants').update({ line_display_name: auth.name }).eq('id', linked.id);
+    }
     const status = participant_id && participant_id !== linked.id ? 'conflict' : 'restored';
     return participantResponse(status, linked);
   }
@@ -64,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const { error: updateError } = await supabase
       .from('participants')
-      .update({ line_user_id: auth.sub })
+      .update({ line_user_id: auth.sub, line_display_name: auth.name ?? null })
       .eq('id', participant_id);
     if (updateError) {
       // レースで同じLINEが先に別参加者へ紐付いた場合(23505)は再検索して返す
@@ -90,6 +94,7 @@ export async function POST(request: NextRequest) {
 
   // (b') 新規2回目: 参加者を作成してLINEを紐付け
   const baseData: Record<string, string | number> = { nickname: nickname.trim(), line_user_id: auth.sub };
+  if (auth.name) baseData.line_display_name = auth.name;
   if (gender) baseData.gender = gender;
   // 移行期間中は age(INTEGER) と age_group(TEXT) の両方に書き込む（/api/participants POST と同じ）
   const ageFields = resolveAgeFields(age, age_group);
