@@ -8,6 +8,7 @@ import { useStampBook } from './StampBookContext';
 import { setLocalParticipant } from '@/lib/storage';
 import { getTheme, Theme } from '@/lib/themes';
 import { StampBookGroup, EventStamp, ProjectImage } from '@/types';
+import LineLoginButton from '@/components/LineLoginButton';
 
 export default function StampBookHomePage() {
   const { participant, groups, loading, setShowScanner, activeProjectId } = useStampBook();
@@ -39,6 +40,7 @@ export default function StampBookHomePage() {
         gender: data.gender ?? undefined,
         age: data.age ?? undefined,
         age_group: data.age_group ?? undefined,
+        line_linked: data.line_linked,
       });
       window.location.reload();
     } catch {
@@ -82,6 +84,7 @@ export default function StampBookHomePage() {
               <UserPlus size={17} strokeWidth={2} />
               アカウントを作成する
             </Link>
+            <LineLoginButton returnTo="/stamp-book" label="LINEでログイン（引き継ぎ）" />
             <Link
               href="/"
               className="block w-full py-3 rounded-xl border border-line text-muted text-[14px] font-medium text-center hover:border-accent hover:text-accent transition-colors"

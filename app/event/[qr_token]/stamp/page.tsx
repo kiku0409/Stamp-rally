@@ -7,6 +7,7 @@ import { Event } from '@/types';
 import { getLocalParticipant, setLocalParticipant, setActiveProjectId } from '@/lib/storage';
 import NicknameForm from '@/components/NicknameForm';
 import StampAcquired from '@/components/StampAcquired';
+import LineLoginButton from '@/components/LineLoginButton';
 
 type Step = 'loading' | 'register' | 'stamping' | 'done' | 'already' | 'error';
 
@@ -129,6 +130,7 @@ export default function StampPage({ params }: StampPageProps) {
         gender: data.gender ?? undefined,
         age: data.age ?? undefined,
         age_group: data.age_group ?? undefined,
+        line_linked: data.line_linked,
       });
       setNickname(data.nickname);
       await acquireStamp(data.id);
@@ -173,7 +175,11 @@ export default function StampPage({ params }: StampPageProps) {
       {step === 'register' && (
         <div className="w-full max-w-sm mx-auto">
           <NicknameForm onSubmit={handleNicknameSubmit} />
-          <div className="mt-4">
+          <div className="mt-4 space-y-3">
+            <LineLoginButton
+              returnTo={`/event/${qr_token}/stamp`}
+              label="LINEでログインしてスタンプ取得"
+            />
             {!showRestore ? (
               <button
                 onClick={() => setShowRestore(true)}

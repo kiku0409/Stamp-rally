@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, KeyRound, User, Pencil, Check, X, LogOut } from 'lucide-react';
+import { ChevronLeft, KeyRound, User, Pencil, Check, X, LogOut, MessageCircle } from 'lucide-react';
 import { getLocalParticipant, setLocalParticipant, clearLocalParticipant, getActiveThemeId } from '@/lib/storage';
 import { formatGrouped } from '@/lib/code';
 import { LocalParticipant } from '@/types';
 import { getTheme, headerGradient } from '@/lib/themes';
+import LineLoginButton from '@/components/LineLoginButton';
 
 const GENDERS = ['男性', '女性', 'その他'];
 
@@ -23,6 +24,7 @@ export default function ProfilePage() {
   const [genderInput, setGenderInput] = useState('');
   const [ageInput, setAgeInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [lineCancelled, setLineCancelled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const ageNum = parseInt(ageInput, 10);
@@ -36,6 +38,11 @@ export default function ProfilePage() {
     }
     setParticipant(local);
     setReady(true);
+    // LINE同意画面でキャンセルして戻ってきた場合の通知
+    if (new URLSearchParams(window.location.search).get('line_error')) {
+      setLineCancelled(true);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
   }, [router]);
 
   useEffect(() => {
@@ -216,6 +223,35 @@ export default function ProfilePage() {
             </p>
           </div>
         )}
+
+        {/* LINE link */}
+        <div className="bg-white rounded-2xl p-5 border border-line card-shadow">
+          <div className="flex items-center gap-2 mb-1.5">
+            <MessageCircle size={16} strokeWidth={2} className="text-accent-deep" />
+            <span className="font-bold text-ink text-[14px]">LINE連携</span>
+          </div>
+          {participant.line_linked ? (
+            <>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Check size={15} strokeWidth={2.5} style={{ color: '#06C755' }} />
+                <span className="text-[14px] font-bold" style={{ color: '#06C755' }}>連携済み</span>
+              </div>
+              <p className="text-[12px] text-muted leading-relaxed">
+                別の端末やLINEアプリ内ブラウザでも、LINEログインでこのスタンプ帳を開けます。
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[12px] text-muted mb-3 leading-relaxed">
+                LINEと連携すると、端末を変えてもLINEログインだけでスタンプ帳を引き継げます。
+              </p>
+              {lineCancelled && (
+                <p className="text-danger text-[12px] mb-2">LINE連携がキャンセルされました</p>
+              )}
+              <LineLoginButton returnTo="/profile" label="LINEと連携する" />
+            </>
+          )}
+        </div>
 
         {/* Logout */}
         <div className="bg-white rounded-2xl p-5 border border-line card-shadow">

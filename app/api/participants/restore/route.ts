@@ -12,12 +12,14 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('participants')
-    .select('id, nickname, recovery_code, gender, age, age_group')
+    .select('id, nickname, recovery_code, gender, age, age_group, line_user_id')
     .eq('recovery_code', normalized)
     .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: '復元コードが正しくありません' }, { status: 404 });
 
-  return NextResponse.json(data);
+  // line_user_id の生値は返さず、連携有無のみ伝える
+  const { line_user_id, ...participant } = data;
+  return NextResponse.json({ ...participant, line_linked: !!line_user_id });
 }

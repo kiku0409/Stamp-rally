@@ -46,6 +46,10 @@ QRをかざすだけで、ライブの思い出が貯まる。
 
 発行される**復元コード**を控えておけば、機種変更後も別端末でスタンプ帳を復元できます（ヘッダーのニックネームをタップ → ユーザー情報画面で復元コードを確認）。
 
+### LINEログイン連携
+
+ユーザー情報画面の「LINEと連携する」からLINEアカウントと紐付けると、機種変更後やLINEアプリ内ブラウザで開いた場合でも「LINEでログイン」だけでスタンプ帳を引き継げます（復元コードの手入力が不要に）。新規ユーザーは「LINEで登録」からも開始でき、LINEの表示名がニックネームにプリフィルされます（性別・年齢は従来通り自前フォームで入力）。
+
 ---
 
 ## 運営の使い方
@@ -98,6 +102,7 @@ QRをかざすだけで、ライブの思い出が貯まる。
 - 特典チケット自動付与・引換用QR表示・引き換え時のリアルタイム通知
 - 会場マップ上のスタンプスポットピン表示（獲得状況が一目でわかる）
 - 復元コードによる別端末引き継ぎ
+- **LINEログイン連携** — LINE紐付けで別端末・LINEアプリ内ブラウザからもワンタップ復元（将来のセグメント配信の土台）
 - 同一ライブの重複スタンプ防止
 
 ### 運営（管理者）
@@ -143,7 +148,14 @@ cp .env.local.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# LINEログイン連携（任意。未設定でも他機能は動作する）
+LINE_LOGIN_CHANNEL_ID=your-channel-id
+LINE_LOGIN_CHANNEL_SECRET=your-channel-secret
+APP_BASE_URL=http://localhost:3000
 ```
+
+LINEログイン連携を使う場合は、[LINE Developersコンソール](https://developers.line.biz/console/)の**LINEログインチャネル**からチャネルID/シークレットを取得し、チャネルの「コールバックURL」に `{APP_BASE_URL}/api/auth/line/callback`（ローカル・本番の両方）を登録する。
 
 ### 3. スーパー管理者の設定
 
@@ -201,7 +213,7 @@ npx playwright test
 ## Vercelデプロイ
 
 1. Vercel でリポジトリをインポート
-2. Environment Variables に `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` を追加
+2. Environment Variables に `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` を追加（LINEログイン連携を使う場合は `LINE_LOGIN_CHANNEL_ID` / `LINE_LOGIN_CHANNEL_SECRET` / `APP_BASE_URL`（本番URL）も追加し、LINEコンソールのコールバックURLに本番URLを登録）
 3. デプロイ実行。以降は `main` への push で自動デプロイ
 
 ---
@@ -273,6 +285,7 @@ participants
 ├── recovery_code TEXT UNIQUE      -- 別端末からの復元コード
 ├── gender        TEXT
 ├── age_group     TEXT             -- 実年齢を文字列で格納（例: "25"）
+├── line_user_id  TEXT UNIQUE      -- LINEログインのuserId（連携済みなら非NULL）
 └── created_at    TIMESTAMPTZ
 
 event_stamps

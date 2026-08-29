@@ -92,8 +92,11 @@ CREATE TABLE IF NOT EXISTS participants (
   gender        TEXT,                  -- '男性' | '女性' | 'その他'
   age           INTEGER,               -- 実年齢（整数）
   age_group     TEXT,                  -- [DEPRECATED] 旧形式の年齢文字列（例: "25", "20代"）。表示フォールバック用に残置。移行完了後に削除予定
+  line_user_id  TEXT,                  -- LINEログインのuserId(sub)。連携済みなら非NULL
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- 1 LINEアカウント = 1 participant
+CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_line_user_id ON participants(line_user_id);
 
 -- Event stamps table
 CREATE TABLE IF NOT EXISTS event_stamps (

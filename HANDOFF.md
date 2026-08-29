@@ -1,7 +1,9 @@
 # 引き継ぎメモ（HANDOFF）
 
-- 更新日時: 2026-07-03 JST
-- ブランチ: `main`（全変更コミット済み・本番デプロイ済み）
+- 更新日時: 2026-08-29 JST
+- ブランチ: `main`
+- 直近作業: LINEログイン連携の実チャネル設定・ローカルE2E完了・本番反映（残: 実機E2E）
+- ⚠️ 注意: 2026-08-13/29 のLINE作業は Mac（/Users/kiku/dev/projects/Stamp-rally）で、2026-07-03 の作業は自宅WSL2 PC で行われ、**Mac側が origin を pull しないまま進めていた**。08-29 に rebase で統合済み（age INTEGER 移行にLINE登録APIも追従）。**作業開始時は必ず `git pull` すること**
 
 次のセッションがこれだけ読めば再開できるようにまとめた運用・状態メモ。
 
@@ -38,9 +40,40 @@
 
 ---
 
-## 2. 現在の実装状況（全て `main` にコミット済み・本番反映済み）
+## 2. 現在の実装状況
 
-### 直近セッション（2026-07-01 その2）で実施したこと
+### 直近セッション（2026-08-13）: LINEログイン連携
+
+**概要**: 参加者がLINEアカウントと紐付けて本人特定できる機能。6月に先方(EMC)と合意した「10月サーキットフェス向けLINE紐付け」構想の実装（経緯: `docs/contractor-conversation-summary.md` / `docs/improvement-memo.md`）。将来のMessaging APIセグメント配信の土台として `participants.line_user_id` を保持する（配信機能は未実装・スコープ外）。
+
+**実装内容**:
+- OAuth 2.0認可コードフロー(LINE Login v2.1)を新規依存なしで実装。id_token検証はLINEの検証API(`/oauth2/v2.1/verify`)に委譲
+- `lib/lineAuth.ts` — authorize URL組み立て / トークン交換 / verify / HMAC署名cookie / returnTo検証
+- Route Handler 3本: `app/api/auth/line/{login,callback,complete}/route.ts`。completeが紐付け本体で5ステータス（linked=既存参加者に紐付け / new=新規1回目→登録フォーム / registered=新規登録 / restored=別端末復元 / conflict=別participantに紐付き済み→自動付け替えせずUIで選択）
+- `app/auth/line/complete/page.tsx` — コールバック後にlocalStorageのparticipant_idを添えてcomplete APIを叩くクライアントページ
+- `line_user_id` はDBと署名付き短命httpOnly cookieのみに存在。APIレスポンス・localStorage・URLには`line_linked: boolean`のみ
+- UI: profile(連携カード) / stamp-book未ログイン / register / event/[qr_token]/stamp の4画面に `components/LineLoginButton.tsx` を組み込み
+- 復元コードAPI(`/api/participants/restore`)がgender/age/age_group/line_linkedも返すよう改修（復元後のプロフィール表示が正しくなる）
+- DBマイグレーション: `supabase/migrations/2026-08-13_participant_line_user_id.sql`（+schema.sql両方更新）
+- ドキュメント更新: README / docs/slide-content.md / BUGS.md(BUG-001に根本対策追記)
+- 検証済み: `npm run build` 成功。curlでOAuth配管をスモークテスト済み（login 302+cookie / returnToオープンリダイレクト拒否 / キャンセル・state不一致リダイレクト / cookie署名改ざん・期限切れ401）
+
+**2026-08-29 セッションで完了したこと（設定・検証）**:
+- **方針確定**: 公式LINE「目撃録」（EMC側が管理者、ユーザーは運用担当者で権限不足）とは**紐づけない**。先方が2026-08-27にLINEで「個人のLINEログインだけでOK、公式LINEの友だち集めはパワープレイでやる」と了承。Messaging APIセグメント配信・同意画面の友だち追加(bot_prompt)・リッチメニュー連携は**スコープ外**。先方希望の「公式LINE→スタンプラリー誘導」は目撃録のあいさつ/リッチメニューにURL・QRを貼るだけ（開発不要）
+- **LINE Developers**: ユーザー自身の名義でプロバイダー「スタンプラリー」を新規作成 → LINEログインチャネル「スタンプラリー」作成（**チャネルID `2011317697`**、ステータス**開発中**）。コールバックURL2本（localhost / stamp-rally-kappa.vercel.app）登録済み
+- Supabaseマイグレーション `2026-08-13_participant_line_user_id.sql` **本番適用済み**（REST経由で列存在を確認）
+- `.env.local` に3変数設定済み。**Vercel Production にも3変数設定済み**（`APP_BASE_URL=https://stamp-rally-kappa.vercel.app`）
+- **ローカルE2E 5シナリオ全て成功**: 既存参加者「きく」に紐付け(linked) / 別端末復元(restored、シークレットウィンドウ) / キャンセル・state不一致(curlでコールバックに直接送信 → `?line_error=cancelled` / `failed` へリダイレクト) / 新規登録(new→registered、表示名がニックネーム初期値に入る) / 競合(conflict UI「別のスタンプ帳と連携済みです」表示)
+- `.env.local.example` に平文で入っていた `TEST_ADMIN_PASSWORD` をダミー値に置換
+
+**残作業**:
+1. **本番での実機E2E**（スマホ・LINEアプリ内ブラウザ）: 本番URLをLINEトークに貼ってタップ → 未登録状態で「LINEでログイン」→ 連携/復元できるか。あわせてPC本番でプロフィールから連携→シークレットウィンドウで復元
+2. **テストデータ片付け**: 参加者「テスト太郎」（ローカルE2Eで作成、ユーザーのLINEに紐付き）を SQL Editor で削除 → `DELETE FROM participants WHERE nickname = 'テスト太郎';`（削除済みか要確認: `SELECT nickname FROM participants WHERE line_user_id IS NOT NULL;`）
+3. **イベント前にチャネルを「公開」にする**: LINE Developers > スタンプラリー > チャネル上部の「開発中」→「公開」。開発中のままだと**チャネル管理者以外はログインできない**
+4. 先方に「LINEログインで取れるのは表示名のみ。年齢・性別はLINEから取得できず登録時に本人入力」を伝えておく（先方が年齢取得を期待していた可能性あり）
+5. 既知の表示仕様: `line_linked` は localStorage のフラグで、SQLで `line_user_id` を消しても画面は「連携済み」のまま（ログアウト→復元コードで再取得すると更新）。通常運用では連携が外れることはないので対応不要
+
+### 過去セッション（2026-07-01 その2）で実施したこと
 
 - **マップピン機能のE2E動作確認 完了**（本番環境で実施）
   - テスト用プロジェクト `__playwright_test__` で会場マップ画像アップロード → イベント作成時にマップクリックでピン座標(X%,Y%)を設定 → 保存/再読み込み後も正確に保持されることを確認
@@ -132,8 +165,9 @@ ALTER TABLE events
 
 ## 4. 次にやること（優先順）
 
+0. **LINEログイン連携の残作業**（§2の「残作業」参照: 本番実機E2E・テスト太郎削除・イベント前にチャネル「公開」）。LINEログインのE2Eテスト（Playwright）は未作成 — LINE側の認可画面を自動化できないため、`/api/auth/line/complete` を署名cookie直叩きでテストする形なら追加可能
 1. ~~全機能のブラウザ検証~~ → **完了**（Playwright E2E 15本・CI化済み。2026-07-03）
-2. ~~`age_group` → `age INTEGER` マイグレーション~~ → **完了**（2026-07-03。`age_group` カラムの削除だけ将来のクリーンアップとして残る）
+2. ~~`age_group` → `age INTEGER` マイグレーション~~ → **完了**（2026-07-03。`age_group` カラムの削除だけ将来のクリーンアップとして残る。LINE登録APIも `lib/participantAge.ts` 経由で二重書き込みに追従済み 2026-08-29）
 3. **GitHub Secrets の設定**（ユーザー作業）: リポジトリ Settings → Secrets and variables → Actions に `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `TEST_ADMIN_EMAIL` / `TEST_ADMIN_PASSWORD` の5つ。設定しないとCIは失敗し続ける
 4. 本格的レート制限（KV導入）
 5. ランキング、SNSシェア等の体験系機能
@@ -176,6 +210,14 @@ ALTER TABLE events
 - `app/admin/events/new/page.tsx` — イベント新規作成（同上）
 - `app/admin/redeem/page.tsx` — 特典引き換え（2段階確認）
 - `app/admin/super/page.tsx` — 全プロジェクト承認管理
+
+**LINEログイン連携**
+- `lib/lineAuth.ts` — OAuth/署名cookieヘルパー（環境変数 `LINE_LOGIN_CHANNEL_ID`/`LINE_LOGIN_CHANNEL_SECRET`/`APP_BASE_URL`）
+- `app/api/auth/line/login/route.ts` — 認可開始（state/nonce発行→LINEへ302）
+- `app/api/auth/line/callback/route.ts` — state検証・トークン交換・id_token検証
+- `app/api/auth/line/complete/route.ts` — 紐付け本体（linked/new/registered/restored/conflict）
+- `app/auth/line/complete/page.tsx` — 完了ページ（localStorage連携・登録フォーム・競合UI）
+- `components/LineLoginButton.tsx` — 共通ボタン（profile/stamp-book/register/event stampの4画面）
 
 **API**
 - `app/api/stamp-book/route.ts` — スタンプ帳データ一括取得（全イベントも events[] で返す）

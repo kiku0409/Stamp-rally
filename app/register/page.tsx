@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { setLocalParticipant } from '@/lib/storage';
 import NicknameForm from '@/components/NicknameForm';
+import LineLoginButton from '@/components/LineLoginButton';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -50,6 +51,12 @@ export default function RegisterPage() {
         {error && (
           <p className="text-danger text-[13px] text-center mt-3">{error}</p>
         )}
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 border-t border-line" />
+          <span className="text-[11px] text-faint">または</span>
+          <div className="flex-1 border-t border-line" />
+        </div>
+        <LineLoginButton returnTo="/stamp-book" label="LINEで登録・引き継ぎ" />
       </div>
     </main>
   );

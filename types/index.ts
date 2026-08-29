@@ -108,6 +108,7 @@ export interface Participant {
   gender?: string;
   age?: number | null;      // 実年齢（整数）。新形式
   age_group?: string;       // [DEPRECATED] 旧形式の年齢文字列（例: "25", "20代"）。表示フォールバック用
+  line_linked?: boolean;    // LINE連携済みか（生のline_user_idはクライアントに出さない）
   created_at: string;
 }
 
@@ -126,6 +127,7 @@ export interface LocalParticipant {
   gender?: string;
   age?: number | null;      // 実年齢（整数）。新形式
   age_group?: string;       // [DEPRECATED] 旧形式の年齢文字列。表示フォールバック用
+  line_linked?: boolean;    // LINE連携済みか
 }
 
 export interface StampResult {

@@ -7,12 +7,13 @@ interface NicknameFormProps {
   /** age は数値文字列（例: "25"）。呼び出し側で Number() に変換して API の `age` に渡す */
   onSubmit: (nickname: string, gender: string, age: string) => void;
   loading?: boolean;
+  defaultNickname?: string; // LINE表示名などのプリフィル用
 }
 
 const GENDERS = ['男性', '女性', 'その他'];
 
-export default function NicknameForm({ onSubmit, loading }: NicknameFormProps) {
-  const [nickname, setNickname] = useState('');
+export default function NicknameForm({ onSubmit, loading, defaultNickname }: NicknameFormProps) {
+  const [nickname, setNickname] = useState(defaultNickname?.slice(0, 20) ?? '');
   const [gender, setGender] = useState('');
   const [age, setAge] = useState('');
 
