@@ -1,11 +1,30 @@
 # 引き継ぎメモ（HANDOFF）
 
-- 更新日時: 2026-08-29 JST
-- ブランチ: `main`
-- 直近作業: LINEログイン連携 **完了**（実チャネル設定・ローカル/本番実機E2E・チャネル公開・本番反映まで全て済み）
+- 更新日時: 2026-10-15 JST
+- ブランチ: `main`（最新コミット `58549c1`）。保留ブランチ `feat/culture-theme`（`2a47cbd`・**未push**）あり
+- 直近作業: 2日間通しイベント対応（日付の期間表示）・マップピン縮小・ヘッダー獲得数をPJ別に（**本番反映済み**）／公式サイト風テーマ（**ブランチのみ・イベント後にマージ**）
 - ⚠️ 注意: 2026-08-13/29 のLINE作業は Mac（/Users/kiku/dev/projects/Stamp-rally）で、2026-07-03 の作業は自宅WSL2 PC で行われ、**Mac側が origin を pull しないまま進めていた**。08-29 に rebase で統合済み（age INTEGER 移行にLINE登録APIも追従）。**作業開始時は必ず `git pull` すること**
 
 次のセッションがこれだけ読めば再開できるようにまとめた運用・状態メモ。
+
+---
+
+## 00. 直近セッション（2026-10-15・Mac）— Shibuya Street Live（10/17〜18）直前対応
+
+### 本番反映済み（`main`）
+- **`f2c7a0e` 複数日開催対応**: `events.end_date DATE`（任意・`end_date >= event_date` のCHECK付き）を追加。マイグレーション `supabase/migrations/2026-10-15_event_end_date.sql` は**本番適用済み**（SQL EditorでユーザーがALTER 3文を実行。COMMENT文だけ未実行＝動作に影響なし）。管理画面のイベント作成/編集に「終了日（任意）」、表示は `lib/utils.ts` の `formatEventDateShort`（`10/17–18`、月またぎ `10/31–11/1`）/ `formatEventDate`（管理画面）。スタンプ取得の可否には使っていない（従来どおり日付制限なし）。README / slide-content / オーナー向けPDF 更新済み
+- **`58549c1` UI修正2件**: ①会場マップのピンを取得済み/未取得とも見た目26px（白フチ）に統一。以前は取得済みだけ二重リングで約46pxになり地図の文字を隠していた。タップ領域は36pxのまま（`app/stamp-book/page.tsx`）②ヘッダー右上「獲得スタンプ」を全PJ合計→**選択中プロジェクトの獲得数**に（`app/stamp-book/layout.tsx`）
+- E2E: `main` で16本全緑（期間表示・ヘッダー獲得数の切替テストを追加）。Vercelデプロイ success、本番JSに変更が入っていることを確認済み
+
+### 保留中: 公式サイト風テーマ（ブランチ `feat/culture-theme`・コミット `2a47cbd`・未push）
+- **ユーザー判断で、10/17〜18のイベントが終わってから `main` に出す**（イベント中に来場者画面のコード変更を持ち込まないため）
+- テーマID `street-live-culture`「ストリートライブ（公式サイト風）」。shibuyastreetlive.jp 準拠（白地・黒線・5色 #FF2E60/#C5FF0B/#0775C1/#FF7957/#AF4BA6 の有機的な形＋目玉・黒帯テロップ・Montserrat Alternates）。デザインプレビュー（F案＝白ヘッダー採用）: https://claude.ai/artifact/YFd5Dk9TRo3FSsx9bGE8Bv
+- 仕組み: `lib/themes.ts` に `style: 'culture'` / `palette` / `eventColorIndex`（スタンプ色はPJ内のイベント順で固定）/ `cultureVars`、共通パーツ `components/Culture.tsx`。**このテーマを選んだPJだけ**見た目が変わる。QR経由の登録・獲得画面にもテーマを当てる（このテーマのときだけ。テーマ取得用に `GET /api/events/theme?qr_token=` 追加）
+- 同ブランチで既存バグも修正: プロフィールのテーマがアクティブPJとずれる（themeId保存漏れ）/ 読み込み中に標準色が一瞬見える / 獲得画面の案内文「TICKETS」→「引換券」
+- 検証: ブランチ上でE2E 20本全緑（`tests/culture-theme.spec.ts` 4本追加）、スマホ幅で全画面スクショ確認済み。**Vercelプレビュー環境は未確認**（Supabase変数がPreviewに入っているか不明）
+
+### 未コミットのまま残しているもの（このセッションでは触っていない・別セッションの作業）
+- `HANDOFF.md` の一部（§1の管理者2名・Supabase行、§3-6/7）、`README.md` の「Supabase無料枠の自動停止」節、`app/admin/login/page.tsx`、`lib/adminAuth.ts`、`package.json`、`.github/workflows/keepalive.yml`、`scripts/`（check-supabase.mjs）。いずれもSupabase自動停止対策の作業途中と思われる。コミットしてよいかユーザー確認待ち
 
 ---
 
@@ -180,6 +199,10 @@ ALTER TABLE events
 0. ~~LINEログイン連携の残作業~~ → **完了**（本番実機E2E・テスト太郎削除・チャネル公開まで 2026-08-29 に完了）。残: 先方への「年齢は取れない」説明と、目撃録に貼るURL/QRの提供（§2参照）。LINEログインのE2Eテスト（Playwright）は未作成 — LINE側の認可画面を自動化できないため、`/api/auth/line/complete` を署名cookie直叩きでテストする形なら追加可能
 1. ~~全機能のブラウザ検証~~ → **完了**（Playwright E2E 15本・CI化済み。2026-07-03）
 2. ~~`age_group` → `age INTEGER` マイグレーション~~ → **完了**（2026-07-03。`age_group` カラムの削除だけ将来のクリーンアップとして残る。LINE登録APIも `lib/participantAge.ts` 経由で二重書き込みに追従済み 2026-08-29）
+- **(イベント前・ユーザー作業)** 管理画面でShibuya Street Liveの各イベントに「終了日 = 10/18」を設定（未設定だと単日表示のまま）
+- **(10/19以降)** `feat/culture-theme` を `main` に取り込む: `git checkout feat/culture-theme && git rebase main` → `npx playwright test`（20本）→ `main` に ff マージ → push。その後、管理画面で対象PJのテーマを「ストリートライブ（公式サイト風）」に切り替えて実機確認
+- 上記の未コミット作業（keepalive / check:supabase / 管理者ログインのエラー文言切り分け）をコミットするか判断
+
 3. **GitHub Secrets の設定**（ユーザー作業）: リポジトリ Settings → Secrets and variables → Actions に `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `TEST_ADMIN_EMAIL` / `TEST_ADMIN_PASSWORD` の5つ。設定しないとCIは失敗し続ける
 4. 本格的レート制限（KV導入）
 5. ランキング、SNSシェア等の体験系機能
