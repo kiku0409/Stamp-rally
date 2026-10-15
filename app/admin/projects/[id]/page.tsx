@@ -9,7 +9,7 @@ import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { getAccessToken } from '@/lib/adminAuth';
 import { Event, Project, ProjectMember, ProjectRole, ProjectStatus, RewardTier, ProjectImage } from '@/types';
 import { Image as ImageIcon, Upload } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { formatEventDate } from '@/lib/utils';
 import { toCsv, downloadCsv } from '@/lib/csv';
 import { THEMES, getTheme, headerGradient } from '@/lib/themes';
 
@@ -696,7 +696,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <div className="flex items-start justify-between">
                       <button className="flex-1 text-left" onClick={() => openStampers(ev)}>
                         <h3 className="font-bold text-ink text-[14px]">{ev.title}</h3>
-                        <p className="text-[12px] text-muted mt-0.5">{formatDate(ev.event_date)} · {ev.venue}</p>
+                        <p className="text-[12px] text-muted mt-0.5">{formatEventDate(ev.event_date, ev.end_date)} · {ev.venue}</p>
                         <p className={`text-[12px] font-bold mt-1 ${ev.stampCount > 0 ? 'text-accent' : 'text-faint'}`}>
                           スタンプ取得数 {ev.stampCount}
                         </p>

@@ -44,9 +44,14 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { title, event_date, venue, description, icon_url, map_x, map_y, map_label, map_color } = body;
+  const { title, event_date, end_date, venue, description, icon_url, map_x, map_y, map_label, map_color } = body;
+
+  if (end_date && end_date < event_date) {
+    return NextResponse.json({ error: '終了日は開催日以降の日付にしてください' }, { status: 400 });
+  }
 
   const update: Record<string, unknown> = { title, event_date, venue, description };
+  if ('end_date' in body) update.end_date = end_date || null;
   if (typeof icon_url === 'string') update.icon_url = icon_url || null;
   if ('map_x' in body) update.map_x = map_x ?? null;
   if ('map_y' in body) update.map_y = map_y ?? null;

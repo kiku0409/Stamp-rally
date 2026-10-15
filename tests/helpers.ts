@@ -131,7 +131,7 @@ export interface SeededEvent {
   qr_token: string;
 }
 
-/** イベントを1件作成。map_x/map_y/map_label を渡すとマップピン対象になる。 */
+/** イベントを1件作成。map_x/map_y/map_label を渡すとマップピン対象になる。endDate で複数日開催。 */
 export async function createEvent(
   sb: SupabaseClient,
   projectId: string,
@@ -139,6 +139,7 @@ export async function createEvent(
     title?: string;
     venue?: string;
     eventDate?: string;
+    endDate?: string;
     mapX?: number;
     mapY?: number;
     mapLabel?: string;
@@ -150,6 +151,7 @@ export async function createEvent(
       title: opts.title ?? `${TEST_TAG}_event_${genCode(4)}`,
       venue: opts.venue ?? 'テスト会場',
       event_date: opts.eventDate ?? new Date().toISOString().slice(0, 10),
+      end_date: opts.endDate ?? null,
       project_id: projectId,
       map_x: opts.mapX ?? null,
       map_y: opts.mapY ?? null,

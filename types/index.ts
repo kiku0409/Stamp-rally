@@ -89,6 +89,7 @@ export interface Event {
   id: string;
   title: string;
   event_date: string;
+  end_date?: string | null; // 複数日開催の終了日（NULL=単日）
   venue: string;
   qr_token: string;
   description?: string;

@@ -11,7 +11,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from('slot_schedules')
-    .select('*, event:events(id, title, event_date, qr_token)')
+    .select('*, event:events(id, title, event_date, end_date, qr_token)')
     .eq('slot_id', id)
     .order('start_at', { ascending: true });
 
@@ -51,7 +51,7 @@ export async function POST(
   const { data, error } = await supabase
     .from('slot_schedules')
     .insert({ slot_id: id, event_id, start_at, end_at })
-    .select('*, event:events(id, title, event_date, qr_token)')
+    .select('*, event:events(id, title, event_date, end_date, qr_token)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

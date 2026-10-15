@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title       TEXT NOT NULL,
   event_date  DATE NOT NULL,
+  end_date    DATE CHECK (end_date IS NULL OR end_date >= event_date), -- 複数日開催の終了日（NULL=単日）
   venue       TEXT NOT NULL,
   description TEXT,
   qr_token    UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),

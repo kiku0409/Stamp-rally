@@ -41,10 +41,13 @@ export async function POST(request: Request) {
   const { user } = auth;
 
   const body = await request.json();
-  const { project_id, title, event_date, venue, description, icon_url, map_x, map_y, map_label, map_color } = body;
+  const { project_id, title, event_date, end_date, venue, description, icon_url, map_x, map_y, map_label, map_color } = body;
 
   if (!project_id || !title || !event_date || !venue) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  }
+  if (end_date && end_date < event_date) {
+    return NextResponse.json({ error: '終了日は開催日以降の日付にしてください' }, { status: 400 });
   }
 
   const supabase = createAdminClient();
@@ -58,6 +61,7 @@ export async function POST(request: Request) {
 
   const qr_token = crypto.randomUUID();
   const row: Record<string, unknown> = { title, event_date, venue, description, qr_token, project_id };
+  if (end_date) row.end_date = end_date;
   if (icon_url) row.icon_url = icon_url;
   if (map_x != null) row.map_x = map_x;
   if (map_y != null) row.map_y = map_y;

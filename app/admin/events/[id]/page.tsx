@@ -12,7 +12,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const { id } = use(params);
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
-  const [form, setForm] = useState({ title: '', event_date: '', venue: '', description: '' });
+  const [form, setForm] = useState({ title: '', event_date: '', end_date: '', venue: '', description: '' });
   const [mapForm, setMapForm] = useState({ map_x: '', map_y: '', map_label: '', map_color: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,7 +38,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     const ev: Event = await eventRes.json();
     const stats = await statsRes.json();
     setEvent(ev);
-    setForm({ title: ev.title, event_date: ev.event_date, venue: ev.venue, description: ev.description || '' });
+    setForm({ title: ev.title, event_date: ev.event_date, end_date: ev.end_date ?? '', venue: ev.venue, description: ev.description || '' });
     setMapForm({
       map_x: ev.map_x != null ? String(ev.map_x) : '',
       map_y: ev.map_y != null ? String(ev.map_y) : '',
@@ -212,6 +212,18 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               required
               className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
             />
+          </div>
+          <div>
+            <label className="block text-[13px] font-medium text-ink mb-1">終了日（任意・複数日開催の場合）</label>
+            <input
+              name="end_date"
+              type="date"
+              value={form.end_date}
+              min={form.event_date || undefined}
+              onChange={handleChange}
+              className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
+            />
+            <p className="text-[11px] text-muted mt-1">設定するとスタンプに「10/17–18」のように期間で表示されます</p>
           </div>
           <div>
             <label className="block text-[13px] font-medium text-ink mb-1">会場名</label>

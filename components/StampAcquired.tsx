@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Music } from 'lucide-react';
 import { Event } from '@/types';
+import { formatEventDateShort } from '@/lib/utils';
 
 interface StampAcquiredProps {
   event: Event;
@@ -50,8 +51,8 @@ function formatStampDate(dateStr: string): string {
 }
 
 export default function StampAcquired({ event, stampedAt }: StampAcquiredProps) {
-  const [, month, day] = event.event_date.split('-');
-  const mmdd = `${parseInt(month)}/${parseInt(day)}`;
+  const mmdd = formatEventDateShort(event.event_date, event.end_date);
+  const isRange = mmdd.includes('–');
 
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -77,7 +78,7 @@ export default function StampAcquired({ event, stampedAt }: StampAcquiredProps) 
             ) : (
               <>
                 <Music size={30} strokeWidth={2} />
-                <span className="text-[11px] font-bold mt-1" style={{ fontFamily: 'var(--font-mono)' }}>
+                <span className={`${isRange ? 'text-[10px]' : 'text-[11px]'} font-bold mt-1 whitespace-nowrap`} style={{ fontFamily: 'var(--font-mono)' }}>
                   {mmdd}
                 </span>
               </>

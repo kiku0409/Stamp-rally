@@ -4,6 +4,7 @@
  *   - 再訪 → 取得済み
  *   - 不正な qr_token → イベントが見つかりません
  *   - 未登録来場者 → 登録フォーム表示
+ *   - 複数日開催（end_date あり）→ スタンプの日付が期間表示
  */
 import { test, expect } from '@playwright/test';
 import {
@@ -14,12 +15,16 @@ import {
 const sb = adminSupabase();
 let project: SeededProject;
 let event: SeededEvent;
+let multiDayEvent: SeededEvent;
 let participant: SeededParticipant;
 
 test.beforeAll(async () => {
   const adminUid = await getAdminUserId(sb, process.env.TEST_ADMIN_EMAIL!);
   project = await createProject(sb, { createdBy: adminUid, status: 'approved' });
   event = await createEvent(sb, project.id, { title: `${'__playwright_test__'}_stamp` });
+  multiDayEvent = await createEvent(sb, project.id, {
+    title: `${'__playwright_test__'}_multiday`, eventDate: '2026-10-17', endDate: '2026-10-18',
+  });
   participant = await createParticipant(sb, {});
 });
 
@@ -55,4 +60,11 @@ test('未登録来場者がQRを開く → 登録フォームが表示される'
   await expect(page.getByText('ニックネームを登録')).toBeVisible({ timeout: 20_000 });
   // 復元導線も出ている
   await expect(page.getByText('すでに登録済みの方はこちら')).toBeVisible();
+});
+
+test('複数日開催のイベント → スタンプの日付が「10/17–18」と期間表示される', async ({ page }) => {
+  await injectParticipant(page, participant);
+  await page.goto(`/event/${multiDayEvent.qr_token}/stamp`);
+  await expect(page.getByRole('heading', { name: 'スタンプ獲得' })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('10/17–18', { exact: true })).toBeVisible();
 });

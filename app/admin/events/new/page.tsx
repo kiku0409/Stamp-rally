@@ -10,7 +10,7 @@ function NewEventForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get('project_id');
-  const [form, setForm] = useState({ title: '', event_date: '', venue: '', description: '' });
+  const [form, setForm] = useState({ title: '', event_date: '', end_date: '', venue: '', description: '' });
   const [mapForm, setMapForm] = useState({ map_x: '', map_y: '', map_label: '', map_color: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -161,6 +161,18 @@ function NewEventForm() {
               required
               className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
             />
+          </div>
+          <div>
+            <label className="block text-[13px] font-medium text-ink mb-1">終了日（任意・複数日開催の場合）</label>
+            <input
+              name="end_date"
+              type="date"
+              value={form.end_date}
+              min={form.event_date || undefined}
+              onChange={handleChange}
+              className="w-full px-3 py-2.5 rounded-xl border border-line focus:border-accent focus:outline-none text-[14px] text-ink bg-white"
+            />
+            <p className="text-[11px] text-muted mt-1">設定するとスタンプに「10/17–18」のように期間で表示されます</p>
           </div>
           <div>
             <label className="block text-[13px] font-medium text-ink mb-1">会場名{required}</label>

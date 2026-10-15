@@ -2,6 +2,7 @@
 
 import { Music, Check } from 'lucide-react';
 import { Event, EventStamp } from '@/types';
+import { formatEventDateShort } from '@/lib/utils';
 import { Theme } from '@/lib/themes';
 
 interface StampCardProps {
@@ -23,8 +24,8 @@ function formatStampDateTime(dateStr: string): string {
 
 export default function StampCard({ event, stamp, theme }: StampCardProps) {
   const isStamped = !!stamp;
-  const [, month, day] = event.event_date.split('-');
-  const mmdd = `${parseInt(month)}/${parseInt(day)}`;
+  const mmdd = formatEventDateShort(event.event_date, event.end_date);
+  const isRange = mmdd.includes('–'); // 44pxの円に収めるため期間表示は文字を小さくする
 
   const accent = theme?.accent ?? '#0A938C';
   const accentDeep = theme?.accentDeep ?? '#07615C';
@@ -51,7 +52,7 @@ export default function StampCard({ event, stamp, theme }: StampCardProps) {
             ) : (
               <>
                 <Music size={14} strokeWidth={2} />
-                <span className="text-[9px] font-bold mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
+                <span className={`${!isRange ? 'text-[9px]' : mmdd.length > 8 ? 'text-[7px] tracking-tighter' : 'text-[8px] tracking-tighter'} font-bold mt-0.5 whitespace-nowrap`} style={{ fontFamily: 'var(--font-mono)' }}>
                   {mmdd}
                 </span>
               </>
