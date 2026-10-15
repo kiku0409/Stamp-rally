@@ -288,26 +288,35 @@ function ProjectView({ group, onScanQR }: { group: StampBookGroup; onScanQR: () 
               {(allEvents ?? []).filter(ev => ev.map_x != null && ev.map_y != null).map(ev => {
                 const stampedIds = new Set(stamps.map(s => s.event_id));
                 const collected = stampedIds.has(ev.id);
+                // タップ領域は36pxのまま、見た目のピンは取得済み/未取得とも同じ26pxにそろえる
+                // （以前は取得済みだけ二重リングで約46pxになり、地図の文字を隠していた）
                 return (
                   <button
                     key={ev.id}
                     type="button"
                     onClick={() => setSelectedEvent(ev)}
-                    className="absolute flex items-center justify-center rounded-full font-bold text-[13px] transition-transform hover:scale-110 active:scale-95"
+                    className="absolute flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
                     style={{
                       left: `${ev.map_x}%`,
                       top: `${ev.map_y}%`,
                       transform: 'translate(-50%, -50%)',
                       width: 36,
                       height: 36,
-                      background: collected ? theme.accent : '#3B82F6',
-                      color: '#fff',
-                      boxShadow: collected
-                        ? `0 0 0 3px white, 0 0 0 5px ${theme.accent}`
-                        : '0 2px 6px rgba(0,0,0,0.3)',
                     }}
                   >
-                    {collected ? <Check size={16} strokeWidth={3} /> : (ev.map_label ?? '?')}
+                    <span
+                      className="flex items-center justify-center rounded-full font-bold text-[11px]"
+                      style={{
+                        width: 26,
+                        height: 26,
+                        background: collected ? theme.accent : '#3B82F6',
+                        color: '#fff',
+                        border: '2px solid #fff',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
+                      }}
+                    >
+                      {collected ? <Check size={13} strokeWidth={3.5} /> : (ev.map_label ?? '?')}
+                    </span>
                   </button>
                 );
               })}

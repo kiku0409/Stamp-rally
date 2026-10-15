@@ -24,11 +24,12 @@ function StampBookShell({ children }: { children: React.ReactNode }) {
 
   const [showProjectPicker, setShowProjectPicker] = useState(false);
 
-  const totalStamps = groups.reduce((sum, g) => sum + g.count, 0);
   const initial = participant?.nickname.charAt(0).toUpperCase() ?? '';
 
   const activeGroup = groups.find(g => g.project.id === activeProjectId) ?? groups[0];
   const activeTheme = getTheme(activeGroup?.project.theme_id);
+  // ヘッダーの「獲得スタンプ」は、選択中プロジェクトの獲得数（全プロジェクト合計ではない）
+  const activeStampCount = activeGroup?.count ?? 0;
 
   function handleQRScan(token: string) {
     setShowScanner(false);
@@ -160,7 +161,7 @@ function StampBookShell({ children }: { children: React.ReactNode }) {
               </Link>
               <div className="text-right">
                 <p className="text-white/60 text-[11px]">獲得スタンプ</p>
-                <p className="text-white text-[24px] font-bold leading-tight">{totalStamps}</p>
+                <p className="text-white text-[24px] font-bold leading-tight">{activeStampCount}</p>
               </div>
             </div>
           </div>

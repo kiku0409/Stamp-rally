@@ -2,6 +2,7 @@
  * 来場者スタンプ帳ナビゲーション E2E:
  *   - ボトムナビ（ホーム / スタンプ / QR / 引換券）
  *   - アクティブプロジェクト切り替え（複数プロジェクト参加時）
+ *   - ヘッダーの「獲得スタンプ」は選択中プロジェクトの獲得数
  *   - ヘッダーのユーザー名 → /profile
  *
  * 注: 「プロフィール」は独立タブではなくヘッダーのユーザー名リンクから開く。
@@ -22,10 +23,12 @@ test.beforeAll(async () => {
   projectA = await createProject(sb, { createdBy: adminUid, status: 'approved', name: `__playwright_test___A_${Date.now()}` });
   projectB = await createProject(sb, { createdBy: adminUid, status: 'approved', name: `__playwright_test___B_${Date.now()}` });
   participant = await createParticipant(sb, {});
-  // 各プロジェクトに1つずつスタンプ → 2グループが stamp-book に出る
+  // A に2つ・B に1つスタンプ → 2グループが stamp-book に出る（ヘッダーの獲得数が切り替わることも確認）
   const evA = await createEvent(sb, projectA.id, {});
+  const evA2 = await createEvent(sb, projectA.id, {});
   const evB = await createEvent(sb, projectB.id, {});
   await createStamp(sb, participant.id, evA.id);
+  await createStamp(sb, participant.id, evA2.id);
   await createStamp(sb, participant.id, evB.id);
 });
 
@@ -63,9 +66,11 @@ test('アクティブプロジェクトを切り替えられる', async ({ page 
   await page.goto('/stamp-book');
   await waitForStampBookLoaded(page, participant.nickname);
 
-  // チップは現在のアクティブ = projectA を表示
+  // チップは現在のアクティブ = projectA を表示、獲得数は A の分（2）だけ
   const chip = page.getByRole('button', { name: projectA.name });
   await expect(chip).toBeVisible();
+  const headerCount = page.getByText('獲得スタンプ', { exact: true }).locator('xpath=following-sibling::p[1]');
+  await expect(headerCount).toHaveText('2');
   await chip.click();
 
   // 切り替えシート
@@ -74,6 +79,7 @@ test('アクティブプロジェクトを切り替えられる', async ({ page 
 
   // チップが projectB に変わる
   await expect(page.getByRole('button', { name: projectB.name })).toBeVisible({ timeout: 10_000 });
+  await expect(headerCount).toHaveText('1');
   const active = await page.evaluate(() => localStorage.getItem('stamp_rally_active_project'));
   expect(active).toBe(projectB.id);
 });
